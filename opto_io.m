@@ -1,18 +1,15 @@
-function [resp1, npts1, resp2, npts2, resp3, npts3, resp4, npts4, out_msg] = ...
-    FOCHS_RZ6RZ5Dio(stim, inpts, indev, outdev, zBUS)
+function [resp, mcIndex] = opto_io(stim, inpts, indev, outdev, zBUS)
 %------------------------------------------------------------------------
-% [resp1, npts1, resp2, npts2, resp3, npts3, resp4, npts4] = ...
-%    FOCHS_RZ6RZ5Dio(stim, inpts, indev, outdev, zBUS)
+% [resp, mcIndex] = opto_io(stim, inpts, indev, outdev, zBUS)
 %------------------------------------------------------------------------
 %
 % Plays stim array through out channels A and B, 
-% and records data from four input channels (A-D). 
+% and records data from 16 input channels. 
 %
 %------------------------------------------------------------------------
 % designed to use with RPVD circuits on these devices:
 % 	indev: RZ5D
-% 		RZ5D_50k_FourChannelInput_zBus.rcx
-% 		RZ5D_50k_4In_1Out_zBus.rcx
+% 		RZ5D_50k_16In_1Out_zBus.rcx
 % 	outdev: RZ6
 % 		RZ6_2Processor_SpeakerOutput_zBus.rcx
 %------------------------------------------------------------------------
@@ -24,9 +21,8 @@ function [resp1, npts1, resp2, npts2, resp3, npts3, resp4, npts4, out_msg] = ...
 %   zBUS    TDT device interface structure for zBUS
 % 
 % Output Arguments:
-%   respX    [1xinpts] input data vector (X=1-4)
-%   nptsX    number of data points read (X=1-4)
-%	out_msg	output information
+%   resp			response matrix (16, inpts)
+%   mcIndex		# of samples read
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -39,25 +35,32 @@ function [resp1, npts1, resp2, npts2, resp3, npts3, resp4, npts4, out_msg] = ...
 % Upgraded Version (HPSearch2_spikeio): 2011-2012 by GA
 % Four-channel Input Version (FOCHS_spikeio): 2012 by GA
 % Optogen mods: 2016 by SJS
+% Opto script mods: 2016 by SJS
 %------------------------------------------------------------------------
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%------------------------------------------------------------------------
 % Reset before playing sound
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% # of output points
-outpts = length(stim);
 % send RESET command (software trigger 3)
+%------------------------------------------------------------------------
 RPtrig(indev, 3);
 RPtrig(outdev, 3);
+
+%------------------------------------------------------------------------
+% Set output pts, input pts
+%------------------------------------------------------------------------
+% # of output points
+outpts = length(stim);
 % set the output buffer length
 RPsettag(outdev, 'StimDur', outpts);
+% set # of input pts
+RPsettag(indev, 'AcqDur', inpts);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Play sound
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%------------------------------------------------------------------------
+% Play sound, record data
+%------------------------------------------------------------------------
 % load output buffer
-out_msg = RPwriteV(outdev, 'data_outL', stim(1, :)); %#ok<NASGU>
-out_msg = RPwriteV(outdev, 'data_outR', stim(2, :));
+RPwriteV(outdev, 'data_outL', stim(1, :)); 
+RPwriteV(outdev, 'data_outR', stim(2, :));
 % send START command (zBUS A)
 zBUStrigA_PULSE(zBUS, 0, 4);
 % main Loop
@@ -69,47 +72,14 @@ RPfastgettag(indev, 'SwpN');
 % send STOP command (zBUS B)
 zBUStrigB_PULSE(zBUS, 0, 4);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%------------------------------------------------------------------------
 % Read data from the buffers
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-inpts1 = inpts;
-inpts2 = inpts;
-inpts3 = inpts;
-inpts4 = inpts;
-
-% --- channel A = 1
+%------------------------------------------------------------------------
+% Get the data from the buffer
 % get the current location in the buffer
-npts1 = RPgettag(indev, 'index_inA'); 
-if npts1 < inpts1
-    inpts1 = npts1;
-end
-% read data from the buffer
-resp1 = RPreadV(indev, 'data_inA', inpts1);
+mcIndex = RPgettag(indev, 'mcIndex');
 
-% --- channel B = 2
-% get the current location in the buffer
-npts2 = RPgettag(indev, 'index_inB'); 
-if npts2 < inpts2
-    inpts2 = npts2;
-end
-% read data from the buffer
-resp2 = RPreadV(indev, 'data_inB', inpts2);
-
-% --- channel C = 3
-% get the current location in the buffer
-npts3 = RPgettag(indev, 'index_inC'); 
-if npts3 < inpts3
-    inpts3 = npts3;
-end
-% read data from the buffer
-resp3 = RPreadV(indev, 'data_inC', inpts3);
-
-% --- channel D = 4
-% get the current location in the buffer
-npts4 = RPgettag(indev, 'index_inD'); 
-if npts4 < inpts4
-    inpts4 = npts4;
-end
-% read data from the buffer
-resp4 = RPreadV(indev, 'data_inD', inpts4);
+%reads from the buffer
+resp = RPreadV(indev, 'mcData', mcIndex);
+resp = resp';
 
