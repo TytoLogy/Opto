@@ -1,6 +1,6 @@
-function [outhandles, outflag] = FOCHS_TDTclose(config, indev, outdev, zBUS, PA5L, PA5R)
+function [outhandles, outflag] = opto_TDTclose(config, indev, outdev, zBUS, PA5L, PA5R)
 %------------------------------------------------------------------------
-% [ outhandles, outflag ] = FOCHS_TDTclose(config, indev, outdev, zBUS, PA5L, PA5R)
+% [ outhandles, outflag ] = opto_TDTclose(config, indev, outdev, zBUS, PA5L, PA5R)
 %------------------------------------------------------------------------
 % 
 % Closes/shuts down TDT I/O Hardware for FOCHS program

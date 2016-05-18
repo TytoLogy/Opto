@@ -13,7 +13,7 @@ config.setattenFunc = @RZ6setatten;
 config.indev.hardware = 'RZ5D';
 config.indev.Fs = 50000;
 config.indev.Circuit_Path = 'C:\TytoLogy\Toolboxes\TDTToolbox\Circuits\RZ5D';
-config.indev.Circuit_Name = 'RZ5D_50k_16In_1Out_zBus';
+config.indev.Circuit_Name = 'RZ5D_50k_16In_1Out_zBus.rcx';
 config.indev.Dnum = 1; % device number
 % output device
 config.outdev.hardware = 'RZ6';

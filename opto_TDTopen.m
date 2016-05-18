@@ -1,6 +1,6 @@
-function [ outhandles, outflag ] = FOCHS_TDTopen(config, varargin)
+function [ outhandles, outflag ] = opto_TDTopen(config, varargin)
 %------------------------------------------------------------------------
-% [ outhandles, outflag ] = FOCHS_TDTopen(config, varargin)
+% [ outhandles, outflag ] = opto_TDTopen(config, varargin)
 %------------------------------------------------------------------------
 % 
 %--- Initializes TDT I/O Hardware ----------------------------------------
@@ -28,7 +28,6 @@ function [ outhandles, outflag ] = FOCHS_TDTopen(config, varargin)
 % Four-channel Input Version (FOCHS_TDTopen): 2012 by GA
 % Optogen mods: 2016 by SJS
 %------------------------------------------------------------------------
-
 disp([mfilename ': ...starting TDT devices...']);
 outflag = 0; % not initialized
 
@@ -88,11 +87,16 @@ if ~TDTINIT || TDTINIT_FORCE
     % initialize the outhandles structure
     %------------------------------------------------------------------
     outhandles = struct();
-    outhandles.indev = config.indev; % Fs, Dnum, Circuit_Path, Circuit_Name
+	 if nargin == 1
+	    outhandles.indev = config.indev; % Fs, Dnum, Circuit_Path, Circuit_Name
+		 outhandles.outdev = config.outdev;
+	 else
+		 outhandles.indev = varargin{1};
+		 outhandles.outdev = varargin{2};
+	 end
     outhandles.indev.C = [];
     outhandles.indev.handle = [];
     outhandles.indev.status = 0;
-    outhandles.outdev = config.outdev;
     outhandles.outdev.C = [];
     outhandles.outdev.handle = [];
     outhandles.outdev.status = 0;
@@ -115,13 +119,13 @@ if ~TDTINIT || TDTINIT_FORCE
 		outhandles.zBUS.handle = tmpdev.handle;
 		outhandles.zBUS.status = tmpdev.status;
 		% Initialize RX* for input
-		disp(['...starting ' config.indev.hardware ' for spike input...'])
+		disp(['...starting ' outhandles.indev.hardware ' for spike input...'])
 		tmpdev = idev.initFunc('GB', outhandles.indev.Dnum);
 		outhandles.indev.C = tmpdev.C;
 		outhandles.indev.handle = tmpdev.handle;
 		outhandles.indev.status = tmpdev.status;
 		% Initialize RX* for output
-		disp(['...starting ' config.outdev.hardware ' for sound input...'])
+		disp(['...starting ' outhandles.outdev.hardware ' for sound input...'])
 		tmpdev = odev.initFunc('GB', outhandles.outdev.Dnum);
 		outhandles.outdev.C = tmpdev.C;
 		outhandles.outdev.handle = tmpdev.handle;
