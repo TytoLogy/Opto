@@ -54,7 +54,7 @@ outpts = length(stim);
 RPsettag(outdev, 'StimDur', outpts);
 % set # of input pts
 RPsettag(indev, 'AcqDur', inpts);
-
+stimdur = RPgettag(outdev, 'StimDur')
 %------------------------------------------------------------------------
 % Play sound, record data
 %------------------------------------------------------------------------
@@ -71,6 +71,8 @@ end
 RPfastgettag(indev, 'SwpN');
 % send STOP command (zBUS B)
 zBUStrigB_PULSE(zBUS, 0, 4);
+
+index_outL = RPgettag(outdev, 'index_outL')
 
 %------------------------------------------------------------------------
 % Read data from the buffers

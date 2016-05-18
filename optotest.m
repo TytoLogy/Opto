@@ -166,16 +166,13 @@ for f = 1:length(freqs)
 		end
 
 		% plot returned values
-		
 		[resp, npts] = mcFastDeMux(mcresp, channels.nInputChannels);
 
 		for c = 1:channels.nInputChannels
 			set(pH(c), 'YData', resp(:, c) + c*yabsmax);
 		end
 		title(sprintf('Freq: %.2f, Rep: %d', freqs(f), n))
-		
 		drawnow
-
 		pause(0.001*stimulus.ISI)
 	end
 end
