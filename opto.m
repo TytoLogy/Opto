@@ -57,7 +57,9 @@ function opto_OpeningFcn(hObject, eventdata, handles, varargin)
 	handles.output = hObject;
 	
 	handles.H = opto_InitH;
-	set(handles.popupAudioSignal, 'String', {'Noise'; 'Tone'});
+	set(handles.popupAudioSignal, 'String', {'Noise'; 'Tone'; 'OFF'});
+	update_ui_val(handles.popupAudioSignal, 1);
+	
 	clist = cell(16, 1);
 	for c = 1:16
 		clist{c} = num2str(c);
@@ -94,49 +96,54 @@ function popupAudioSignal_Callback(hObject, eventdata, handles)
 	switch stimString
 		case 'NOISE'
 			update_ui_str(handles.textMsg, 'Noise stimulus selected');
-			handles.H.audio.signal = handles.H.noise;
+			handles.H.audio.Signal = 'noise';
+			guidata(hObject, handles);
 			% enable, make visible Fmax stuff, update Fmax val
 		case 'TONE'
 			update_ui_str(handles.textMsg, 'Tone stimulus selected');
-			handles.H.audio.signal = handles.H.tone;
+			handles.H.audio.Signal = 'tone';
+			guidata(hObject, handles);
 			% disable Fmax ctrls, change Fmin name to Freq, update val
+		case 'OFF'
+			update_ui_str(handles.textMsg, 'Audio stimulus OFF');
+			handles.H.audio.Signal = 'off';
+			guidata(hObject, handles);
 	end
+	update_ui_str(handles.textMsg, ['Stimulus type set to ' stimString]);
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------	
-function checkAudioOnOff_Callback(hObject, eventdata, handles)
-	val = read_ui_val(hObject);
-	if val == 1
-		update_ui_str(hObject, 'ON');
-	else
-		update_ui_str(hObject, 'OFF');
-	end
-	handles.H.audio.On = val;
-	guidata(hObject, handles);
-%-------------------------------------------------------------------------
 function editAudioDelay_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
-	if between(val, 0, handles.H.TDT.SweepDuration)
+	if between(val, 0.6, handles.H.TDT.SweepPeriod)
 		handles.H.audio.Delay = val;
+		update_ui_str(handles.textMsg, 'Audio delay set');
+		guidata(hObject, handles);
 	else
 		update_ui_str(handles.textMsg, 'invalid audio Delay');
-		update_ui_str(hObject, handles.H.audio.Dur);
+		update_ui_str(hObject, handles.H.audio.Delay);
 	end
-	guidata(hObject, handles);
+	if handles.H.TDT.Enable
+		RPsettag(handles.H.TDT.outdev, 'StimDelay', handles.H.audio.Delay);
+	end
 %-------------------------------------------------------------------------
 function editAudioDur_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
-	if between(val, 0, handles.H.TDT.SweepDuration)
+	if between(val, 0, handles.H.TDT.SweepPeriod)
 		handles.H.audio.Duration = val;
+		guidata(hObject, handles);
 	else
 		update_ui_str(handles.textMsg, 'invalid audio Duration');
 		update_ui_str(hObject, handles.H.audio.Duration);
 	end
-	guidata(hObject, handles);
+	if handles.H.TDT.Enable
+		RPsettag(handles.H.TDT.outdev, 'StimDur', handles.H.audio.Duration);
+	end	
 %-------------------------------------------------------------------------
 function editAudioLevel_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	if between(val, 0, 100)
 		handles.H.audio.Level = val;
+		guidata(hObject, handles);
 	else
 		update_ui_str(handles.textMsg, 'invalid audio Level');
 		update_ui_str(hObject, handles.H.audio.Level);
@@ -145,8 +152,9 @@ function editAudioLevel_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function editAudioRamp_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
-	if between(val, 0, handles.H.audio.Dur)
+	if between(val, 0, handles.H.audio.Duration)
 		handles.H.audio.Ramp = val;
+		guidata(hObject, handles);
 	else
 		update_ui_str(handles.textMsg, 'invalid audio Ramp');
 		update_ui_str(hObject, handles.H.audio.Ramp);
@@ -155,17 +163,19 @@ function editAudioRamp_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function editAudioFmin_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
-	switch handles.H.audio.Signal.Type
+	switch handles.H.audio.Signal
 		case 'Noise'
-			if between(val, 0, handles.H.audio.Signal.Fmax)
+			if between(val, 3500, handles.H.audio.Signal.Fmax)
 				handles.H.audio.Signal.Fmin = val;
+				guidata(hObject, handles);
 			else
 				update_ui_str(handles.textMsg, 'invalid audio noise Fmin');
 				update_ui_str(hObject, handles.H.audio.Signal.Fmin);
 			end
 		case 'Tone'
-			if between(val, 0, handles.H.TDT.outdev.Fs / 2)
+			if between(val, 3500, handles.H.TDT.outdev.Fs / 2)
 				handles.H.audio.Signal.Frequency = val;
+				guidata(hObject, handles);
 			else
 				update_ui_str(handles.textMsg, 'invalid audio tone Frequencu');
 				update_ui_str(hObject, handles.H.audio.Signal.Frequency);
@@ -177,13 +187,13 @@ function editAudioFmax_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	if between(val, handles.H.audio.Signal.Fmin, handles.H.TDT.outdev.Fs / 2)
 		handles.H.audio.Signal.Fmax = val;
+		guidata(hObject, handles);
 	else
 		update_ui_str(handles.textMsg, 'invalid audio noise Fmax');
 		update_ui_str(hObject, handles.H.audio.Signal.Fmax);
 	end
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
-
 
 
 %-------------------------------------------------------------------------
@@ -201,36 +211,53 @@ function checkOptoOnOff_Callback(hObject, eventdata, handles)
 	end
 	handles.H.opto.Enable = val;
 	guidata(hObject, handles);
+	if handles.H.TDT.Enable
+		RPsettag(handles.H.TDT.indev, 'OptoEnable', handles.H.opto.Enable);
+	end
 %-------------------------------------------------------------------------
 function editOptoDelay_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	if between(val, 0, handles.H.TDT.SweepPeriod)
 		handles.H.opto.Delay = val;
+		guidata(hObject, handles);
 	else
 		update_ui_str(handles.textMsg, 'invalid opto Delay');
 		update_ui_str(hObject, handles.H.opto.Delay);
 	end
-	guidata(hObject, handles);
+	if handles.H.TDT.Enable
+		% set the optical delay (convert to samples)
+		RPsettag(handles.H.TDT.indev, 'OptoDelay', ...
+						ms2bin(handles.H.opto.Delay, handles.H.TDT.indev.Fs));
+	end
 %-------------------------------------------------------------------------
 function editOptoDur_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	if between(val, 0, handles.H.TDT.SweepPeriod)
 		handles.H.opto.Dur = val;
+		guidata(hObject, handles);
 	else
 		update_ui_str(handles.textMsg, 'invalid opto Dur');
 		update_ui_str(hObject, handles.H.opto.Dur);
 	end
-	guidata(hObject, handles);
+	if handles.H.TDT.Enable
+		% set the optical duration (convert to samples)
+		RPsettag(handles.H.TDT.indev, 'OptoDur', ...
+						ms2bin(handles.H.opto.Dur, handles.H.TDT.indev.Fs));
+	end
 %-------------------------------------------------------------------------
 function editOptoAmp_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	if between(val, 0, 2000)
 		handles.H.opto.Amp = val;
+		guidata(hObject, handles);
 	else
 		update_ui_str(handles.textMsg, 'invalid opto Amp');
 		update_ui_str(hObject, handles.H.opto.Amp);
 	end
-	guidata(hObject, handles);
+	if handles.H.TDT.Enable
+		% set the optical amplitude (convert to volts)
+		RPsettag(handles.H.TDT.indev, 'OptoAmp', 0.001*handles.H.opto.Amp);
+	end
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 function editISI_Callback(hObject, eventdata, handles)
@@ -270,6 +297,7 @@ function buttonTDTEnable_Callback(hObject, eventdata, handles)
 		handles.H.TDT.PA5R = outhandles.PA5R;
 		handles.H.TDT.Enable = 0;
 		update_ui_str(hObject, 'TDT Enable');
+		update_ui_str(handles.textMsg, 'TDT Hardware OFF');
 		
 	elseif ( (handles.H.TDT.Enable == 0) && (val == 1) )
 		% start TDT hardware
@@ -305,12 +333,13 @@ function buttonTDTEnable_Callback(hObject, eventdata, handles)
 		handles.H.TDT.outdev.Fs = Fs(2);
 		handles.H.TDT.Enable = 1;
 		update_ui_str(hObject, 'TDT Disable');
+		update_ui_str(handles.textMsg, 'TDT Hardware ON');
 		guidata(hObject, handles)
 	end
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 function editAcqDuration_Callback(hObject, eventdata, handles)
-	val = read_ui_val(hObject);
+	val = read_ui_str(hObject, 'n');
 	update_ui_str(handles.textMsg, ...
 						sprintf('setting AcqDuration to %d ms', val));
 	% if TDT HW is enabled, set the tag in the circuit
@@ -320,10 +349,10 @@ function editAcqDuration_Callback(hObject, eventdata, handles)
 											ms2bin(val, handles.H.TDT.indev.Fs));
 		% Set the total sweep period time (AcqDur + 10 ms) on input device
 		RPsettag(handles.H.TDT.indev, 'SwPeriod', ...
-											ms2bin(val+10, handles.H.TDT.indev.Fs));
+											ms2bin(val+5, handles.H.TDT.indev.Fs));
 		% Set the total sweep period time (AcqDur + 10 ms) on output device
 		RPsettag(handles.H.TDT.outdev, 'SwPeriod', ...
-											ms2bin(val+10, handles.H.TDT.outdev.Fs));
+											ms2bin(val+5, handles.H.TDT.outdev.Fs));
 	end
 	% store value
 	handles.H.TDT.AcqDuration = val;
@@ -390,136 +419,13 @@ function editMonGain_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 function buttonSearch_Callback(hObject, eventdata, handles)
-	% Determine run state from value of button - need to do this in order to
-	% be able to stop/start
-	state = read_ui_val(hObject);
-	
-	% if user wants to start run, check if tdt hardware is initialized
-	if state && ~handles.H.TDT.Enable
-		% user started run, but HW not init'ed so abort
-		update_ui_val(hObject, 0);
-		update_ui_str(handles.textMsg, 'TDT HW not enabled!!!!');
-		guidata(hObject, handles);
-		return
-	
-	% if state of button is 0 and TDT hardware is started, stop run
-	elseif ~state && handles.H.TDT.Enable
-		% Terminate the Run
-		update_ui_str(handles.textMsg, 'Search ending...');
-		RPtrig(handles.H.TDT.indev, 2);
-		guidata(hObject, handles);
-		return
-	
-	else
-		% Start I/O
-		update_ui_str(handles.textMsg, 'Starting search...');
-		
-		% update settings
-		opto_TDTsettings(	handles.H.TDT.indev, ...
-								handles.H.TDT.outdev, ...
-								handles.H.TDT, ...
-								handles.H.audio, ...
-								handles.H.TDT.channels, ...
-								handles.H.opto);
-
-		% turn on audio monitor for spikes using software trigger 1
-		RPtrig(handles.H.TDT.indev, 1);
-
-		% calculate # of points to acquire (in units of samples)
-		inpts = ms2bin(handles.H.TDT.AcqDuration, handles.H.TDT.indev.Fs);
-		
-		RPsettag(handles.H.TDT.indev, 'AcqDur', ...
-					ms2bin(handles.H.TDT.AcqDuration, handles.H.TDT.indev.Fs));
-		RPsettag(handles.H.TDT.indev, 'SwPeriod', ...
-				ms2bin(handles.H.TDT.AcqDuration+1, handles.H.TDT.indev.Fs));
-	
-		% generate figure
-		if isempty(handles.H.fH) || ~ishandle(handles.H.fH)
-			handles.H.fH = figure;
-			handles.H.ax = axes;
-			guidata(hObject, handles);
-		end
-		% store local copy of handle for simplicity in calls
-		fH = handles.H.fH;
-		figure(fH);
-		ax = handles.H.ax;
-		xv = linspace(0, handles.H.TDT.AcqDuration, inpts);
-		xlim([0, inpts]);
-		yabsmax = 5;
-
-		tmpData = zeros(inpts, handles.H.TDT.channels.nInputChannels);
-		for n = 1:handles.H.TDT.channels.nInputChannels
-			tmpData(:, n) = n*(yabsmax) + 2*(2*rand(inpts, 1)-1);
-		end
-		pH = plot(ax, xv, tmpData);
-
-		yticks_yvals = yabsmax*(1:handles.H.TDT.channels.nInputChannels);
-		yticks_txt = cell(handles.H.TDT.channels.nInputChannels, 1);
-		for n = 1:handles.H.TDT.channels.nInputChannels
-			yticks_txt{n} = num2str(n);
-		end
-
-		ylim(yabsmax*[0 handles.H.TDT.channels.nInputChannels+1]);
-		set(ax, 'YTick', yticks_yvals);
-		set(ax, 'YTickLabel', yticks_txt);
-		set(ax, 'TickDir', 'out');
-		set(ax, 'Box', 'off');
-
-		%------------------------------------------------------------
-		% main loop
-		%------------------------------------------------------------
-		audio = handles.H.audio;
-		indev = handles.H.TDT.indev;
-		outdev = handles.H.TDT.outdev;
-		zBUS = handles.H.TDT.zBUS;
-		% make sure mute is off
-		RPsettag(outdev, 'Mute', 0);		
-
-		rep = 0;
-		pause(0.001*audio.ISI);
-		
-		freq = 8000;
-		
-		while get(hObject, 'Value')
-			rep = rep + 1;
-			% generate [2XN] stimulus array. row 1 == output A on RZ6, row 2 = output B
-			stim = synmonosine(	handles.H.audio.Duration, ...
-										outdev.Fs, ...
-										handles.H.tone.Frequency, ...
-										handles.H.tone.PeakAmplitude, 0);
-			stim = sin2array(stim, audio.Ramp, outdev.Fs);
-			nullstim = syn_null(handles.H.audio.Duration, outdev.Fs, 0);
-			S = [stim; nullstim];
-		
-
-			% Set attenuation levels
-			RPsettag(outdev, 'AttenL', handles.H.audio.AttenL);
-			RPsettag(outdev, 'AttenR', handles.H.audio.AttenR);
-
-			[mcresp, ~] = opto_io(S, inpts, indev, outdev, zBUS);
-			% plot returned values
-			[resp, ~] = mcFastDeMux(mcresp, handles.H.TDT.channels.nInputChannels);
-
-			for c = 1:handles.H.TDT.channels.nInputChannels
-				set(pH(c), 'YData', resp(:, c)' + c*yabsmax);
-			end
-			title(ax, sprintf('Freq: %.2f, Rep: %d', freq, rep));
-			
-			drawnow
-
-			pause(0.001*handles.H.audio.ISI)
-			
-		end	% END while get(hObject, 'Value')
-		
-	end	% END if
-
-	
+	opto_RunSearch
 %-------------------------------------------------------------------------
 
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% Test Script
+% Test Script (for curves)
 %-------------------------------------------------------------------------
 function buttonRunTestScript_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
@@ -540,9 +446,6 @@ function buttonLoadTestScript_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 
-
-	
-	
 
 %-------------------------------------------------------------------------
 % --- Executes during object creation, after setting all properties.
