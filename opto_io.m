@@ -46,7 +46,7 @@ RPtrig(indev, 3);
 RPtrig(outdev, 3);
 
 %------------------------------------------------------------------------
-% Set output pts, input pts
+% Set output pts, input pts per stimulus length and inpts argument
 %------------------------------------------------------------------------
 % # of output points
 outpts = length(stim);
@@ -54,7 +54,7 @@ outpts = length(stim);
 RPsettag(outdev, 'StimDur', outpts);
 % set # of input pts
 RPsettag(indev, 'AcqDur', inpts);
-stimdur = RPgettag(outdev, 'StimDur')
+
 %------------------------------------------------------------------------
 % Play sound, record data
 %------------------------------------------------------------------------
@@ -63,7 +63,7 @@ RPwriteV(outdev, 'data_outL', stim(1, :));
 RPwriteV(outdev, 'data_outR', stim(2, :));
 % send START command (zBUS A)
 zBUStrigA_PULSE(zBUS, 0, 4);
-% main Loop
+% main Loop - loop until circuit sets SwpEnd tag to 1
 sweep_end = RPfastgettag(indev, 'SwpEnd');
 while(sweep_end==0)
     sweep_end = RPfastgettag(indev, 'SwpEnd');
@@ -72,16 +72,12 @@ RPfastgettag(indev, 'SwpN');
 % send STOP command (zBUS B)
 zBUStrigB_PULSE(zBUS, 0, 4);
 
-index_outL = RPgettag(outdev, 'index_outL')
-
 %------------------------------------------------------------------------
-% Read data from the buffers
+% Read data from the buffer
 %------------------------------------------------------------------------
-% Get the data from the buffer
 % get the current location in the buffer
 mcIndex = RPgettag(indev, 'mcIndex');
-
 %reads from the buffer
-resp = RPreadV(indev, 'mcData', mcIndex);
-resp = resp';
+resp = RPreadV(indev, 'mcData', mcIndex)';
+% resp = resp';
 

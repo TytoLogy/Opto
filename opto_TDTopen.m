@@ -216,9 +216,5 @@ function [ zbus, idev, odev, pa5 ] = setiodev(config)
 			idev.samplefreqFunc = @RPsamplefreq;
 			odev.samplefreqFunc = @RPsamplefreq;
 			pa5 = [];			
-			
-			
-			
-			
-			
+
 	end

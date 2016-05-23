@@ -1,7 +1,7 @@
-function Fs = TDT_opto_settings(indev, outdev, ...
+function Fs = opto_TDTsettings(indev, outdev, ...
 												tdt, stimulus, channels, optical)
 %------------------------------------------------------------------------
-% Fs = TDT_opto_settings(indev, outdev, tdt, stimulus, channels, optical)
+% Fs = opto_TDTsettings(indev, outdev, tdt, stimulus, channels, optical)
 %------------------------------------------------------------------------
 % Opto program
 %------------------------------------------------------------------------
