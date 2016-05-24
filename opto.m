@@ -22,7 +22,7 @@ function varargout = opto(varargin)
 
 % Edit the above text to modify the response to help opto
 
-% Last Modified by GUIDE v2.5 24-May-2016 13:04:44
+% Last Modified by GUIDE v2.5 24-May-2016 13:51:50
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -456,10 +456,39 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 									' not found!']);
 		return
 	else
-		eval(handles.H.TestScript);
+		% load test information from script
+		run(handles.H.TestScript);
 	end
-	keyboard
-	% get data filename
+	
+	% update date and time in animal struct
+	handles.H.animal.Date = TytoLogy_datetime('date_compact');
+	handles.H.animal.Time = TytoLogy_datetime('time');
+	guidata(hObject, handles);
+	
+	% create filename from animal info
+	%	animal # _ date _ unit _ Penetration # _ Depth _ type .dat
+	defaultfile = sprintf('%s_%s_%s_%s_%s_%s.dat', ...
+									handles.H.animal.Animal, ...
+									handles.H.animal.Date, ...
+									handles.H.animal.Unit, ...
+									handles.H.animal.Pen, ...
+									handles.H.animal.Depth, ...
+									test.Type);
+
+	[fname, pname] = uiputfile('*.dat', 'Save Data', defaultfile);
+
+	if fname == 0
+		optomsg(handles, 'Run Test Script Cancelled');
+		return
+	else
+		datafile = fullfile(pname, fname);
+		optomsg(handles, ['Writing data to file: ' datafile]);
+	end
+	
+	[stimcache, stimseq] = opto_buildStimCache(test, handles.H.TDT, ...
+																handles.H.caldata);
+	
+
 	
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -483,6 +512,110 @@ function buttonLoadTestScript_Callback(hObject, eventdata, handles)
 
 
 %-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% ANIMAL settings (stored in handles.H.animal struct)
+%-------------------------------------------------------------------------
+function editAnimal_Callback(hObject, eventdata, handles)
+	% set animal #
+	str = read_ui_str(hObject);
+	if (length(str) > 4) || isempty(str)
+		optomsg(handles, 'Animal Number must be 4 characters or fewer');
+		update_ui_str(hObject, handles.H.animal.Animal)
+	else
+		optomsg(handles, ['Animal #: ' str]);
+		handles.H.animal.Animal = str;
+		guidata(hObject, handles);
+	end
+%-------------------------------------------------------------------------
+function editUnit_Callback(hObject, eventdata, handles)
+	% set Unit #
+	str = read_ui_str(hObject);
+	if (length(str) > 3) || isempty(str)
+		optomsg(handles, 'Unit Number must be 3 characters or fewer');
+		update_ui_str(hObject, handles.H.animal.Unit)
+	else
+		optomsg(handles, ['Unit #: ' str]);
+		handles.H.animal.Unit = str;
+		guidata(hObject, handles);
+	end
+%-------------------------------------------------------------------------
+function editRec_Callback(hObject, eventdata, handles)
+	% set Rec # (Recording Session #)
+	str = read_ui_str(hObject);
+	if (length(str) > 2) || isempty(str)
+		optomsg(handles, 'Recording Session must be 2 characters or fewer');
+		update_ui_str(hObject, handles.H.animal.Rec)
+	else
+		optomsg(handles, ['Rec #: ' str]);
+		handles.H.animal.Rec = str;
+		guidata(hObject, handles);
+	end
+%-------------------------------------------------------------------------
+function editPen_Callback(hObject, eventdata, handles)
+	% set Pen # (Penetration #)
+	str = read_ui_str(hObject);
+	if (length(str) > 2) || isempty(str)
+		optomsg(handles, 'Penetration # must be 2 characters or fewer');
+		update_ui_str(hObject, handles.H.animal.Pen)
+	else
+		optomsg(handles, ['Pen #: ' str]);
+		handles.H.animal.Pen = str;
+		guidata(hObject, handles);
+	end
+%-------------------------------------------------------------------------
+function editAP_Callback(hObject, eventdata, handles)
+	% set AP location (Anterior/Posterior recording location, mm)
+	str = read_ui_str(hObject);
+	if isempty(str)
+		optomsg(handles, 'AP location cannot be empty!');
+		update_ui_str(hObject, handles.H.animal.AP)
+	else
+		optomsg(handles, ['AP location: ' str ' mm']);
+		handles.H.animal.AP = str;
+		guidata(hObject, handles);
+	end
+%-------------------------------------------------------------------------
+function editML_Callback(hObject, eventdata, handles)
+	% set ML location (Medial/Lateral recording location, mm)
+	str = read_ui_str(hObject);
+	if isempty(str)
+		optomsg(handles, 'ML location cannot be empty!');
+		update_ui_str(hObject, handles.H.animal.ML)
+	else
+		optomsg(handles, ['ML location: ' str ' mm']);
+		handles.H.animal.ML = str;
+		guidata(hObject, handles);
+	end
+%-------------------------------------------------------------------------
+function editDepth_Callback(hObject, eventdata, handles)
+	% set Depth location (Recording depth, micrometers)
+	str = read_ui_str(hObject);
+	if isempty(str)
+		optomsg(handles, 'Recording depth cannot be empty!');
+		update_ui_str(hObject, handles.H.animal.Depth)
+	else
+		optomsg(handles, ['Depth: ' str ' um']);
+		handles.H.animal.Depth = str;
+		guidata(hObject, handles);
+	end
+%-------------------------------------------------------------------------
+function editComments_Callback(hObject, eventdata, handles)
+	% store comments
+	handles.H.animal.comments = read_ui_str(hObject);
+	guidata(hObject, handles);
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+
+
+%-------------------------------------------------------------------------
+% --- Executes on button press in buttonDebug.
+%-------------------------------------------------------------------------
+function buttonDebug_Callback(hObject, eventdata, handles)
+	keyboard
+%-------------------------------------------------------------------------
+
+
+%-------------------------------------------------------------------------
 % --- Executes during object creation, after setting all properties.
 %-------------------------------------------------------------------------
 function editAcqDuration_CreateFcn(hObject, eventdata, handles)
@@ -499,7 +632,6 @@ function textTestScript_CreateFcn(hObject, eventdata, handles)
 	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
 	end
-	
 %-------------------------------------------------------------------------
 function editISI_CreateFcn(hObject, eventdata, handles)
 	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -553,119 +685,41 @@ function popupMonitorChannel_CreateFcn(hObject, eventdata, handles)
 	    set(hObject,'BackgroundColor','white');
 	end
 %-------------------------------------------------------------------------
+function editAnimal_CreateFcn(hObject, eventdata, handles)
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
+		set(hObject,'BackgroundColor','white');
+	end
+function editUnit_CreateFcn(hObject, eventdata, handles)
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
+		set(hObject,'BackgroundColor','white');
+	end
+function editRec_CreateFcn(hObject, eventdata, handles)
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
+		set(hObject,'BackgroundColor','white');
+	end
+function editPen_CreateFcn(hObject, eventdata, handles)
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
+		set(hObject,'BackgroundColor','white');
+	end
+function editAP_CreateFcn(hObject, eventdata, handles)
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
+		set(hObject,'BackgroundColor','white');
+	end
+function editML_CreateFcn(hObject, eventdata, handles)
+function editDepth_CreateFcn(hObject, eventdata, handles)
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
+		set(hObject,'BackgroundColor','white');
+	end
+function editComments_CreateFcn(hObject, eventdata, handles)
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
+		set(hObject,'BackgroundColor','white');
+	end
 %-------------------------------------------------------------------------
 
-
-
-function editAnimal_Callback(hObject, eventdata, handles)
-% hObject    handle to editAnimal (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of editAnimal as text
-%        str2double(get(hObject,'String')) returns contents of editAnimal as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function editAnimal_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to editAnimal (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function editUnit_Callback(hObject, eventdata, handles)
-% hObject    handle to editUnit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of editUnit as text
-%        str2double(get(hObject,'String')) returns contents of editUnit as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function editUnit_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to editUnit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function editRec_Callback(hObject, eventdata, handles)
-% hObject    handle to editRec (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of editRec as text
-%        str2double(get(hObject,'String')) returns contents of editRec as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function editRec_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to editRec (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function editPen_Callback(hObject, eventdata, handles)
-% hObject    handle to editPen (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of editPen as text
-%        str2double(get(hObject,'String')) returns contents of editPen as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function editPen_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to editPen (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function editAP_Callback(hObject, eventdata, handles)
-% hObject    handle to editAP (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of editAP as text
-%        str2double(get(hObject,'String')) returns contents of editAP as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function editAP_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to editAP (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
