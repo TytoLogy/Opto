@@ -22,7 +22,7 @@ function varargout = opto(varargin)
 
 % Edit the above text to modify the response to help opto
 
-% Last Modified by GUIDE v2.5 18-May-2016 17:23:08
+% Last Modified by GUIDE v2.5 24-May-2016 13:04:44
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -53,13 +53,22 @@ function opto_OpeningFcn(hObject, eventdata, handles, varargin)
 	% handles    structure with handles and user data (see GUIDATA)
 	% varargin   command line arguments to opto (see VARARGIN)
 
+	%----------------------------------------------------------------
 	% Choose default command line output for opto
+	%----------------------------------------------------------------
 	handles.output = hObject;
-	
+	%----------------------------------------------------------------
+	% initialize H struct (contains all internal application data)
+	%----------------------------------------------------------------
 	handles.H = opto_InitH;
+	%----------------------------------------------------------------
+	% update UI
+	%----------------------------------------------------------------
 	set(handles.popupAudioSignal, 'String', {'Noise'; 'Tone'; 'OFF'});
 	update_ui_val(handles.popupAudioSignal, 1);
-	
+	%----------------------------------------------------------------
+	% list of channels for monitor popup
+	%----------------------------------------------------------------
 	clist = cell(16, 1);
 	for c = 1:16
 		clist{c} = num2str(c);
@@ -95,31 +104,31 @@ function popupAudioSignal_Callback(hObject, eventdata, handles)
 	stimString = upper(stimTypes{read_ui_val(hObject)});
 	switch stimString
 		case 'NOISE'
-			update_ui_str(handles.textMsg, 'Noise stimulus selected');
+			optomsg(handles, 'Noise stimulus selected');
 			handles.H.audio.Signal = 'noise';
 			guidata(hObject, handles);
 			% enable, make visible Fmax stuff, update Fmax val
 		case 'TONE'
-			update_ui_str(handles.textMsg, 'Tone stimulus selected');
+			optomsg(handles, 'Tone stimulus selected');
 			handles.H.audio.Signal = 'tone';
 			guidata(hObject, handles);
 			% disable Fmax ctrls, change Fmin name to Freq, update val
 		case 'OFF'
-			update_ui_str(handles.textMsg, 'Audio stimulus OFF');
+			optomsg(handles, 'Audio stimulus OFF');
 			handles.H.audio.Signal = 'off';
 			guidata(hObject, handles);
 	end
-	update_ui_str(handles.textMsg, ['Stimulus type set to ' stimString]);
+	optomsg(handles, ['Stimulus type set to ' stimString]);
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------	
 function editAudioDelay_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	if between(val, 0.6, handles.H.TDT.SweepPeriod)
 		handles.H.audio.Delay = val;
-		update_ui_str(handles.textMsg, 'Audio delay set');
+		optomsg(handles, 'Audio delay set');
 		guidata(hObject, handles);
 	else
-		update_ui_str(handles.textMsg, 'invalid audio Delay');
+		optomsg(handles, 'invalid audio Delay');
 		update_ui_str(hObject, handles.H.audio.Delay);
 	end
 	if handles.H.TDT.Enable
@@ -132,7 +141,7 @@ function editAudioDur_Callback(hObject, eventdata, handles)
 		handles.H.audio.Duration = val;
 		guidata(hObject, handles);
 	else
-		update_ui_str(handles.textMsg, 'invalid audio Duration');
+		optomsg(handles, 'invalid audio Duration');
 		update_ui_str(hObject, handles.H.audio.Duration);
 	end
 	if handles.H.TDT.Enable
@@ -145,7 +154,7 @@ function editAudioLevel_Callback(hObject, eventdata, handles)
 		handles.H.audio.Level = val;
 		guidata(hObject, handles);
 	else
-		update_ui_str(handles.textMsg, 'invalid audio Level');
+		optomsg(handles, 'invalid audio Level');
 		update_ui_str(hObject, handles.H.audio.Level);
 	end
 	guidata(hObject, handles);
@@ -156,7 +165,7 @@ function editAudioRamp_Callback(hObject, eventdata, handles)
 		handles.H.audio.Ramp = val;
 		guidata(hObject, handles);
 	else
-		update_ui_str(handles.textMsg, 'invalid audio Ramp');
+		optomsg(handles, 'invalid audio Ramp');
 		update_ui_str(hObject, handles.H.audio.Ramp);
 	end
 	guidata(hObject, handles);
@@ -169,7 +178,7 @@ function editAudioFmin_Callback(hObject, eventdata, handles)
 				handles.H.audio.Signal.Fmin = val;
 				guidata(hObject, handles);
 			else
-				update_ui_str(handles.textMsg, 'invalid audio noise Fmin');
+				optomsg(handles, 'invalid audio noise Fmin');
 				update_ui_str(hObject, handles.H.audio.Signal.Fmin);
 			end
 		case 'Tone'
@@ -177,7 +186,7 @@ function editAudioFmin_Callback(hObject, eventdata, handles)
 				handles.H.audio.Signal.Frequency = val;
 				guidata(hObject, handles);
 			else
-				update_ui_str(handles.textMsg, 'invalid audio tone Frequencu');
+				optomsg(handles, 'invalid audio tone Frequency');
 				update_ui_str(hObject, handles.H.audio.Signal.Frequency);
 			end
 	end
@@ -185,16 +194,21 @@ function editAudioFmin_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function editAudioFmax_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
-	if between(val, handles.H.audio.Signal.Fmin, handles.H.TDT.outdev.Fs / 2)
+	if between(val, handles.H.audio.Signal.Fmin, ...
+							handles.H.TDT.outdev.Fs / 2)
 		handles.H.audio.Signal.Fmax = val;
 		guidata(hObject, handles);
 	else
-		update_ui_str(handles.textMsg, 'invalid audio noise Fmax');
+		optomsg(handles, 'invalid audio noise Fmax');
 		update_ui_str(hObject, handles.H.audio.Signal.Fmax);
 	end
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 
+%-------------------------------------------------------------------------
+function optomsg(handles, msgStr)
+	update_ui_str(handles.textMsg, msgStr);
+%-------------------------------------------------------------------------
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -221,7 +235,7 @@ function editOptoDelay_Callback(hObject, eventdata, handles)
 		handles.H.opto.Delay = val;
 		guidata(hObject, handles);
 	else
-		update_ui_str(handles.textMsg, 'invalid opto Delay');
+		optomsg(handles, 'invalid opto Delay');
 		update_ui_str(hObject, handles.H.opto.Delay);
 	end
 	if handles.H.TDT.Enable
@@ -236,7 +250,7 @@ function editOptoDur_Callback(hObject, eventdata, handles)
 		handles.H.opto.Dur = val;
 		guidata(hObject, handles);
 	else
-		update_ui_str(handles.textMsg, 'invalid opto Dur');
+		optomsg(handles, 'invalid opto Dur');
 		update_ui_str(hObject, handles.H.opto.Dur);
 	end
 	if handles.H.TDT.Enable
@@ -251,7 +265,7 @@ function editOptoAmp_Callback(hObject, eventdata, handles)
 		handles.H.opto.Amp = val;
 		guidata(hObject, handles);
 	else
-		update_ui_str(handles.textMsg, 'invalid opto Amp');
+		optomsg(handles, 'invalid opto Amp');
 		update_ui_str(hObject, handles.H.opto.Amp);
 	end
 	if handles.H.TDT.Enable
@@ -263,7 +277,7 @@ function editOptoAmp_Callback(hObject, eventdata, handles)
 function editISI_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	if val < 0
-		update_ui_str(handles.textMsg, 'ISI must be positive');
+		optomsg(handles, 'ISI must be positive');
 		update_ui_str(hObject, handles.H.audio.ISI);
 	else
 		handles.H.audio.ISI = val;
@@ -297,7 +311,7 @@ function buttonTDTEnable_Callback(hObject, eventdata, handles)
 		handles.H.TDT.PA5R = outhandles.PA5R;
 		handles.H.TDT.Enable = 0;
 		update_ui_str(hObject, 'TDT Enable');
-		update_ui_str(handles.textMsg, 'TDT Hardware OFF');
+		optomsg(handles, 'TDT Hardware OFF');
 		
 	elseif ( (handles.H.TDT.Enable == 0) && (val == 1) )
 		% start TDT hardware
@@ -333,15 +347,14 @@ function buttonTDTEnable_Callback(hObject, eventdata, handles)
 		handles.H.TDT.outdev.Fs = Fs(2);
 		handles.H.TDT.Enable = 1;
 		update_ui_str(hObject, 'TDT Disable');
-		update_ui_str(handles.textMsg, 'TDT Hardware ON');
+		optomsg(handles, 'TDT Hardware ON');
 		guidata(hObject, handles)
 	end
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 function editAcqDuration_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
-	update_ui_str(handles.textMsg, ...
-						sprintf('setting AcqDuration to %d ms', val));
+	optomsg(handles, sprintf('setting AcqDuration to %d ms', val));
 	% if TDT HW is enabled, set the tag in the circuit
 	if handles.H.TDT.Enable
 		% Set the length of time to acquire data
@@ -366,9 +379,9 @@ function editAcqDuration_Callback(hObject, eventdata, handles)
 function checkMonitorOnOff_Callback(hObject, eventdata, handles)
 	val = read_ui_val(hObject);
 	if val
-		update_ui_str(handles.textMsg, 'turning monitor ON');
+		optomsg(handles, 'turning monitor ON');
 	else
-		update_ui_str(handles.textMsg, 'turning monitor OFF');
+		optomsg(handles, 'turning monitor OFF');
 	end
 	% if TDT HW is enabled, send trigger to turn monitor on or off
 	if handles.H.TDT.Enable
@@ -377,7 +390,8 @@ function checkMonitorOnOff_Callback(hObject, eventdata, handles)
 			RPtrig(handles.H.TDT.indev, 1);
 			% update values just to be sure
 			RPsettag(handles.H.TDT.indev, 'MonChan', handles.H.TDT.MonChan);
-			RPsettag(handles.H.TDT.indev, 'MonGain', handles.H.TDT.MonitorGain);
+			RPsettag(handles.H.TDT.indev, ...
+											'MonGain', handles.H.TDT.MonitorGain);
 		else
 			% turn off audio monitor for spikes using software trigger 2
 			RPtrig(handles.H.TDT.indev, 2);
@@ -389,8 +403,7 @@ function checkMonitorOnOff_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function popupMonitorChannel_Callback(hObject, eventdata, handles)
 	val = read_ui_val(hObject);
-	update_ui_str(handles.textMsg, ...
-						sprintf('setting monitor channel to %d', val));
+	optomsg(handles, sprintf('setting monitor channel to %d', val));
 	% if TDT HW is enabled, set the tag in the circuit
 	if handles.H.TDT.Enable
 		RPsettag(handles.H.TDT.indev, 'MonChan', val);
@@ -401,8 +414,7 @@ function popupMonitorChannel_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function editMonGain_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
-	update_ui_str(handles.textMsg, ...
-						sprintf('setting monitor gain to %d', val));
+	optomsg(handles, sprintf('setting monitor gain to %d', val));
 	% if TDT HW is enabled, set the tag in the circuit
 	if handles.H.TDT.Enable
 		RPsettag(handles.H.TDT.indev, 'MonGain', val);
@@ -419,6 +431,7 @@ function editMonGain_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 function buttonSearch_Callback(hObject, eventdata, handles)
+	% execute RunSearch script
 	opto_RunSearch
 %-------------------------------------------------------------------------
 
@@ -428,6 +441,26 @@ function buttonSearch_Callback(hObject, eventdata, handles)
 % Test Script (for curves)
 %-------------------------------------------------------------------------
 function buttonRunTestScript_Callback(hObject, eventdata, handles)
+	% make sure TDT is enabled
+	if ~handles.H.TDT.Enable
+		optomsg(handles, 'Please enable TDT hardware!');
+		return
+	end
+	
+	% perform some checks, load script information
+	if isempty(handles.H.TestScript)
+		optomsg(handles, 'Please load a Test Script')
+		return
+	elseif ~exist(handles.H.TestScript, 'file')
+		optomsg(handles, ['Test Script file ' handles.H.TestScript ...
+									' not found!']);
+		return
+	else
+		eval(handles.H.TestScript);
+	end
+	keyboard
+	% get data filename
+	
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 function buttonEditTestScript_Callback(hObject, eventdata, handles)
@@ -435,14 +468,16 @@ function buttonEditTestScript_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 function buttonLoadTestScript_Callback(hObject, eventdata, handles)
-	[filename, pathname, findex] = uigetfile('*.m', 'Select Test Script File');
+	[filename, pathname, findex] = uigetfile('*.m', ...
+															'Select Test Script File');
 	if findex
-		update_ui_str(handles.textMsg, 'loading test script');
 		handles.H.TestScript = fullfile(pathname, filename);
+		update_ui_str(handles.textTestScript, handles.H.TestScript);
+		optomsg(handles, ['test script:' handles.H.TestScript]);
+		guidata(hObject, handles);
 	else
-		update_ui_str(handles.textMsg, 'cancelled test script load');
+		optomsg(handles, 'cancelled test script load');
 	end
-	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 
@@ -519,3 +554,118 @@ function popupMonitorChannel_CreateFcn(hObject, eventdata, handles)
 	end
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+
+
+
+function editAnimal_Callback(hObject, eventdata, handles)
+% hObject    handle to editAnimal (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editAnimal as text
+%        str2double(get(hObject,'String')) returns contents of editAnimal as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editAnimal_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editAnimal (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function editUnit_Callback(hObject, eventdata, handles)
+% hObject    handle to editUnit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editUnit as text
+%        str2double(get(hObject,'String')) returns contents of editUnit as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editUnit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editUnit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function editRec_Callback(hObject, eventdata, handles)
+% hObject    handle to editRec (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editRec as text
+%        str2double(get(hObject,'String')) returns contents of editRec as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editRec_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editRec (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function editPen_Callback(hObject, eventdata, handles)
+% hObject    handle to editPen (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editPen as text
+%        str2double(get(hObject,'String')) returns contents of editPen as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editPen_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editPen (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function editAP_Callback(hObject, eventdata, handles)
+% hObject    handle to editAP (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editAP as text
+%        str2double(get(hObject,'String')) returns contents of editAP as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editAP_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editAP (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
