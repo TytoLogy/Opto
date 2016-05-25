@@ -87,16 +87,14 @@ c.Sn = cell(c.nstims, 1);
 c.splval = cell(c.nstims, 1);
 c.rmsval = cell(c.nstims, 1);
 c.atten = cell(c.nstims, 1);
-
-c.ITD = zeros(c.nstims, 1);
-c.ILD = zeros(c.nstims, 1);
-c.BC = zeros(c.nstims, 1);
 c.FREQ = cell(c.nstims, 1);
 c.LEVEL= zeros(c.nstims, 1);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Settings for Type of stimulus
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% *** seeems like this section is superfluous....
 switch c.curvetype
 	
 	% LEVEL curves can use either noise or tones
@@ -288,7 +286,8 @@ switch c.curvetype
 	% Unsupported
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	otherwise
-		warning([mfilename ': that type of curve is not fully implemented... sorry.']);
+		warning('%s: Sorry, that type of curve is not fully implemented.', ...
+						mfilename);
 		c = [];
 		return
 end

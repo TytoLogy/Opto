@@ -47,6 +47,7 @@ test.Randomize = 0;
 %-------------------------------------------------------------------------
 test.TDT.AcqDuration = 1000;
 test.TDT.AcqDuration.SweepPeriod = 1001;
-	
+
+ 
 
 

@@ -22,7 +22,7 @@ function varargout = opto(varargin)
 
 % Edit the above text to modify the response to help opto
 
-% Last Modified by GUIDE v2.5 24-May-2016 13:51:50
+% Last Modified by GUIDE v2.5 25-May-2016 15:58:48
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -203,11 +203,6 @@ function editAudioFmax_Callback(hObject, eventdata, handles)
 		update_ui_str(hObject, handles.H.audio.Signal.Fmax);
 	end
 	guidata(hObject, handles);
-%-------------------------------------------------------------------------
-
-%-------------------------------------------------------------------------
-function optomsg(handles, msgStr)
-	update_ui_str(handles.textMsg, msgStr);
 %-------------------------------------------------------------------------
 
 %-------------------------------------------------------------------------
@@ -487,8 +482,10 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	
 	[stimcache, stimseq] = opto_buildStimCache(test, handles.H.TDT, ...
 																handles.H.caldata);
-	
-
+	handles.H.stimcache = stimcache;
+	handles.H.stimseq = stimseq;
+	guidata(hObject, handles);
+	save stims.mat stimcache stimseq
 	
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -606,6 +603,52 @@ function editComments_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+function buttonLoadCal_Callback(hObject, eventdata, handles)
+	% open a dialog box to get calibration data file name and path
+% 	[filenm, pathnm] = uigetfile({'*_cal.mat'; '*.mat'}, ...
+% 											'Load cal data...', ...
+% 											[handles.caldatapath filesep]);
+	[filenm, pathnm] = uigetfile({'*.mat'; '*.*'}, ...
+											'Load cal data...', ...
+											[pwd filesep]);
+	
+	% load the speaker calibration data if user doesn't hit cancel
+	if filenm
+		% try to load the calibration data
+		try
+			tmpcal = load_cal(fullfile(pathnm, filenm));
+		catch errMsg
+			% on error, tmpcal is empty
+			tmpcal = [];
+			optomsg(handles, errMsg);
+		end
+		
+		% if tmpcal is a structure, load of calibration file was
+		% hopefully successful, so save it in the handles info
+		if isstruct(tmpcal)
+			handles.H.caldata = tmpcal;
+			% update UI control limits based on calibration data
+			handles.H.Lim.F = [handles.H.caldata.Freqs(1) handles.H.caldata.Freqs(end)];
+			
+% 			% update slider parameters
+% 			slider_limits(handles.F, handles.Lim.F);
+% 			slider_update(handles.F, handles.Ftext);
+% 			% update calibration data path and filename settings
+% 			handles.caldatapath = pathnm;
+% 			handles.caldatafile = filenm;
+			
+			% update settings
+			guidata(hObject, handles);
+		else
+			errordlg(['Error loading calibration file ' filenm], ...
+						'LoadCal error'); 
+		end
+	end
+%--------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 
 %-------------------------------------------------------------------------
 % --- Executes on button press in buttonDebug.
@@ -722,4 +765,6 @@ function editComments_CreateFcn(hObject, eventdata, handles)
 		set(hObject,'BackgroundColor','white');
 	end
 %-------------------------------------------------------------------------
+
+
 
