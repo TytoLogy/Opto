@@ -46,6 +46,8 @@ c.curvetype = upper(test.Type);
 c.freezeStim = audio.Frozen;
 % # of reps (reps per stim)
 c.nreps = test.Reps;
+% save stimulus?
+c.saveStim = test.saveStim;
 
 % figure out number of different audio stimulus levels
 if ~isempty(strfind(test.Type, 'LEVEL'))
@@ -173,12 +175,12 @@ switch c.curvetype
 				% Synthesize noise or tone, frozed or unfrozed and 
 				% get rms values for setting attenuator
 				if ~test.freezeStim % stimulus is unfrozen
-					[Sn, rmsval] = synmonosine(audio.Duration, outdev.Fs, FREQ, c.radvary, caldata);
+					Sn = synmonosine(audio.Duration, outdev.Fs, FREQ, c.radvary, caldata);
 				else	% stimulus is frozen
 					% enforce rad_vary = 0, this fixes the starting phase at 0
-					[Sn, rmsval] = synmonosine(audio.Duration, outdev.Fs, FREQ, 0, caldata);
+					Sn = synmonosine(audio.Duration, outdev.Fs, FREQ, 0, caldata);
 				end
-
+				rmsval = rms(Sn);
 				% ramp the sound on and off (important!)
 				Sn = sin2array(Sn, audio.Ramp, outdev.Fs);
 
@@ -188,11 +190,11 @@ switch c.curvetype
 				% Store the parameters in the stimulus cache struct
 				c.stimvar{sindex} = FREQ;
 				c.Sn{sindex} = Sn;
-				c.splval{sindex} = spl_val;
-				c.rmsval{sindex} = rmsval;
+				c.splval{sindex} = splval;
+				c.rmsval{sindex} = rmscal;
 				c.atten{sindex} = atten;
 				c.FREQ{sindex} = FREQ;
-				c.LEVEL(sindex) = ABI;
+				c.LEVEL(sindex) = splval;
 				
 			end	%%% End of TRIAL LOOP
 		end %%% End of REPS LOOP
@@ -238,11 +240,11 @@ switch c.curvetype
 				if ~audio.Frozen % stimulus is unfrozen
 					switch c.stimtype
 						case 'noise'
-							[Sn, rmsval] = synmononoise_fft(audio.Duration, ...
+							Sn = synmononoise_fft(audio.Duration, ...
 															outdev.Fs, signal.Fmin, ...
 															signal.Fmax, 1, caldata);
 						case 'tone'
-							[Sn, rmsval] = synmonotone(audio.Duration, ...
+							Sn = synmonotone(audio.Duration, ...
 															outdev.Fs, ...
 															signal.Frequency, 1, ...
 															c.radvary, caldata);
@@ -250,21 +252,24 @@ switch c.curvetype
 				else	% stimulus is frozen
 					switch c.stimtype
 						case 'noise'
-							[Sn, rmsval] = synmononoise_fft(audio.Duration, ...
+							Sn = synmononoise_fft(audio.Duration, ...
 															outdev.Fs, signal.Fmin, ...
 															signal.Fmax, 1, caldata, ...
 															c.Smag0, c.Sphase0);
 						case 'tone'
 							% enforce rad_vary = 0
-							[Sn, rmsval] = synmonotone(audio.Duration, ...
+							Sn = synmonotone(audio.Duration, ...
 															outdev.Fs, ...
 															signal.Frequency, 1, ...
 															0, caldata);
 					end
 				end
+				
+				% ramp the sound on and off (important!) and scale
+				Sn = sin2array(caldata.DAlevel * Sn, audio.Ramp, outdev.Fs);
 
-				% ramp the sound on and off (important!)
-				Sn = sin2array(Sn, audio.Ramp, outdev.Fs);
+				% compute RMS value
+				rmsval = rms(Sn);
 
 				% get the attenuator settings for the desired SPL
 				atten = figure_mono_atten(LEVEL, rmsval, caldata);

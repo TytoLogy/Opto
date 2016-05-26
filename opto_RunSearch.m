@@ -14,6 +14,7 @@
 	elseif ~state && handles.H.TDT.Enable
 		% Terminate the Run
 		update_ui_str(handles.textMsg, 'Search ending...');
+		% turn off monitor using software trigger 2 sent to indev
 		RPtrig(handles.H.TDT.indev, 2);
 		guidata(hObject, handles);
 		return

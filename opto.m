@@ -487,6 +487,10 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	guidata(hObject, handles);
 	save stims.mat stimcache stimseq
 	
+	
+	% Play stimuli in cache, record neural data
+	testdata = opto_playCache(handles, datafile, stimcache, test, []);
+	
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 function buttonEditTestScript_Callback(hObject, eventdata, handles)
