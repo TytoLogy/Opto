@@ -84,54 +84,80 @@
 		outdev = handles.H.TDT.outdev;
 		zBUS = handles.H.TDT.zBUS;
 		TDT = handles.H.TDT;
-
+		H = handles.H;
+		
 		% make sure mute is off
 		RPsettag(outdev, 'Mute', 0);		
 
 		rep = 0;
-		pause(0.001*handles.H.audio.ISI);
+		pause(0.001*H.audio.ISI);
 		
 		while get(hObject, 'Value')
 			rep = rep + 1;
-			% generate [2XN] stimulus array. row 1 == output A on RZ6, row 2 = output B
-			handles.H.audio.Signal
-			switch upper(handles.H.audio.Signal)
+			% update the H stimulus info from GUI settings
+			% this is a kludge, but there's no easy way to do this from
+			% within a loop (other than using an "evalin" sort of thing to 
+			% evaluate the call within a different workspace, which is
+			% perhaps an even greater kludge...)
+			H = update_H_from_GUI(handles);
+			
+			% generate [2XN] stimulus array. 
+			% row 1 == output A on RZ6, row 2 = output B
+			switch upper(H.audio.Signal)
 				case 'TONE'
-					stim = synmonosine(	handles.H.audio.Duration, ...
+					stim = synmonosine(	H.audio.Duration, ...
 												outdev.Fs, ...
-												handles.H.tone.Frequency, ...
-												handles.H.tone.PeakAmplitude, ...
-												handles.H.caldata);
+												H.tone.Frequency, ...
+												H.caldata.DAscale, ...
+												H.caldata);
 					tstr = sprintf('Tone %d Hz, Rep %d', ...
-											handles.H.tone.Frequency, rep);
+											H.tone.Frequency, rep);
 				case 'NOISE'
-					stim = synmononoise_fft(	handles.H.audio.Duration, ...
+					stim = synmononoise_fft(	H.audio.Duration, ...
 														outdev.Fs, ...
-														handles.H.noise.Fmin, ...
-														handles.H.noise.Fmax, ...
-														handles.H.noise.PeakAmplitude, ...
-														handles.H.caldata);
+														H.noise.Fmin, ...
+														H.noise.Fmax, ...
+														H.caldata.DAscale, ...
+														H.caldata);
 					tstr = sprintf('Noise, Rep %d', rep);
 				case 'OFF'
-					stim = syn_null(handles.H.audio.Duration, outdev.Fs, 0);
+					stim = syn_null(H.audio.Duration, outdev.Fs, 0);
 					tstr = sprintf('Off, Rep = %d', rep);
 				otherwise
 					warning('unknown signal')
 			end
 			% ramp onset/offset
-			stim = sin2array(stim, handles.H.audio.Ramp, outdev.Fs);
+			stim = sin2array(stim, H.audio.Ramp, outdev.Fs);
 			% build stimulus array (2 channel)
-			S = [stim; syn_null(handles.H.audio.Duration, outdev.Fs, 0)];
+			S = [stim; syn_null(H.audio.Duration, outdev.Fs, 0)];
 
+			if strcmpi(H.audio.Signal, 'OFF')
+				AttenL = 120;
+			else
+				AttenL = figure_mono_atten(H.audio.Level, ...
+													rms(stim), H.caldata);
+				if AttenL <= 0
+					AttenL = 0;
+					optomsg(handles, 'Attenuation at minimum!');
+				elseif AttenL >= 120
+					AttenL = 120;
+					optomsg(handles, 'Attenuation at maximum!');
+				else
+					optomsg(handles, sprintf('Rep %d: %s, atten: %.1f dB', ...
+														rep, H.audio.Signal, AttenL));
+				end
+			end
+			% Right attenuator is set to 120 since it is unused
+			AttenR = 120;
 			% Set attenuation levels
-			RPsettag(outdev, 'AttenL', handles.H.audio.AttenL);
-			RPsettag(outdev, 'AttenR', handles.H.audio.AttenR);
-
+			RPsettag(outdev, 'AttenL', AttenL);
+			RPsettag(outdev, 'AttenR', AttenR);
+			
 			% play stim, record data
 			[mcresp, ~] = opto_io(S, inpts, indev, outdev, zBUS);
+			
 			% plot returned values
 			[resp, ~] = mcFastDeMux(mcresp, TDT.channels.nInputChannels);
-			
 			for c = 1:TDT.channels.nInputChannels
 				set(pH(c), 'YData', resp(:, c)' + c*yabsmax);
 			end
@@ -139,6 +165,6 @@
 			drawnow
 
 			% wait for ISI
-			pause(0.001*handles.H.audio.ISI)
+			pause(0.001*H.audio.ISI)
 		end	% END while get(hObject, 'Value')
 	end	% END if

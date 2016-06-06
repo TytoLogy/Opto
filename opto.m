@@ -108,14 +108,31 @@ function popupAudioSignal_Callback(hObject, eventdata, handles)
 			handles.H.audio.Signal = 'noise';
 			guidata(hObject, handles);
 			% enable, make visible Fmax stuff, update Fmax val
+			enable_ui(handles.textAudioFmin);
+			update_ui_str(handles.textAudioFmin, 'Fmin (Hz)');
+			enable_ui(handles.editAudioFmin);
+			enable_ui(handles.textAudioFmax);
+			enable_ui(handles.editAudioFmax);
+			guidata(hObject, handles);
 		case 'TONE'
 			optomsg(handles, 'Tone stimulus selected');
 			handles.H.audio.Signal = 'tone';
 			guidata(hObject, handles);
 			% disable Fmax ctrls, change Fmin name to Freq, update val
+			enable_ui(handles.textAudioFmin);
+			update_ui_str(handles.textAudioFmin, 'Freq. (Hz)');
+			enable_ui(handles.editAudioFmin);
+			disable_ui(handles.textAudioFmax);
+			disable_ui(handles.editAudioFmax);
+			guidata(hObject, handles);
 		case 'OFF'
 			optomsg(handles, 'Audio stimulus OFF');
 			handles.H.audio.Signal = 'off';
+			guidata(hObject, handles);
+			disable_ui(handles.textAudioFmin);
+			disable_ui(handles.editAudioFmin);
+			disable_ui(handles.textAudioFmax);
+			disable_ui(handles.editAudioFmax);
 			guidata(hObject, handles);
 	end
 	optomsg(handles, ['Stimulus type set to ' stimString]);
@@ -174,33 +191,33 @@ function editAudioFmin_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	switch handles.H.audio.Signal
 		case 'Noise'
-			if between(val, 3500, handles.H.audio.Signal.Fmax)
-				handles.H.audio.Signal.Fmin = val;
+			if between(val, 3500, handles.H.noise.Fmax)
+				handles.H.audio.noise.Fmin = val;
 				guidata(hObject, handles);
 			else
 				optomsg(handles, 'invalid audio noise Fmin');
-				update_ui_str(hObject, handles.H.audio.Signal.Fmin);
+				update_ui_str(hObject, handles.H.noise.Fmin);
 			end
 		case 'Tone'
 			if between(val, 3500, handles.H.TDT.outdev.Fs / 2)
-				handles.H.audio.Signal.Frequency = val;
+				handles.H.tone.Frequency = val;
 				guidata(hObject, handles);
 			else
 				optomsg(handles, 'invalid audio tone Frequency');
-				update_ui_str(hObject, handles.H.audio.Signal.Frequency);
+				update_ui_str(hObject, handles.H.tone.Frequency);
 			end
 	end
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 function editAudioFmax_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
-	if between(val, handles.H.audio.Signal.Fmin, ...
+	if between(val, handles.H.noise.Fmin, ...
 							handles.H.TDT.outdev.Fs / 2)
-		handles.H.audio.Signal.Fmax = val;
+		handles.H.noise.Fmax = val;
 		guidata(hObject, handles);
 	else
 		optomsg(handles, 'invalid audio noise Fmax');
-		update_ui_str(hObject, handles.H.audio.Signal.Fmax);
+		update_ui_str(hObject, handles.H.noise.Fmax);
 	end
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
@@ -490,6 +507,7 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	
 	% Play stimuli in cache, record neural data
 	testdata = opto_playCache(handles, datafile, stimcache, test, []);
+	save('testdata.mat', testdata, '-MAT');
 	
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -623,12 +641,13 @@ function buttonLoadCal_Callback(hObject, eventdata, handles)
 		% try to load the calibration data
 		try
 			tmpcal = load_cal(fullfile(pathnm, filenm));
+			optomsg(handles, ['Loaded cal from ' fullfile(pathnm, filenm)]);
 		catch errMsg
 			% on error, tmpcal is empty
-			tmpcal = [];
 			optomsg(handles, errMsg);
+			return
 		end
-		
+
 		% if tmpcal is a structure, load of calibration file was
 		% hopefully successful, so save it in the handles info
 		if isstruct(tmpcal)
@@ -643,6 +662,7 @@ function buttonLoadCal_Callback(hObject, eventdata, handles)
 % 			handles.caldatapath = pathnm;
 % 			handles.caldatafile = filenm;
 			
+			update_ui_str(handles.textCalibration, filenm);
 			% update settings
 			guidata(hObject, handles);
 		else
