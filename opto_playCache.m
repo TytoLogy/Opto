@@ -225,7 +225,6 @@ RPsettag(outdev, 'Mute', 0);
 %--------------------------------------------------------
 RPtrig(handles.H.TDT.indev, 1);
 
-
 %--------------------------------------------------------
 %--------------------------------------------------------
 % Main Data Loop
@@ -248,9 +247,23 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 	Sn = [stimcache.Sn{sindex}; zeros(size(stimcache.Sn{sindex}));];
 	% set the attenuators
 	setattenfunc(outdev, [atten(L) 120]);
+	% set opto stim
+	if stimcache.opto{sindex}.Enable
+		% turn on opto trigger
+		RPsettag(indev, 'OptoEnable', 1);
+		% set opto params
+		RPsettag(indev, 'OptoDelay', ...
+								ms2bin(stimcache.opto{sindex}.Delay, indev.Fs));
+		RPsettag(indev, 'OptoDur', ...
+								ms2bin(stimcache.opto{sindex}.Dur, indev.Fs));
+		RPsettag(indev, 'OptoAmp', 0.001*stimcache.opto{sindex}.Amp);
+	else
+		% ensure opto trigger is OFF
+		RPsettag(indev, 'OptoEnable', 0);
+	end
 
 	% play the sound and return the response
-	[datatrace, rate] = iofunc(Sn, acqpts, indev, outdev, zBUS);
+	[datatrace, ~] = iofunc(Sn, acqpts, indev, outdev, zBUS);
 
 	% Save Data
 % 	writeTrialData(datafile, datatrace, ...

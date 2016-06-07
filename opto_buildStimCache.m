@@ -91,15 +91,19 @@ c.rmsval = cell(c.nstims, 1);
 c.atten = cell(c.nstims, 1);
 c.FREQ = cell(c.nstims, 1);
 c.LEVEL= zeros(c.nstims, 1);
+c.opto = cell(c.nstims, 1);
+for n = 1:c.nstims
+	c.opto{n} = opto;
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Settings for Type of stimulus
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % *** seeems like this section is superfluous....
-switch c.curvetype
+switch c.curvetype		
 	
-	% LEVEL curves can use either noise or tones
+	% LEVEL curves can use either noise or tones or opto
 	case {'LEVEL'}
 		switch c.stimtype
 			case 'noise'
@@ -111,7 +115,7 @@ switch c.curvetype
 				FREQ = signal.Frequency;	% freq. for tone (Hz)'
 				% vary phase randomly from stim to stim 1 = yes, 0 = no
 				% (consistent phase each time)
-				c.radvary = signal.RadVary;	
+				c.radvary = signal.RadVary;
 			otherwise
 				warning([mfilename ': unsupported stimtype ' c.stimtype ' for curvetype ' c.curvetype])
 				c = [];
@@ -142,8 +146,11 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Randomize trial presentations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-stimseq = randomSequence(c.nreps, c.ntrials);
-c.trialRandomSequence = stimseq;
+c.trialRandomSequence = randomSequence(c.nreps, c.ntrials);
+% assign to output variable
+if nargout > 1
+	stimseq = c.trialRandomSequence;
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % run through the dependent variable
@@ -151,9 +158,43 @@ c.trialRandomSequence = stimseq;
 disp([mfilename ' is building stimuli for ' c.curvetype ' curve...'])
 switch c.curvetype
 	
+	
+	case 'OPTO'
+		% Stimulus parameter to vary (varName) and the range (stimvar)
+		c.vname = upper(c.curvetype);
+		c.vrange = opto.Dur;
+		
+		% null sound stimulus
+		Sn = syn_null(audio.Duration, outdev.Fs, 0);
+		% max atten setting
+		atten = 120;
+				
+		% init sindex counter
+		sindex = 0;
+		% now loop through the randomized trials
+		for rep = 1:c.nreps
+			for trial = 1:c.ntrials
+				% increment sindex counter (index into stim cache struct)
+				sindex = sindex + 1;
+				% Store the parameters in the stimulus cache struct
+				c.stimvar{sindex} = opto.Amp;
+				c.Sn{sindex} = Sn;
+				c.splval{sindex} = 0;
+				c.rmsval{sindex} = 0;
+				c.atten{sindex} = atten;
+				c.opto{sindex}.Enable = 1;
+				c.opto{sindex}.Delay = opto.Delay;
+				c.opto{sindex}.Dur = opto.Dur;
+				c.opto{sindex}.Amp = opto.Amp;
+			end	%%% End of TRIAL LOOP
+		end %%% End of REPS LOOP
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+	
+	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	% FREQ Curve
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	case 'FREQ'
 		% Stimulus parameter to vary (varName) and the range (stimvar)
 		c.vname = upper(c.curvetype);
@@ -161,32 +202,25 @@ switch c.curvetype
 		
 		% for FREQ curves, these parameters are fixed:
 		splval = audio.Level(1);
-
+		% init sindex counter
 		sindex = 0;
 		% now loop through the randomized trials
 		for rep = 1:c.nreps
 			for trial = 1:c.ntrials
+				% increment sindex counter (index into stim cache struct)
 				sindex = sindex + 1;
-
 				% Get the randomized stimulus variable value from c.stimvar 
 				% indices stored in c.trialRandomSequence
 				FREQ = c.vrange(c.trialRandomSequence(rep, trial));
-
 				% Synthesize noise or tone, frozed or unfrozed and 
 				% get rms values for setting attenuator
-				if ~test.freezeStim % stimulus is unfrozen
-					Sn = synmonosine(audio.Duration, outdev.Fs, FREQ, c.radvary, caldata);
-				else	% stimulus is frozen
-					% enforce rad_vary = 0, this fixes the starting phase at 0
-					Sn = synmonosine(audio.Duration, outdev.Fs, FREQ, 0, caldata);
-				end
+				Sn = synmonosine(audio.Duration, outdev.Fs,...
+											FREQ, caldata.DAscale, caldata);
 				rmsval = rms(Sn);
 				% ramp the sound on and off (important!)
 				Sn = sin2array(Sn, audio.Ramp, outdev.Fs);
-
 				% get the attenuator settings for the desired SPL
-				atten = figure_atten(splval, rmsval, caldata);
-
+				atten = figure_mono_atten(splval, rmsval, caldata);
 				% Store the parameters in the stimulus cache struct
 				c.stimvar{sindex} = FREQ;
 				c.Sn{sindex} = Sn;
@@ -195,14 +229,14 @@ switch c.curvetype
 				c.atten{sindex} = atten;
 				c.FREQ{sindex} = FREQ;
 				c.LEVEL(sindex) = splval;
-				
+				c.opto{sindex}.Enable = 0;
 			end	%%% End of TRIAL LOOP
 		end %%% End of REPS LOOP
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	% LEVEL Curve
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	case 'LEVEL'
 		% Stimulus parameter to vary (varName) and the range (stimvar)
 		c.vname = upper(c.curvetype);
@@ -215,16 +249,18 @@ switch c.curvetype
 					% get ITD = 0 Smag and Sphase
 					[c.S0, c.Smag0, c.Sphase0] = ...
 						synmononoise_fft(audio.Duration, outdev.Fs, ...
-												signal.Fmin, signal.Fmax, 1, caldata);
+												signal.Fmin, signal.Fmax, ...
+												caldata.DAscale, caldata);
 				case 'tone'
 					% enforce rad_vary = 0
-					[c.S0, c.Scale0] = synmonotone(audio.Duration, ...
+					[c.S0, c.Scale0] = synmonosine(audio.Duration, ...
 																outdev.Fs, ...
 																signal.Frequency, ...
-																1, 0, caldata);
+																caldata.DAscale, caldata);
 			end
 		end
-
+		
+		% init sindex
 		sindex = 0;
 		% now loop through the randomized trials
 		for rep = 1:c.nreps
@@ -242,38 +278,37 @@ switch c.curvetype
 						case 'noise'
 							Sn = synmononoise_fft(audio.Duration, ...
 															outdev.Fs, signal.Fmin, ...
-															signal.Fmax, 1, caldata);
+															signal.Fmax, ...
+															caldata.DAscale, caldata);
 						case 'tone'
-							Sn = synmonotone(audio.Duration, ...
+							Sn = synmonosine(audio.Duration, ...
 															outdev.Fs, ...
-															signal.Frequency, 1, ...
-															c.radvary, caldata);
+															signal.Frequency, ...
+															caldata.DAscale, caldata);
 					end
 				else	% stimulus is frozen
 					switch c.stimtype
 						case 'noise'
 							Sn = synmononoise_fft(audio.Duration, ...
 															outdev.Fs, signal.Fmin, ...
-															signal.Fmax, 1, caldata, ...
+															signal.Fmax, ...
+															caldata.DAscale, caldata, ...
 															c.Smag0, c.Sphase0);
 						case 'tone'
 							% enforce rad_vary = 0
-							Sn = synmonotone(audio.Duration, ...
+							Sn = synmonosine(audio.Duration, ...
 															outdev.Fs, ...
-															signal.Frequency, 1, ...
-															0, caldata);
+															signal.Frequency, ...
+															caldata.DAscale, caldata);
 					end
 				end
 				
-				% ramp the sound on and off (important!) and scale
-				Sn = sin2array(caldata.DAlevel * Sn, audio.Ramp, outdev.Fs);
-
+				% ramp the sound on and off (important!)
+				Sn = sin2array(Sn, audio.Ramp, outdev.Fs);
 				% compute RMS value
 				rmsval = rms(Sn);
-
 				% get the attenuator settings for the desired SPL
 				atten = figure_mono_atten(LEVEL, rmsval, caldata);
-
 				% Store the parameters in the stimulus cache struct
 				c.stimvar{sindex} = LEVEL;
 				c.Sn{sindex} = Sn;
