@@ -136,11 +136,11 @@ switch c.curvetype
 				c = [];
 				return
 		end
+		
+	case {'OPTO', 'OPTO-DELAY', 'OPTO-DUR', 'OPTO-AMP'}
 	
 	otherwise
-		warning([mfilename ': unsupported curvetype ' c.curvetype])
-		c = [];
-		return
+		error([mfilename ': unsupported curvetype ' c.curvetype])
 end		
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -158,7 +158,9 @@ end
 disp([mfilename ' is building stimuli for ' c.curvetype ' curve...'])
 switch c.curvetype
 	
-	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% OPTO optical only, no variation
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	case 'OPTO'
 		% Stimulus parameter to vary (varName) and the range (stimvar)
 		c.vname = upper(c.curvetype);
@@ -186,6 +188,120 @@ switch c.curvetype
 				c.opto{sindex}.Delay = opto.Delay;
 				c.opto{sindex}.Dur = opto.Dur;
 				c.opto{sindex}.Amp = opto.Amp;
+			end	%%% End of TRIAL LOOP
+		end %%% End of REPS LOOP
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% OPTO-DELAY Opto stim Delay curve
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	case 'OPTO-DELAY'
+		% Stimulus parameter to vary (varName) and the range (stimvar)
+		c.vname = upper(c.curvetype);
+		c.vrange = opto.Delay;
+		
+		% null sound stimulus
+		Sn = syn_null(audio.Duration, outdev.Fs, 0);
+		% max atten setting
+		atten = 120;
+				
+		% init sindex counter
+		sindex = 0;
+		% now loop through the randomized trials
+		for rep = 1:c.nreps
+			for trial = 1:c.ntrials
+				% increment sindex counter (index into stim cache struct)
+				sindex = sindex + 1;
+				% Get the randomized stimulus variable value from c.stimvar 
+				% indices stored in c.trialRandomSequence and 
+				% store the parameters in the stimulus cache struct
+				c.stimvar{sindex} = ...
+										c.vrange(c.trialRandomSequence(rep, trial));
+				% Store the parameters in the stimulus cache struct
+				c.Sn{sindex} = Sn;
+				c.splval{sindex} = 0;
+				c.rmsval{sindex} = 0;
+				c.atten{sindex} = atten;
+				c.opto{sindex}.Enable = 1;
+				c.opto{sindex}.Delay = c.stimvar{sindex};
+				c.opto{sindex}.Dur = opto.Dur;
+				c.opto{sindex}.Amp = opto.Amp;
+			end	%%% End of TRIAL LOOP
+		end %%% End of REPS LOOP
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% OPTO-DUR Opto stim Duration curve
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	case 'OPTO-DUR'
+		% Stimulus parameter to vary (varName) and the range (stimvar)
+		c.vname = upper(c.curvetype);
+		c.vrange = opto.Dur;
+		
+		% null sound stimulus
+		Sn = syn_null(audio.Duration, outdev.Fs, 0);
+		% max atten setting
+		atten = 120;
+				
+		% init sindex counter
+		sindex = 0;
+		% now loop through the randomized trials
+		for rep = 1:c.nreps
+			for trial = 1:c.ntrials
+				% increment sindex counter (index into stim cache struct)
+				sindex = sindex + 1;
+				% Get the randomized stimulus variable value from c.stimvar 
+				% indices stored in c.trialRandomSequence and 
+				% store the parameters in the stimulus cache struct
+				c.stimvar{sindex} = ...
+									c.vrange(c.trialRandomSequence(rep, trial));
+				% Store stimulus Parameters
+				c.Sn{sindex} = Sn;
+				c.splval{sindex} = 0;
+				c.rmsval{sindex} = 0;
+				c.atten{sindex} = atten;
+				c.opto{sindex}.Enable = 1;
+				c.opto{sindex}.Delay = opto.Delay;
+				c.opto{sindex}.Dur = c.stimvar{sindex};
+				c.opto{sindex}.Amp = opto.Amp;
+			end	%%% End of TRIAL LOOP
+		end %%% End of REPS LOOP
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% OPTO-AMP Amplitude curve
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	case 'OPTO-AMP'
+		% Stimulus parameter to vary (varName) and the range (stimvar)
+		c.vname = upper(c.curvetype);
+		c.vrange = opto.Amp;
+		
+		% null sound stimulus
+		Sn = syn_null(audio.Duration, outdev.Fs, 0);
+		% max atten setting
+		atten = 120;
+				
+		% init sindex counter
+		sindex = 0;
+		% now loop through the randomized trials
+		for rep = 1:c.nreps
+			for trial = 1:c.ntrials
+				% increment sindex counter (index into stim cache struct)
+				sindex = sindex + 1;
+				% Get the randomized stimulus variable value from c.stimvar 
+				% indices stored in c.trialRandomSequence and 
+				% store the parameters in the stimulus cache struct
+				c.stimvar{sindex} = ...
+									c.vrange(c.trialRandomSequence(rep, trial));
+				% Store the parameters in the stimulus cache struct
+				c.Sn{sindex} = Sn;
+				c.splval{sindex} = 0;
+				c.rmsval{sindex} = 0;
+				c.atten{sindex} = atten;
+				c.opto{sindex}.Enable = 1;
+				c.opto{sindex}.Delay = opto.Delay;
+				c.opto{sindex}.Dur = opto.Dur;
+				c.opto{sindex}.Amp = c.stimvar{sindex};
 			end	%%% End of TRIAL LOOP
 		end %%% End of REPS LOOP
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -506,8 +506,8 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	
 	
 	% Play stimuli in cache, record neural data
-	testdata = opto_playCache(handles, datafile, stimcache, test, []);
-	save('testdata.mat', testdata, '-MAT');
+	testdata = opto_playCache(handles, datafile, stimcache, test, []); %#ok<NASGU>
+	save('testdata.mat', 'testdata', '-MAT');
 	
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------

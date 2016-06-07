@@ -1,29 +1,23 @@
-function out = writeTrialData(datafile, datatrace, dataID, ...
-												trialNumber, repNumber)
+function varargout = closeTrialData(datafile, varargin)
 %--------------------------------------------------------------------------
-% out = writeTrialData(datafile, datatrace, dataID, trialNumber, repNumber)
+% out = closeTrialData(datafile, time_end)
 %--------------------------------------------------------------------------
-% TytoLogy:Experiments:opto Application
-%--------------------------------------------------------------------------
-% Writes trial data for binary data file
+%
+% Closes trial data for binary data file
 % 
 % Uses BinaryFileToolbox
 % 
 %--------------------------------------------------------------------------
 % Input Arguments:
 % 
-%	datafile
-% 	datatrace
-% 	dataID
-% 	trialNumber
-% 	repNumber
+%	datafile			data file name to be closed
+%	time_end			end of experiment time (optional)
 %
 % Output Arguments:
 %
-% 	out
+% 	out	time_end (optional)
 % 	
-%--------------------------------------------------------------------------
-% See Also: readTrialData, writeDataHeader fopen, fwrite;
+% See Also: writeTrialData, fopen, fwrite;
 %--------------------------------------------------------------------------
 
 %--------------------------------------------------------------------------
@@ -31,38 +25,41 @@ function out = writeTrialData(datafile, datatrace, dataID, ...
 % sshanbhag@neomed.edu
 %--------------------------------------------------------------------------
 % Revision History
-%	7 June 2016 (SJS): file created
+%	7 June 2016 (SJS): file created from HPSearch closeTrialData
 %--------------------------------------------------------------------------
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % some setup and initialization
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% get the finish time
+if nargin == 1
+	time_end = now;
+else
+	time_end = varargin{1};
+end
+if nargout
+	varargout{1} = time_end;
+end
+
 % open the file for appending
 fp = fopen(datafile, 'a');
+
 % check to make sure this worked
 if fp == -1
 	% error occurred, return error code -1
-	out = -1;
+	varargout{1} = -1;
 	return
-else
-	out = 1;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % write the trial header
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-% write the dataID
-writeVector(fp, dataID, 'double');
-% write the trial Number
-writeVector(fp, trialNumber, 'int32');
-% write the rep number
-writeVector(fp, repNumber, 'int32');
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% write the data
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-% write the datatrace (multiplexed if multichannel!)
-writeVector(fp, datatrace, 'double');
+% write the END string
+writeString(fp, 'DATA_END');
+
+% write the time
+writeVector(fp, time_end, 'double');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % close the file

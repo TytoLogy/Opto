@@ -63,7 +63,6 @@ audio = test.audio;
 opto = test.opto;
 caldata = handles.H.caldata;
 
-
 %--------------------------------------------------------
 %--------------------------------------------------------
 % Setup Plots using the _configurePlots script
@@ -141,8 +140,9 @@ depvars_sort = zeros(stimcache.ntrials, stimcache.nreps);
 %--------------------------------------------------------
 %--------------------------------------------------------
 % initialize the data file. write data file header
-% writeDataFileHeader(datafile, curve, audio, tdt, ...
-% 											analysis, caldata, indev, outdev);
+testopts = rmfield(test, {'audio', 'opto'});
+writeDataFileHeader(datafile, testopts, audio, opto, channels, caldata, ...
+								indev, outdev);
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -266,8 +266,8 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 	[datatrace, ~] = iofunc(Sn, acqpts, indev, outdev, zBUS);
 
 	% Save Data
-% 	writeTrialData(datafile, datatrace, ...
-% 								stimcache.stimvar{sindex}, trial, rep);
+	writeTrialData(datafile, datatrace, stimcache.stimvar{sindex}, ...
+								trial, rep);
 
 	% store the dependent variable parameters for later use
 	depvars(trial, rep) = stimcache.stimvar{sindex};
@@ -288,11 +288,8 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 		% mcDeMux returns an array that is [nChannels, nPoints]
 		resp{stimcache.trialRandomSequence(rep, trial), rep} = ...
 										mcDeMux(datatrace, channels.nInputChannels);
-% 		current_trace = ...
-% 		  resp{stimcache.trialRandomSequence(rep, trial), rep}(:, SPIKECHAN);
 	else
 		resp{stimcache.trialRandomSequence(rep, trial), rep} =  datatrace;
-% 		current_trace = resp{stimcache.trialRandomSequence(rep, trial), rep};
 	end
 
 % 	% RespPlot: plot trace
@@ -364,6 +361,12 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 	sindex = sindex + 1;
 end %%% End of REPS LOOP
 
+if cancelFlag
+	optomsg(handles, 'Test Stopped');
+else
+	optomsg(handles, 'Test Complete!');
+end
+
 %--------------------------------------------------------
 %--------------------------------------------------------
 % get time stamp
@@ -376,7 +379,7 @@ time_end = now;
 % write the end of data file
 %--------------------------------------------------------
 %--------------------------------------------------------
-% 	closeTrialData(datafile, time_end);
+closeTrialData(datafile, time_end);
 % 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % % Compute mean spike count as a function of depvars and std error bars
