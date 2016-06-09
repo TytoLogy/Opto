@@ -1,28 +1,30 @@
-function Fs = FOCHS_RZ6RZ5Dsettings(indev, outdev, ...
+function Fs = opto_TDTsettings(indev, outdev, ...
 												tdt, stimulus, channels, optical)
 %------------------------------------------------------------------------
-% Fs = FOCHS_RZ6RZ5Dsettings(indev, outdev, tdt, stimulus, channels, optical)
+% Fs = opto_TDTsettings(indev, outdev, tdt, stimulus, channels, optical)
 %------------------------------------------------------------------------
-% FOCHS program
+% Opto program
 %------------------------------------------------------------------------
-% Sets up TDT settings for HPSearch using 
+% Sets up TDT settings for Opto using 
 % 	RZ52 (via PZ2) for spike input 
 % 			- and -
 % 	RZ6 for stimulus output
 % 
 %------------------------------------------------------------------------
 % designed to use with RPVD circuits: 
-%		RZ5D_50k_FourChannelInput_zBus.rcx
+%		RZ5D_50k_16In_1Out_zBus.rcx
 % 		RZ6_2Processor_SpeakerOutput_zBus.rcx
 %------------------------------------------------------------------------
 % Input Arguments:
-%   indev       TDT device interface structure
-%   outdev      TDT device interface structure (not used)
-%   tdt         TDT setting parameter structure
-%   stimulus    stimulus parameters structure
-%   channels    I/O channels parameters structure 
+% 	indev       TDT device interface structure
+% 	outdev      TDT device interface structure (not used)
+% 	tdt         TDT setting parameter structure
+% 	stimulus    stimulus parameters structure
+% 	channels    I/O channels parameters structure
+%	optical		optical stimulus settings
+%
 % Output Arguments:
-%    Fs         [1X2] sampling rates for input (1) and output (2)
+%	Fs         [1X2] sampling rates for input (1) and output (2)
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -36,9 +38,6 @@ function Fs = FOCHS_RZ6RZ5Dsettings(indev, outdev, ...
 % Optogen Version (FOCHS_RZ6RZ5Dsettings): 2016 by SJS  
 %------------------------------------------------------------------------
 % Revisions
-%	3 May 2016 (SJS):
-% 	 - added "optical"| input structure
-% 	 - modified code to set tags in RZ5D
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -79,13 +78,8 @@ RPsettag(indev, 'HPFreq', tdt.HPFreq);
 RPsettag(indev, 'LPFreq', tdt.LPFreq);
 
 %------------------------------------------------------------------------
-% Input Channel and Gain Settings
+% Gain Settings
 %------------------------------------------------------------------------
-% set input channels 
-RPsettag(indev, 'inChannelA', channels.InputChannel1); 
-RPsettag(indev, 'inChannelB', channels.InputChannel2); 
-RPsettag(indev, 'inChannelC', channels.InputChannel3); 
-RPsettag(indev, 'inChannelD', channels.InputChannel4);
 % set the overall gain for input
 RPsettag(indev, 'Gain', tdt.CircuitGain);
 

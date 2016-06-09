@@ -1,5 +1,13 @@
+function buttonTest_Callback(hObject, eventdata, handles)
+% --- Executes on button press in buttonTest in the opto program
 % indev frequency (Hz) = 48828.125
 % outdev frequency (Hz) = 195312.5
+
+if handles.H.TDT.Enable
+	% Terminate the Run
+	update_ui_str(handles.textMsg, 'Cannot run test... disable TDT to continue');
+	return
+end
 
 %% configure structs
 % lock file
@@ -7,7 +15,7 @@ config.TDTLOCKFILE = fullfile(pwd, 'tdtlockfile.mat');
 config.CONFIGNAME = 'RZ6OUT200K_RZ5DIN';
 % function handles
 config.ioFunc = @opto_io;
-config.TDTsetFunc = @TDT_opto_settings;
+config.TDTsetFunc = @opto_TDTsettings;
 config.setattenFunc = @RZ6setatten;
 % input device
 config.indev.hardware = 'RZ5D';
@@ -98,7 +106,7 @@ PA5R = outhandles.PA5R;
 % Fs is a 1X2 array of sample rates for indev and outdev - this is because
 % the actual sample rates often differ from those specified in the software
 % settings due to clock frequency divisor issues
-Fs = opto_TDTsettings(indev, outdev, tdt, stimulus, channels, optical);
+opto_TDTsettings(indev, outdev, tdt, stimulus, channels, optical);
 
 %% do stuff
 
@@ -115,7 +123,7 @@ RPtrig(indev, 1);
 inpts = ms2bin(tdt.AcqDuration, indev.Fs);
 
 % generate figure
-fH = figure;
+fH = figure; %#ok<NASGU>
 ax = axes;
 xv = linspace(0, tdt.AcqDuration, inpts);
 xlim([0, inpts]);
@@ -160,18 +168,18 @@ for f = 1:length(freqs)
 	for n = 1:nreps
 		% play stimulus, return read values
 		if indev.status && outdev.status && zBUS.status
-			[mcresp, mcpts] = opto_io(S, inpts, indev, outdev, zBUS);
+			[mcresp, ~] = opto_io(S, inpts, indev, outdev, zBUS);
 		else
 			error('stati == 0');
 		end
 
 		% plot returned values
-		[resp, npts] = mcFastDeMux(mcresp, channels.nInputChannels);
+		[resp, ~] = mcFastDeMux(mcresp, channels.nInputChannels);
 
 		for c = 1:channels.nInputChannels
 			set(pH(c), 'YData', resp(:, c) + c*yabsmax);
 		end
-		title(sprintf('Freq: %.2f, Rep: %d', freqs(f), n))
+		title(sprintf('Freq: %.2f, Rep: %d', freqs(f), n));
 		drawnow
 		pause(0.001*stimulus.ISI)
 	end
@@ -181,12 +189,12 @@ end
 RPtrig(indev, 2);
 
 %% stop TDT hardware
-[outhandles, outflag] = opto_TDTclose(config, indev, outdev, zBUS, PA5L, PA5R);
-indev = outhandles.indev;
-outdev = outhandles.outdev;
-zBUS = outhandles.zBUS;
-PA5L = outhandles.PA5L;
-PA5R = outhandles.PA5R;
+[outhandles, outflag] = opto_TDTclose(config, indev, outdev, zBUS, PA5L, PA5R); %#ok<ASGLU>
+indev = outhandles.indev; %#ok<NASGU>
+outdev = outhandles.outdev; %#ok<NASGU>
+zBUS = outhandles.zBUS; %#ok<NASGU>
+PA5L = outhandles.PA5L; %#ok<NASGU>
+PA5R = outhandles.PA5R; %#ok<NASGU>
 
 
 
