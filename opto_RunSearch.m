@@ -6,14 +6,16 @@
 	if state && ~handles.H.TDT.Enable
 		% user started run, but HW not init'ed so abort
 		update_ui_val(hObject, 0);
-		update_ui_str(handles.textMsg, 'TDT HW not enabled!!!!');
+		update_ui_str(hObject, 'Search');
+		optomsg(handles, 'TDT HW not enabled!!!!');
 		guidata(hObject, handles);
 		return
 	
 	% if state of button is 0 and TDT hardware is started, stop run
 	elseif ~state && handles.H.TDT.Enable
 		% Terminate the Run
-		update_ui_str(handles.textMsg, 'Search ending...');
+		optomsg(handles, 'Search ending...');
+		update_ui_str(hObject, 'Search');
 		% turn off monitor using software trigger 2 sent to indev
 		RPtrig(handles.H.TDT.indev, 2);
 		guidata(hObject, handles);
@@ -21,8 +23,9 @@
 	
 	else
 		% Start I/O
-		update_ui_str(handles.textMsg, 'Starting search...');
-		
+		optomsg(handles, 'Starting search...');
+		update_ui_str(hObject, 'Stop Search');
+
 		% update settings
 		opto_TDTsettings(	handles.H.TDT.indev, ...
 								handles.H.TDT.outdev, ...
@@ -30,6 +33,11 @@
 								handles.H.audio, ...
 								handles.H.TDT.channels, ...
 								handles.H.opto);
+							
+		% build filter
+		fband = [handles.H.TDT.HPFreq handles.H.TDT.LPFreq] ./ ...
+							(0.5 * handles.H.TDT.indev.Fs);
+		[filtB, filtA] = butter(3, fband);
 
 		% turn on audio monitor for spikes using software trigger 1
 		RPtrig(handles.H.TDT.indev, 1);
@@ -73,7 +81,7 @@
 		set(ax, 'YTickLabel', yticks_txt);
 		set(ax, 'TickDir', 'out');
 		set(ax, 'Box', 'off');
-		set(fH, 'Position', [1221 537 560 420]);
+		set(fH, 'Position', [1221 537 560 420]);		
 
 		%------------------------------------------------------------
 		% main loop
@@ -100,7 +108,7 @@
 			% evaluate the call within a different workspace, which is
 			% perhaps an even greater kludge...)
 			H = update_H_from_GUI(handles);
-			
+
 			% generate [2XN] stimulus array. 
 			% row 1 == output A on RZ6, row 2 = output B
 			switch upper(H.audio.Signal)
@@ -119,7 +127,9 @@
 														H.noise.Fmax, ...
 														H.caldata.DAscale, ...
 														H.caldata);
-					tstr = sprintf('Noise, Rep %d', rep);
+					tstr = sprintf('Noise [%d:%d] kHz, Rep %d', ...
+											0.001*H.noise.Fmin, ...
+											0.001*H.noise.Fmax, rep);
 				case 'OFF'
 					stim = syn_null(H.audio.Duration, outdev.Fs, 0);
 					tstr = sprintf('Off, Rep = %d', rep);
@@ -159,7 +169,9 @@
 			% plot returned values
 			[resp, ~] = mcFastDeMux(mcresp, TDT.channels.nInputChannels);
 			for c = 1:TDT.channels.nInputChannels
-				set(pH(c), 'YData', resp(:, c)' + c*yabsmax);
+				tmpY = filtfilt(filtB, filtA, sin2array(resp(:, c)', 1, indev.Fs));
+				set(pH(c), 'YData', tmpY + c*yabsmax);
+% 				set(pH(c), 'YData', resp(:, c)' + c*yabsmax);
 			end
 			title(ax, tstr);
 			drawnow

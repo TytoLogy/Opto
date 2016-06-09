@@ -13,12 +13,12 @@ H.audio.Level = read_ui_str(handles.editAudioLevel, 'n');
 % ramp on.off
 H.audio.Ramp = read_ui_str(handles.editAudioRamp, 'n');
 % frequency (for tone), freq range (for noise)
-switch H.audio.Signal
-	case 'Noise'
-		handles.H.noise.Fmin = read_ui_str(handles.editAudioFmin, 'n');
-		handles.H.noise.Fmax = read_ui_str(handles.editAudioFmax, 'n');
-	case 'Tone'
-		handles.H.tone.Frequency = read_ui_str(handles.editAudioFmin, 'n');
+switch upper(H.audio.Signal)
+	case 'NOISE'
+		H.noise.Fmin = read_ui_str(handles.editAudioFmin, 'n');
+		H.noise.Fmax = read_ui_str(handles.editAudioFmax, 'n');
+	case 'TONE'
+		H.tone.Frequency = read_ui_str(handles.editAudioFmin, 'n');
 end
 
 % opto stimulus settings

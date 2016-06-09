@@ -22,7 +22,7 @@ function varargout = opto(varargin)
 
 % Edit the above text to modify the response to help opto
 
-% Last Modified by GUIDE v2.5 25-May-2016 15:58:48
+% Last Modified by GUIDE v2.5 09-Jun-2016 19:30:23
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -61,6 +61,28 @@ function opto_OpeningFcn(hObject, eventdata, handles, varargin)
 	% initialize H struct (contains all internal application data)
 	%----------------------------------------------------------------
 	handles.H = opto_InitH;
+	guidata(hObject, handles);
+	%----------------------------------------------------------------
+	% Calibration data
+	%----------------------------------------------------------------
+	calfile = 'Optorig_TDTxxxx_4k-90k_5V_cal.mat';
+	% load the calibration data
+	tmpcal = load_cal(calfile);
+	% if tmpcal is a structure, load of calibration file was
+	% hopefully successful, so save it in the handles info
+	if isstruct(tmpcal)
+		handles.H.caldata = tmpcal;
+		% updatelimits based on calibration data
+		handles.H.Lim.F = [handles.H.caldata.Freqs(1) handles.H.caldata.Freqs(end)];
+		update_ui_str(handles.textCalibration, calfile);
+		% update settings
+		guidata(hObject, handles);
+	else
+		errordlg(['Error loading calibration file ' calfile], ...
+					'LoadCal error'); 
+	end
+	
+	
 	%----------------------------------------------------------------
 	% update UI
 	%----------------------------------------------------------------
@@ -189,19 +211,23 @@ function editAudioRamp_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function editAudioFmin_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
-	switch handles.H.audio.Signal
-		case 'Noise'
+	switch upper(handles.H.audio.Signal)
+		case 'NOISE'
 			if between(val, 3500, handles.H.noise.Fmax)
-				handles.H.audio.noise.Fmin = val;
+				handles.H.noise.Fmin = val;
 				guidata(hObject, handles);
+				optomsg(handles, sprintf('Noise Fmin: %.0f', ...
+													handles.H.noise.Fmin));
 			else
 				optomsg(handles, 'invalid audio noise Fmin');
 				update_ui_str(hObject, handles.H.noise.Fmin);
 			end
-		case 'Tone'
+		case 'TONE'
 			if between(val, 3500, handles.H.TDT.outdev.Fs / 2)
 				handles.H.tone.Frequency = val;
 				guidata(hObject, handles);
+				optomsg(handles, sprintf('Tone Freq: %.0f', ...
+													handles.H.tone.Frequency));
 			else
 				optomsg(handles, 'invalid audio tone Frequency');
 				update_ui_str(hObject, handles.H.tone.Frequency);
@@ -215,6 +241,8 @@ function editAudioFmax_Callback(hObject, eventdata, handles)
 							handles.H.TDT.outdev.Fs / 2)
 		handles.H.noise.Fmax = val;
 		guidata(hObject, handles);
+		optomsg(handles, sprintf('Noise Fmax: %.0f', ...
+													handles.H.noise.Fmax));
 	else
 		optomsg(handles, 'invalid audio noise Fmax');
 		update_ui_str(hObject, handles.H.noise.Fmax);
@@ -384,6 +412,52 @@ function editAcqDuration_Callback(hObject, eventdata, handles)
 	handles.H.TDT.SweepPeriod = val + 10;
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
+function editCircuitGain_Callback(hObject, eventdata, handles)
+	val = read_ui_str(hObject, 'n');
+	optomsg(handles, sprintf('setting CircuitGain to %d', val));
+	% if TDT HW is enabled, set the tag in the circuit
+	% note that since this is addressing the circuit directly, it will
+	% take affect immediately and without need for action in running
+	% scripts or searching
+	if handles.H.TDT.Enable
+		% Set the circuit gain
+		RPsettag(handles.H.TDT.indev, 'Gain', val);
+	end
+	% store value
+	handles.H.TDT.CircuitGain = val;
+	guidata(hObject, handles);
+%-------------------------------------------------------------------------
+function editHPFreq_Callback(hObject, eventdata, handles)
+	val = read_ui_str(hObject, 'n');
+	optomsg(handles, sprintf('setting HP filter freq to %d', val));
+	% if TDT HW is enabled, set the tag in the circuit
+	% note that since this is addressing the circuit directly, it will
+	% take affect immediately and without need for action in running
+	% scripts or searching
+	if handles.H.TDT.Enable
+		% set the high pass filter
+		RPsettag(handles.H.TDT.indev, 'HPFreq', val);
+	end
+	% store value
+	handles.H.TDT.HPFreq = val;
+	guidata(hObject, handles);
+%-------------------------------------------------------------------------
+function editLPFreq_Callback(hObject, eventdata, handles)
+	val = read_ui_str(hObject, 'n');
+	optomsg(handles, sprintf('setting LP filter freq to %d', val));
+	% if TDT HW is enabled, set the tag in the circuit
+	% note that since this is addressing the circuit directly, it will
+	% take affect immediately and without need for action in running
+	% scripts or searching
+	if handles.H.TDT.Enable
+		% set the low pass filter
+		RPsettag(handles.H.TDT.indev, 'LPFreq', val);
+	end
+	% store value
+	handles.H.TDT.LPFreq = val;
+	guidata(hObject, handles);
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 
 %-------------------------------------------------------------------------
 % Monitor
@@ -446,7 +520,6 @@ function buttonSearch_Callback(hObject, eventdata, handles)
 	% execute RunSearch script
 	opto_RunSearch
 %-------------------------------------------------------------------------
-
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -690,6 +763,21 @@ function editAcqDuration_CreateFcn(hObject, eventdata, handles)
 		 set(hObject,'BackgroundColor','white');
 	end
 %-------------------------------------------------------------------------
+function editCircuitGain_CreateFcn(hObject, eventdata, handles)
+	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+		 set(hObject,'BackgroundColor','white');
+	end
+%-------------------------------------------------------------------------
+function editHPFreq_CreateFcn(hObject, eventdata, handles)
+	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+		 set(hObject,'BackgroundColor','white');
+	end
+%-------------------------------------------------------------------------
+function editLPFreq_CreateFcn(hObject, eventdata, handles)
+	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+		 set(hObject,'BackgroundColor','white');
+	end
+%-------------------------------------------------------------------------
 function editMonGain_CreateFcn(hObject, eventdata, handles)
 	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
@@ -789,6 +877,5 @@ function editComments_CreateFcn(hObject, eventdata, handles)
 		set(hObject,'BackgroundColor','white');
 	end
 %-------------------------------------------------------------------------
-
 
 
