@@ -1,8 +1,8 @@
 function [curvedata, varargout] = opto_playCache(handles, datafile, ...
-											stimcache, test, analysis, varargin)
+											stimcache, test, varargin)
 %--------------------------------------------------------------------------
 % [curvedata, rawdata] = opto_playCache(handles, datafile, ...
-% 											stimcache, curve, analysis, varargin)
+% 											stimcache, curve, varargin)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -76,8 +76,8 @@ caldata = handles.H.caldata;
 %--------------------------------------------------------
 %--------------------------------------------------------
 L = 1;
-R = 2;
-MAX_ATTEN = 120;
+R = 2; %#ok<NASGU>
+MAX_ATTEN = 120; 
 
 % make sure we have lowercase stimtype and curvetype
 curvetype = upper(stimcache.curvetype);
@@ -116,12 +116,12 @@ fprintf('\t display channel: %d\n', handles.H.TDT.MonChan);
 % acqpts = tdt.nChannels * ms2samples(tdt.AcqDuration, indev.Fs);
 %-------------------------------------------------------
 acqpts = ms2samples(test.AcqDuration, indev.Fs);
-outpts = ms2samples(audio.Duration, outdev.Fs);
+outpts = ms2samples(audio.Duration, outdev.Fs); %#ok<NASGU>
 %-------------------------------------------------------
 % stimulus start and stop in samples
 %-------------------------------------------------------
 stim_start = ms2samples(audio.Delay, outdev.Fs);
-stim_end = stim_start + ms2samples(audio.Duration, outdev.Fs);
+stim_end = stim_start + ms2samples(audio.Duration, outdev.Fs); %#ok<NASGU>
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -140,9 +140,12 @@ depvars_sort = zeros(stimcache.ntrials, stimcache.nreps);
 %--------------------------------------------------------
 %--------------------------------------------------------
 % initialize the data file. write data file header
+% remove the big Sn from stimcache before storing in test
+test.stimcache = rmfield(stimcache, 'Sn');
+% remove redundant elements from test, store in test opts
 testopts = rmfield(test, {'audio', 'opto'});
-writeDataFileHeader(datafile, testopts, audio, opto, channels, caldata, ...
-								indev, outdev);
+writeOptoDataFileHeader(datafile, testopts, audio, opto, channels, ...
+								 caldata, indev, outdev);
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -158,13 +161,13 @@ writeDataFileHeader(datafile, testopts, audio, opto, channels, caldata, ...
 %--------------------------------------------------------
 % RasterIndex = RASTERLIM;
 cancelFlag = 0;
-pauseFlag = 0;
+pauseFlag = 0; %#ok<NASGU>
 sindex = 1;
 
 if stimcache.saveStim
-	stimWriteFlag = 1;
+	stimWriteFlag = 1; %#ok<NASGU>
 else
-	stimWriteFlag = 0;
+	stimWriteFlag = 0; %#ok<NASGU>
 end
 
 %--------------------------------------------------------
@@ -214,16 +217,62 @@ RPsettag(indev, 'MonGain', handles.H.TDT.MonitorGain);
 % set output channel for audio monitor (channel 9 on RZ5D 
 % is dedicated to the built-in audio speaker/monitor)
 RPsettag(indev, 'MonOutChan', channels.MonitorOutputChannel);
-%--------------------------------------------------------
-% attenuation
-%--------------------------------------------------------
-RPsettag(outdev, 'AttenL', 90);
-RPsettag(outdev, 'AttenR', 90);
-RPsettag(outdev, 'Mute', 0);
-%--------------------------------------------------------
 % turn on audio monitor for spikes using software trigger 1
+RPtrig(indev, 1);
 %--------------------------------------------------------
-RPtrig(handles.H.TDT.indev, 1);
+% attenuation - set to MAX_ATTEN, un-mute
+%--------------------------------------------------------
+RPsettag(outdev, 'AttenL', MAX_ATTEN);
+RPsettag(outdev, 'AttenR', MAX_ATTEN);
+RPsettag(outdev, 'Mute', 0);
+
+% build filter for plotting data
+fband = [handles.H.TDT.HPFreq handles.H.TDT.LPFreq] ./ ...
+					(0.5 * handles.H.TDT.indev.Fs);
+[filtB, filtA] = butter(3, fband);
+
+%--------------------------------------------------------
+%--------------------------------------------------------
+% Set up figure for plotting incoming data
+%--------------------------------------------------
+% generate figure, axes
+if isempty(handles.H.fH) || ~ishandle(handles.H.fH)
+	handles.H.fH = figure;
+end
+if isempty(handles.H.ax) || ~ishandle(handles.H.ax)
+	handles.H.ax = axes;
+end
+% store local copy of figure handle for simplicity in calls
+fH = handles.H.fH;
+% create/switch focus to figure, generate axis
+figure(fH);
+ax = handles.H.ax;
+% set up plot
+% calculate # of points to acquire (in units of samples)
+xv = linspace(0, handles.H.TDT.AcqDuration, acqpts);
+xlim([0, acqpts]);
+yabsmax = 5;
+tmpData = zeros(acqpts, channels.nInputChannels);
+for n = 1:channels.nInputChannels
+	tmpData(:, n) = n*(yabsmax) + 2*(2*rand(acqpts, 1)-1);
+end
+pH = plot(ax, xv, tmpData);
+yticks_yvals = yabsmax*(1:channels.nInputChannels);
+yticks_txt = cell(channels.nInputChannels, 1);
+for n = 1:channels.nInputChannels
+	yticks_txt{n} = num2str(n);
+end
+ylim(yabsmax*[0 channels.nInputChannels+1]);
+set(ax, 'YTick', yticks_yvals);
+set(ax, 'YTickLabel', yticks_txt);
+set(ax, 'TickDir', 'out');
+set(ax, 'Box', 'off');
+set(fH, 'Position', [861 204 557 800]);		
+xlabel('Time (ms)')
+ylabel('Channel')
+set(ax, 'Color', 0.75*[1 1 1]);
+set(fH, 'Color', 0.75*[1 1 1]);
+set(fH, 'ToolBar', 'none');
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -266,7 +315,7 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 	[datatrace, ~] = iofunc(Sn, acqpts, indev, outdev, zBUS);
 
 	% Save Data
-	writeTrialData(datafile, datatrace, stimcache.stimvar{sindex}, ...
+	writeOptoTrialData(datafile, datatrace, stimcache.stimvar{sindex}, ...
 								trial, rep);
 
 	% store the dependent variable parameters for later use
@@ -276,9 +325,13 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 
 	% This is code for letting the user know what in
 	% tarnation is going on in text at bottom of window
-	optomsg(handles, sprintf('%s = %d repetition = %d  atten = %d', ...
+	optomsg(handles, sprintf('%s = %d repetition = %d  atten = %.0f', ...
 								curvetype, stimcache.stimvar{sindex}, rep, ...
 								atten(L)) );
+	% also, create title for plot for more info
+	tstr = sprintf('%s: %d  Rep: %d  Atten:%.0f', ...
+								curvetype, stimcache.stimvar{sindex}, rep, ...
+								atten(L));
 
 	% Store response data in cell array
 	% 	Note: by indexing the response using row values from the 
@@ -287,61 +340,19 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 		% demultiplex the returned vector and store the response
 		% mcDeMux returns an array that is [nChannels, nPoints]
 		resp{stimcache.trialRandomSequence(rep, trial), rep} = ...
-										mcDeMux(datatrace, channels.nInputChannels);
+								mcFastDeMux(datatrace, channels.nInputChannels);
 	else
 		resp{stimcache.trialRandomSequence(rep, trial), rep} =  datatrace;
 	end
 
-% 	% RespPlot: plot trace
-% 	% plot trace
-% 	axes(RespPlot);
-% 	plot(tvec, current_trace)
-% 	ylim(analysis.respscale.*[-1 1]);
-% 	xlim([0 round(max(tvec))]);
-% 	line(xlim, analysis.spikeThreshold * [1 1], 'Color', 'r');
-% 
-% 	% detect and plot spikes using software Schmitt trigger detector
-% 	spiketimes = spikeschmitt2(current_trace, analysis.spikeThreshold, ...
-% 														analysis.spikeWindow, indev.Fs);
-% 	spiketimes = 1000 * spiketimes / indev.Fs;
-% 	hold on
-% 		yl = ylim;
-% 		plot(spiketimes, yl(2)*ones(size(spiketimes)), 'r.')
-% 	hold off
-% 	% draw lines to show start and stop of analysis window
-% 	respv1 = line(analysis.spikeStartTime*[1 1], yl, 'Color', 'g');
-% 	respv2 = line(analysis.spikeEndTime*[1 1], yl, 'Color', 'r');		
-% 
-% 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%			
-% 	% Raster Plot
-% 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%			
-% 	% select the raster axes
-% 	axes(RasterPlot);
-% 	if RasterIndex < 1
-% 		RasterIndex = RASTERLIM;
-% 	end
-% 	% is RasterIndex == RASTERLIM?
-% 	if RasterIndex == RASTERLIM
-% 		% first, plot a "dummy" point to set Left hand scale
-% 		xlim([0 max(tvec)])
-% 		plot(xlim, RASTERLIM.*[1 1], '.', 'Color', [1 1 1]);
-% 		% then plot the spike "ticks"
-% 		hold on
-% 			plot(spiketimes, RasterIndex*ones(size(spiketimes)), 'b.')
-% 		hold off
-% 		ylim('manual');
-% 		ylim([0 RASTERLIM + 1]);
-% 		set(RasterPlot, 'YTickLabel', []);
-% 		rasterv1 = line(analysis.spikeStartTime*[1 1], ylim, 'Color', 'g');
-% 		rasterv2 = line(analysis.spikeEndTime*[1 1], ylim, 'Color', 'r');		
-% 	else
-% 		hold on
-% 			plot(spiketimes, RasterIndex*ones(size(spiketimes)), 'b.')
-% 		hold off
-% 	end
-% 	% decrement RasterIndex to move next plot down a row
-% 	RasterIndex = RasterIndex - 1;
-% 	drawnow
+	for c = 1:channels.nInputChannels
+		tmpY = resp{stimcache.trialRandomSequence(rep, trial), rep}(:, c)';
+		tmpY = filtfilt(filtB, filtA, ...
+						sin2array(	tmpY, 5, indev.Fs));
+		set(pH(c), 'YData', tmpY + c*yabsmax);
+	end
+ 	title(ax, tstr);
+	drawnow
 
 	% check state of cancel button
 	cancelFlag = read_ui_val(cancelButton);
@@ -379,7 +390,7 @@ time_end = now;
 % write the end of data file
 %--------------------------------------------------------
 %--------------------------------------------------------
-closeTrialData(datafile, time_end);
+closeOptoTrialData(datafile, time_end);
 % 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % % Compute mean spike count as a function of depvars and std error bars
@@ -436,8 +447,7 @@ if ~cancelFlag
 	end
 	curvedata.depvars = depvars;
 	curvedata.depvars_sort = depvars_sort;
-% 	curvedata.spike_times = spike_times;
-% 	curvedata.spike_counts = spike_counts;
+
 	if stimcache.saveStim
 		[pathstr, fbase] = fileparts(datafile);
 		curvedata.stimfile = fullfile(pathstr, [fbase '_stim.mat']);
@@ -446,12 +456,11 @@ end
 
 %--------------------------------------------------------
 %--------------------------------------------------------
+% clean up
+%--------------------------------------------------------
+%--------------------------------------------------------
 % close curve panel
-%--------------------------------------------------------
-%--------------------------------------------------------
 close(PanelHandle)
-
-
 % turn off monitor using software trigger 2 sent to indev
 RPtrig(indev, 2);
 

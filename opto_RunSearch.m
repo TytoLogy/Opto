@@ -22,7 +22,9 @@
 		return
 	
 	else
+		%------------------------------------------------------------
 		% Start I/O
+		%------------------------------------------------------------
 		optomsg(handles, 'Starting search...');
 		update_ui_str(hObject, 'Stop Search');
 
@@ -45,11 +47,15 @@
 		% calculate # of points to acquire (in units of samples)
 		inpts = ms2bin(handles.H.TDT.AcqDuration, handles.H.TDT.indev.Fs);
 		
+		% set acquisition duration and sweep period for indev.
 		RPsettag(handles.H.TDT.indev, 'AcqDur', ...
 					ms2bin(handles.H.TDT.AcqDuration, handles.H.TDT.indev.Fs));
 		RPsettag(handles.H.TDT.indev, 'SwPeriod', ...
 				ms2bin(handles.H.TDT.AcqDuration+1, handles.H.TDT.indev.Fs));
 	
+		%------------------------------------------------------------
+		% create figure for plotting neural data
+		%------------------------------------------------------------
 		% generate figure, axes
 		if isempty(handles.H.fH) || ~ishandle(handles.H.fH)
 			handles.H.fH = figure;
@@ -59,10 +65,12 @@
 			handles.H.ax = axes;
 			guidata(hObject, handles);
 		end
-		% store local copy of handle for simplicity in calls
+		% store local copy of figure handle for simplicity in calls
 		fH = handles.H.fH;
+		% create/switch focus to figure, generate axis
 		figure(fH);
 		ax = handles.H.ax;
+		% set up plot
 		xv = linspace(0, handles.H.TDT.AcqDuration, inpts);
 		xlim([0, inpts]);
 		yabsmax = 5;
@@ -81,7 +89,12 @@
 		set(ax, 'YTickLabel', yticks_txt);
 		set(ax, 'TickDir', 'out');
 		set(ax, 'Box', 'off');
-		set(fH, 'Position', [1221 537 560 420]);		
+		set(fH, 'Position', [861 204 557 800]);
+		xlabel('Time (ms)')
+		ylabel('Channel')
+		set(ax, 'Color', 0.75*[1 1 1]);
+		set(fH, 'Color', 0.75*[1 1 1]);
+		set(fH, 'ToolBar', 'none');
 
 		%------------------------------------------------------------
 		% main loop
@@ -169,9 +182,8 @@
 			% plot returned values
 			[resp, ~] = mcFastDeMux(mcresp, TDT.channels.nInputChannels);
 			for c = 1:TDT.channels.nInputChannels
-				tmpY = filtfilt(filtB, filtA, sin2array(resp(:, c)', 1, indev.Fs));
+				tmpY = filtfilt(filtB, filtA, sin2array(resp(:, c)', 5, indev.Fs));
 				set(pH(c), 'YData', tmpY + c*yabsmax);
-% 				set(pH(c), 'YData', resp(:, c)' + c*yabsmax);
 			end
 			title(ax, tstr);
 			drawnow

@@ -93,6 +93,11 @@ RPsettag(indev, 'MonGain', tdt.MonitorGain);
 % set output channel for audio monitor (channel 9 on RZ5D 
 % is dedicated to the built-in audio speaker/monitor)
 RPsettag(indev, 'MonOutChan', channels.MonitorOutputChannel);
+% turn on monitor if enabled
+if tdt.MonEnable
+	% turn on audio monitor for spikes using software trigger 1
+	RPtrig(indev, 1);
+end
 
 %------------------------------------------------------------------------
 % OPTICAL settings

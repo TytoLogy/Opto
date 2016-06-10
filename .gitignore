@@ -52,3 +52,8 @@ Temporary Items
 # TDT hardware lock file
 tdtlockfile.mat
 
+# other matlab files to ignore
+tdtlockfile.mat
+testdata.mat
+stims.mat
+
