@@ -97,6 +97,8 @@ function opto_OpeningFcn(hObject, eventdata, handles, varargin)
 		clist{c} = num2str(c);
 	end
 	set(handles.popupMonitorChannel, 'String', clist);
+	
+	handles.H.DefaultOutputDir = 'E:\Data\SJS';
 	% Update handles structure
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
@@ -561,6 +563,7 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 									handles.H.animal.Pen, ...
 									handles.H.animal.Depth, ...
 									test.Type); %#ok<*NODEF>
+	defaultfile = fullfile(handles.H.DefaultOutputDir, defaultfile);
 
 	[fname, pname] = uiputfile('*.dat', 'Save Data', defaultfile);
 
