@@ -65,7 +65,7 @@ try
 	% read the header
 	datainfo = readOptoDataFileHeader(fp);
 catch errMsg
-	disp errMsg.message
+	errMsg.message
 	errflag = 1;
 	fclose(fp);
 	return;
@@ -80,7 +80,7 @@ try
 	% read the data start string
 	datastartstring = readString(fp); %#ok<*NASGU>
 catch errMsg
-	disp errMsg.message
+	errMsg.message
 	fclose(fp);
 	return;
 end
@@ -89,7 +89,7 @@ try
 	% read the data
 	data = readOptoTrialData(fp, nettrials);
 catch errMsg
-	disp errMsg.message
+	errMsg.message
 	fclose(fp);
 	return;
 end
@@ -98,7 +98,7 @@ try
 	% read the data end string
 	dataendstring = readString(fp);
 catch errMsg
-	disp errMsg.message
+	errMsg.message
 	fclose(fp);
 	return;
 end
@@ -107,7 +107,7 @@ try
 	% read the data end time
 	datainfo.time_end = readVector(fp);
 catch errMsg
-	disp errMsg.message
+	errMsg.message
 	fclose(fp);
 	return;
 end
