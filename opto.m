@@ -82,12 +82,13 @@ function opto_OpeningFcn(hObject, eventdata, handles, varargin)
 					'LoadCal error'); 
 	end
 	
-	
 	%----------------------------------------------------------------
 	% update UI
 	%----------------------------------------------------------------
 	set(handles.popupAudioSignal, 'String', {'Noise'; 'Tone'; 'OFF'});
 	update_ui_val(handles.popupAudioSignal, 1);
+ 	set(handles.figure1, 'Position', [85 615 662 425]);
+	
 	%----------------------------------------------------------------
 	% list of channels for monitor popup
 	%----------------------------------------------------------------
@@ -96,6 +97,8 @@ function opto_OpeningFcn(hObject, eventdata, handles, varargin)
 		clist{c} = num2str(c);
 	end
 	set(handles.popupMonitorChannel, 'String', clist);
+	
+	handles.H.DefaultOutputDir = 'E:\Data\SJS';
 	% Update handles structure
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
@@ -541,7 +544,8 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 									' not found!']);
 		return
 	else
-		% load test information from script
+		% load test information from script (this will define the 
+		% "test" struct
 		run(handles.H.TestScript);
 	end
 	
@@ -558,7 +562,8 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 									handles.H.animal.Unit, ...
 									handles.H.animal.Pen, ...
 									handles.H.animal.Depth, ...
-									test.Type);
+									test.Type); %#ok<*NODEF>
+	defaultfile = fullfile(handles.H.DefaultOutputDir, defaultfile);
 
 	[fname, pname] = uiputfile('*.dat', 'Save Data', defaultfile);
 
@@ -576,10 +581,11 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	handles.H.stimseq = stimseq;
 	guidata(hObject, handles);
 	save stims.mat stimcache stimseq
-	
+	% add stimseq to test struct (kludgey...)
+	test.stimseq = stimseq;
 	
 	% Play stimuli in cache, record neural data
-	testdata = opto_playCache(handles, datafile, stimcache, test, []); %#ok<NASGU>
+	testdata = opto_playCache(handles, datafile, stimcache, test); %#ok<NASGU>
 	save('testdata.mat', 'testdata', '-MAT');
 	
 %-------------------------------------------------------------------------

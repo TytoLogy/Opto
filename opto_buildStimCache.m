@@ -53,7 +53,7 @@ c.saveStim = test.saveStim;
 if ~isempty(strfind(test.Type, 'LEVEL'))
 	nLevels = length(audio.Level);
 else
-	nLevels = 1;
+	nLevels = 0;
 end
 % # of frequencies for FREQ type
 if ~isempty(strfind(test.Type, 'FREQ'))
@@ -341,7 +341,7 @@ switch c.curvetype
 				c.stimvar{sindex} = FREQ;
 				c.Sn{sindex} = Sn;
 				c.splval{sindex} = splval;
-				c.rmsval{sindex} = rmscal;
+				c.rmsval{sindex} = rmsval;
 				c.atten{sindex} = atten;
 				c.FREQ{sindex} = FREQ;
 				c.LEVEL(sindex) = splval;

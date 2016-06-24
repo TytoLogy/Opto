@@ -31,13 +31,13 @@ test.audio.signal.Type = 'tone';
 test.audio.signal.Frequency = 5000:2500:80000;
 test.audio.signal.RadVary = 0;
 test.audio.Delay = 100;
-test.audio.Duration = 200;
-test.audio.Level = 70;
+test.audio.Duration = 100;
+test.audio.Level = 80;
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
-test.audio.ISI = 250;
+test.audio.ISI = 200;
 
-test.Reps = 5;
+test.Reps = 10;
 test.Randomize = 1;
 
 test.saveStim = 0;

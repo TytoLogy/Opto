@@ -1,7 +1,7 @@
-function out = writeTrialData(datafile, datatrace, dataID, ...
+function out = writeOptoTrialData(datafile, datatrace, dataID, ...
 												trialNumber, repNumber)
 %--------------------------------------------------------------------------
-% out = writeTrialData(datafile, datatrace, dataID, trialNumber, repNumber)
+% out = writeOptoTrialData(datafile, datatrace, dataID, trialNumber, repNumber)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -23,7 +23,7 @@ function out = writeTrialData(datafile, datatrace, dataID, ...
 % 	out
 % 	
 %--------------------------------------------------------------------------
-% See Also: readTrialData, writeDataHeader fopen, fwrite;
+% See Also: readOptoTrialData, writeOptoDataHeader fopen, fwrite;
 %--------------------------------------------------------------------------
 
 %--------------------------------------------------------------------------
@@ -31,7 +31,8 @@ function out = writeTrialData(datafile, datatrace, dataID, ...
 % sshanbhag@neomed.edu
 %--------------------------------------------------------------------------
 % Revision History
-%	7 June 2016 (SJS): file created
+%	7 June 2016 (SJS): file created from HPSearch writeTrialData
+%	10 Jun 2016 (SJS): renamed writeOptoTrialData
 %--------------------------------------------------------------------------
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
