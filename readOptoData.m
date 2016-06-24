@@ -4,7 +4,6 @@ function [data, datainfo] = readOptoData(varargin)
 %------------------------------------------------------------------------
 % % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
-
 % Reads binary data file created by the opto program
 %
 % If a datafile name is provided in varargin (e.g.,
@@ -32,6 +31,7 @@ function [data, datainfo] = readOptoData(varargin)
 %			- adapted from readHPData.m
 % 
 % Revisions:
+%	24 June 2016 (SJS): added data position, status and # read
 %------------------------------------------------------------------------
 % TO DO:
 %	*Documentation!
@@ -87,7 +87,7 @@ end
 
 try
 	% read the data
-	data = readOptoTrialData(fp, nettrials);
+	[data, nread, dpos, status] = readOptoTrialData(fp, nettrials);
 catch errMsg
 	errMsg.message
 	fclose(fp);
@@ -113,6 +113,11 @@ catch errMsg
 end
 
 fclose(fp);
+
+datainfo.status = status;
+datainfo.nread = nread;
+datainfo.dpos = dpos;
+
 
 % now, demultiplex the data if there are more than 1 channel in the data
 % traces

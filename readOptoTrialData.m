@@ -11,8 +11,8 @@ function [D, numRead, varargout] = readOptoTrialData(fp, netTrials)
 %--------------------------------------------------------------------------
 % Input Arguments:
 %	fp			file stream
-% 	netTrials	# of trials that should be in file (compute from 
-% 				header information
+% 	netTrials	# of trials that should be in file (computed from 
+%					header information)
 %
 % Output Arguments:
 %	D
@@ -30,6 +30,7 @@ function [D, numRead, varargout] = readOptoTrialData(fp, netTrials)
 % Revision History
 % Revision History
 %	7 June 2016 (SJS): file created from HPSearch readTrialData
+%	23 June 2016 (SJS): added Dpos output
 %--------------------------------------------------------------------------
 % TO DO:
 %--------------------------------------------------------------------------
@@ -47,15 +48,19 @@ end
 
 % allocate cell struct array
 D = cell(netTrials, 1);
+Dpos = zeros(netTrials, 1);
 
 errflag = 0;
-trial = 1;
+trial = 0;
 
 try
-	while ~feof(fp) && trial <= netTrials
+	while ~feof(fp) && trial < netTrials
+		trial = trial + 1;
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		% read the trial header
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		% get file position and store in Dpos
+		Dpos(trial) = ftell(fp);
 		% read the dataID
 		D{trial}.dataID = readVector(fp);
 		% read the trial Number
@@ -67,18 +72,25 @@ try
 		% read the trial data
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		D{trial}.datatrace = readVector(fp);
-		trial = trial + 1;
+		
 	end
-catch
-	lasterror
+catch errMsg
+	fprintf('%s\n', errMsg.message);
 	errflag = 1;
 end
 
+if errflag
+	warning('%s: error reading data', mfilename);
+end
+
 if trial ~= netTrials
-    numRead = trial - 1;
-	varargout{1} = 'incomplete';
+	numRead = trial - 1;
+	varargout{1} = Dpos(1:numRead);
+	varargout{2} = 'incomplete';
 else
 	numRead = trial;
+	varargout{1} = Dpos;
+	varargout{2} = 'complete';	
 end
 
 
