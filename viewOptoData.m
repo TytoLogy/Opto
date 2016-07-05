@@ -35,29 +35,39 @@
 %	*Documentation!
 %--------------------------------------------------------------------------
 
-HPFreq = 125;
+HPFreq = 200;
 LPFreq = 8000;
 
 %%
-datapath = 'E:\Data\1058';
-datafile = '1058_20160623_0_02_1500_FREQ.dat';
+if ispc
+	datapath = 'E:\Data\1058';
+	datafile = '1058_20160623_0_02_1500_FREQ.dat';
+else 
+	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1058';
+	datafile = '1058_20160623_0_02_1500_FREQ.dat';
+end
 
 % read in data
 [D, Dinf] = readOptoData(fullfile(datapath, datafile));
 
 %%
 
-channel = 1;
+inchan = Dinf.channels.InputChannels;
+nchan = length(inchan);
+
 Fs = Dinf.indev.Fs;
 
-							
 % build filter
 fband = [HPFreq LPFreq] ./ (0.5 * Fs);
 [filtB, filtA] = butter(5, fband);
 
-tmpD = D{1}.datatrace(:, channel);
+% filter, plot data
+tmpD = zeros(size(D{1}.datatrace));
+t = (1/Fs)*((1:length(tmpD(:, 1))) - 1);
 
-
-plot(filtfilt(filtB, filtA,tmp));
-
+%%
+for c = 1:nchan
+	tmpD(:, c) = filtfilt(filtB, filtA, D{4}.datatrace(:, c));
+end
+plot(1000*t, tmpD)
 
