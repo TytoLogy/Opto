@@ -35,10 +35,13 @@
 %	*Documentation!
 %--------------------------------------------------------------------------
 
+%% settings for processing data
 HPFreq = 200;
 LPFreq = 8000;
 
-%%
+%% Read Data
+
+% set paths
 if ispc
 	datapath = 'E:\Data\1058';
 	datafile = '1058_20160623_0_02_1500_FREQ.dat';
@@ -50,22 +53,64 @@ end
 % read in data
 [D, Dinf] = readOptoData(fullfile(datapath, datafile));
 
-%%
+%% Get test info
+Dinf.test.Type = char(Dinf.test.Type);
 
-inchan = Dinf.channels.InputChannels;
-nchan = length(inchan);
+fprintf('Test type: %s\n', Dinf.test.Type);
 
+% for FREQ test, find indices of stimuli with same frequency
+if strcmpi(Dinf.test.Type, 'FREQ')
+	freqlist = cell2mat(Dinf.test.stimcache.FREQ);
+	nfreqs = length(Dinf.test.stimcache.vrange);
+	stimindex = cell(nfreqs, 1);
+	for f = 1:nfreqs
+		stimindex{f} = find(Dinf.test.stimcache.vrange(f) == freqlist);
+	end
+else
+	error('%s: unsupported test type %s', mfilename, Dinf.test.Type);
+end
+
+%% define filter for data
 Fs = Dinf.indev.Fs;
+
+HPFreq = 225;
+LPFreq = 5000;
 
 % build filter
 fband = [HPFreq LPFreq] ./ (0.5 * Fs);
 [filtB, filtA] = butter(5, fband);
 
+% Pull out trials
+
+channel = 16;
+nchan = length(Dinf.channels.InputChannels);
+
+t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
+
+for f = 1:nfreqs
+	dlist = stimindex{f};
+	ntrials = length(dlist);
+	tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
+	for n = 1:ntrials
+		tmpD = filtfilt(filtB, filtA, D{dlist(n)}.datatrace(:, channel));
+		tmpM(:, n) = tmpD;
+% 		if n == 1
+% 			plot(t, tmpD)
+% 		else
+% 			hold on
+% 			plot(t, tmpD)
+% 			hold off
+% 		end
+	end
+	stackplot(t, tmpM);
+	title(sprintf('Channel %d, Freq %d', channel, Dinf.test.stimcache.vrange(f)));
+end
+
+%%
 % filter, plot data
 tmpD = zeros(size(D{1}.datatrace));
 t = (1/Fs)*((1:length(tmpD(:, 1))) - 1);
 
-%%
 for c = 1:nchan
 	tmpD(:, c) = filtfilt(filtB, filtA, D{4}.datatrace(:, c));
 end
