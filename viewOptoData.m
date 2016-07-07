@@ -80,11 +80,11 @@ LPFreq = 5000;
 fband = [HPFreq LPFreq] ./ (0.5 * Fs);
 [filtB, filtA] = butter(5, fband);
 
-% Pull out trials
-
-channel = 16;
+% Pull out trials, apply filter, store in matrix
+channel = 4;
 nchan = length(Dinf.channels.InputChannels);
 
+% time vector for plotting
 t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
 
 for f = 1:nfreqs
@@ -92,15 +92,7 @@ for f = 1:nfreqs
 	ntrials = length(dlist);
 	tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
 	for n = 1:ntrials
-		tmpD = filtfilt(filtB, filtA, D{dlist(n)}.datatrace(:, channel));
-		tmpM(:, n) = tmpD;
-% 		if n == 1
-% 			plot(t, tmpD)
-% 		else
-% 			hold on
-% 			plot(t, tmpD)
-% 			hold off
-% 		end
+		tmpM(:, n) = filtfilt(filtB, filtA, D{dlist(n)}.datatrace(:, channel));
 	end
 	stackplot(t, tmpM);
 	title(sprintf('Channel %d, Freq %d', channel, Dinf.test.stimcache.vrange(f)));
