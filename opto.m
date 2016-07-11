@@ -412,7 +412,7 @@ function editAcqDuration_Callback(hObject, eventdata, handles)
 	end
 	% store value
 	handles.H.TDT.AcqDuration = val;
-	handles.H.TDT.SweepPeriod = val + 10;
+	handles.H.TDT.SweepPeriod = val + 5;
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 function editCircuitGain_Callback(hObject, eventdata, handles)

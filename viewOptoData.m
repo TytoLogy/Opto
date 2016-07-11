@@ -1,12 +1,12 @@
 %------------------------------------------------------------------------
-% [data, datainfo] = readOptoData(varargin)
+% [data, datainfo] = viewOptoData(varargin)
 %------------------------------------------------------------------------
 % % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
-% Reads binary data file created by the opto program
+% Reads binary data file created by the opto program, plots traces
 %
 % If a datafile name is provided in varargin (e.g.,
-% readOptoData('c:\mydir\mynicedata.dat'), the program will attempt to 
+% viewOptoData('c:\mydir\mynicedata.dat'), the program will attempt to 
 % read from that file.  
 % 
 % Otherwise it will open a dialog window for the user
