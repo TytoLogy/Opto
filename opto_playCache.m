@@ -312,11 +312,27 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 	end
 
 	% play the sound and return the response
-	[datatrace, ~] = iofunc(Sn, acqpts, indev, outdev, zBUS);
+	[rawdata, ~] = iofunc(Sn, acqpts, indev, outdev, zBUS);
+	
+	% demux the response if necessary and store response data in cell array
+	% 	Note: by indexing the response using row values from the 
+	% 	trialRandomSequence array, the resp{} data will be in SORTED form!
+	if channels.nInputChannels > 1
+		% demultiplex the returned vector and store the response
+		% mcDeMux returns an array that is [nChannels, nPoints]
+		tmpD = mcFastDeMux(rawdata, channels.nInputChannels);
+		resp{stimcache.trialRandomSequence(rep, trial), rep} = tmpD;
+		recdata = tmpD(:, channels.RecordChannelList);
+	else
+		resp{stimcache.trialRandomSequence(rep, trial), rep} =  rawdata;
+		recdata = rawdata;
+	end
 
 	% Save Data
-	writeOptoTrialData(datafile, datatrace, stimcache.stimvar{sindex}, ...
-								trial, rep);
+	writeOptoTrialData(datafile, ...
+					recdata, ...
+					stimcache.stimvar{sindex}, ...
+					trial, rep);
 
 	% store the dependent variable parameters for later use
 	depvars(trial, rep) = stimcache.stimvar{sindex};
@@ -333,22 +349,13 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 								curvetype, stimcache.stimvar{sindex}, rep, ...
 								atten(L));
 
-	% Store response data in cell array
-	% 	Note: by indexing the response using row values from the 
-	% 	trialRandomSequence array, the resp{} data will be in SORTED form!
-	if channels.nInputChannels > 1
-		% demultiplex the returned vector and store the response
-		% mcDeMux returns an array that is [nChannels, nPoints]
-		resp{stimcache.trialRandomSequence(rep, trial), rep} = ...
-								mcFastDeMux(datatrace, channels.nInputChannels);
-	else
-		resp{stimcache.trialRandomSequence(rep, trial), rep} =  datatrace;
-	end
-
+	% build data matrixto plot
 	for c = 1:channels.nInputChannels
 		tmpY = resp{stimcache.trialRandomSequence(rep, trial), rep}(:, c)';
+		% filter data
 		tmpY = filtfilt(filtB, filtA, ...
-						sin2array(	tmpY, 5, indev.Fs));
+						sin2array(tmpY, 5, indev.Fs));
+		% update plot
 		set(pH(c), 'YData', tmpY + c*yabsmax);
 	end
  	title(ax, tstr);

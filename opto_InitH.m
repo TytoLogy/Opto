@@ -63,6 +63,9 @@ channels.InputChannels = 1:channels.nInputChannels;
 channels.OpticalChannel = 10;
 channels.MonitorChannel = 1;
 channels.MonitorOutputChannel = 9; 
+channels.RecordChannels = num2cell(true(channels.nInputChannels, 1));
+channels.nRecordChannels = sum(cell2mat(channels.RecordChannels));
+channels.RecordChannelList = find(cell2mat(channels.RecordChannels));
 
 % configurationi
 % lock file
@@ -72,7 +75,6 @@ config.CONFIGNAME = 'RZ6OUT200K_RZ5DIN';
 config.ioFunc = @opto_io;
 config.TDTsetFunc = @opto_TDTsettings;
 config.setattenFunc = @RZ6setatten;
-
 
 TDT = struct(	'Enable', 0, ...
 					'indev', indev, ...
