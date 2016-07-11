@@ -13,7 +13,7 @@ function out = writeOptoTrialData(datafile, datatrace, dataID, ...
 % Input Arguments:
 % 
 %	datafile
-% 	datatrace
+% 	datatrace (matrix!)
 % 	dataID
 % 	trialNumber
 % 	repNumber
@@ -33,6 +33,8 @@ function out = writeOptoTrialData(datafile, datatrace, dataID, ...
 % Revision History
 %	7 June 2016 (SJS): file created from HPSearch writeTrialData
 %	10 Jun 2016 (SJS): renamed writeOptoTrialData
+%	11 Jul 2016 (SJS): changed writing of data to writeMatrix (from
+%								writeVector)
 %--------------------------------------------------------------------------
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -63,7 +65,7 @@ writeVector(fp, repNumber, 'int32');
 % write the data
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % write the datatrace (multiplexed if multichannel!)
-writeVector(fp, datatrace, 'double');
+writeMatrix(fp, datatrace, 'double');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % close the file

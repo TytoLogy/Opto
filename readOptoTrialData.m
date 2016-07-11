@@ -31,6 +31,8 @@ function [D, numRead, varargout] = readOptoTrialData(fp, netTrials)
 % Revision History
 %	7 June 2016 (SJS): file created from HPSearch readTrialData
 %	23 June 2016 (SJS): added Dpos output
+%	11 Jul 2016 (SJS): changed reading of data to readMatrix (from
+%								readVector)
 %--------------------------------------------------------------------------
 % TO DO:
 %--------------------------------------------------------------------------
@@ -71,7 +73,7 @@ try
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		% read the trial data
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		D{trial}.datatrace = readVector(fp);
+		D{trial}.datatrace = readMatrix(fp);
 		
 	end
 catch errMsg

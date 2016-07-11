@@ -1,10 +1,11 @@
-function [data, datainfo] = readOptoData(varargin)
+function [data, datainfo] = readOptoData_noDeMux(varargin)
 %------------------------------------------------------------------------
-% [data, datainfo] = readOptoData(varargin)
+% [data, datainfo] = readOptoData_noDeMux(varargin)
 %------------------------------------------------------------------------
 % % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
-% Reads binary data file created by the opto program
+% Reads binary data file created by the opto program (newer versions
+% with channel record option enabled)
 %
 % If a datafile name is provided in varargin (e.g.,
 % readOptoData('c:\mydir\mynicedata.dat'), the program will attempt to 
@@ -27,11 +28,9 @@ function [data, datainfo] = readOptoData(varargin)
 %  Sharad Shanbhag
 %	sshanbhag@neomed.edu
 %------------------------------------------------------------------------
-% Created: 10 June, 2016 (SJS) 
-%			- adapted from readHPData.m
+% Created: 11 July, 2016 (SJS) 
+%			- adapted from readOptoData.m
 % 
-% Revisions:
-%	24 June 2016 (SJS): added data position, status and # read
 %------------------------------------------------------------------------
 % TO DO:
 %	*Documentation!
@@ -117,18 +116,5 @@ fclose(fp);
 datainfo.status = status;
 datainfo.nread = nread;
 datainfo.dpos = dpos;
-
-
-% now, demultiplex the data if there are more than 1 channel in the data
-% traces
-if (datainfo.channels.nInputChannels > 1)  
-	nTrials = length(data);
-	for n = 1:nTrials
-		data{n}.datatrace = mcFastDeMux(data{n}.datatrace, ...
-										datainfo.channels.nInputChannels);
-	end
-end
-
-	
 
 

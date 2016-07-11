@@ -22,7 +22,7 @@ function varargout = opto(varargin)
 
 % Edit the above text to modify the response to help opto
 
-% Last Modified by GUIDE v2.5 09-Jun-2016 19:30:23
+% Last Modified by GUIDE v2.5 11-Jul-2016 15:40:53
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -85,9 +85,16 @@ function opto_OpeningFcn(hObject, eventdata, handles, varargin)
 	%----------------------------------------------------------------
 	% update UI
 	%----------------------------------------------------------------
+	% window position and size
+ 	set(handles.figure1, 'Position', [38 557 739 447]);
+	% audio stimulus selector
 	set(handles.popupAudioSignal, 'String', {'Noise'; 'Tone'; 'OFF'});
-	update_ui_val(handles.popupAudioSignal, 1);
- 	set(handles.figure1, 'Position', [85 615 662 425]);
+	update_ui_val(handles.popupAudioSignal, 1);	
+	% channels 
+	set(handles.tableChannelSelect, 'Data', ...
+											handles.H.TDT.channels.RecordChannels);
+	set(handles.tableChannelSelect, 'ColumnName', 'Record');
+	guidata(hObject, handles)
 	
 	%----------------------------------------------------------------
 	% list of channels for monitor popup
@@ -458,6 +465,16 @@ function editLPFreq_Callback(hObject, eventdata, handles)
 	end
 	% store value
 	handles.H.TDT.LPFreq = val;
+	guidata(hObject, handles);
+%-------------------------------------------------------------------------
+function tableChannelSelect_CellEdit_Callback(hObject, eventdata, handles)
+	cellD = get(hObject, 'Data');
+	matD = cell2mat(cellD);
+	handles.H.TDT.channels.RecordChannels = cellD;
+	handles.H.TDT.channels.nRecordChannels = sum(matD);
+	handles.H.TDT.channels.RecordChannelList = find(matD);
+	set(hObject, 'Data', num2cell(matD))
+	optomsg(handles, 'Changing Channels to Record...');
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -884,4 +901,6 @@ function editComments_CreateFcn(hObject, eventdata, handles)
 	end
 %-------------------------------------------------------------------------
 
-
+ ;
+	
+		
