@@ -249,7 +249,7 @@ figure(fH);
 ax = handles.H.ax;
 % set up plot
 % calculate # of points to acquire (in units of samples)
-xv = linspace(0, handles.H.TDT.AcqDuration, acqpts);
+xv = linspace(0, test.AcqDuration, acqpts);
 xlim([0, acqpts]);
 yabsmax = 5;
 tmpData = zeros(acqpts, channels.nInputChannels);
