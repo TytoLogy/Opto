@@ -36,10 +36,8 @@
 %--------------------------------------------------------------------------
 
 %% settings for processing data
-HPFreq = 400;
+HPFreq = 200;
 LPFreq = 8000;
-
-channel = 10;
 
 %% Read Data
 
@@ -48,7 +46,7 @@ if ispc
 % 	datapath = 'E:\Data\SJS\1058';
 % 	datafile = '1058_20160623_0_02_1500_FREQ.dat';
 	datapath = 'E:\Data\SJS\1012\20160727';
-	datafile = '1012_20160727_5_3_1_OPTO.dat';
+	datafile = '1012_20160727_7_3_1_OPTO.dat';
 else 
 	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1058';
 	datafile = '1058_20160623_0_02_1500_FREQ.dat';
@@ -80,28 +78,27 @@ end
 %% define filter for data
 Fs = Dinf.indev.Fs;
 
+HPFreq = 225;
+LPFreq = 5000;
 
 % build filter
 fband = [HPFreq LPFreq] ./ (0.5 * Fs);
 [filtB, filtA] = butter(5, fband);
 
 % Pull out trials, apply filter, store in matrix
-nchan = length(Dinf.channels.nRecordChannels);
-chanIndex =  find(Dinf.channels.RecordChannelList == channel);
-if isempty(chanIndex)
-	error('%s: channel %d was not recorded.', mfilename, channel);
-end
+channel = 4;
+nchan = length(Dinf.channels.InputChannels);
 
+% time vector for plotting
+t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
 
 if strcmpi(Dinf.test.Type, 'FREQ')
-	% time vector for plotting
-	t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
 	for f = 1:nfreqs
 		dlist = stimindex{f};
 		ntrials = length(dlist);
 		tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
 		for n = 1:ntrials
-			tmpM(:, n) = filtfilt(filtB, filtA, D{dlist(n)}.datatrace(:, chanIndex));
+			tmpM(:, n) = filtfilt(filtB, filtA, D{dlist(n)}.datatrace(:, channel));
 		end
 		stackplot(t, tmpM);
 		title(sprintf('Channel %d, Freq %d', channel, Dinf.test.stimcache.vrange(f)));
@@ -109,17 +106,7 @@ if strcmpi(Dinf.test.Type, 'FREQ')
 end
 
 if strcmpi(Dinf.test.Type, 'OPTO')
-	% time vector for plotting
-	t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
-	ntrials = Dinf.test.stimcache.nstims;
-	tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
-	for n = 1:ntrials
-			tmpM(:, n) = filtfilt(filtB, filtA, D{n}.datatrace(:, chanIndex));
-	end
-	stackplot(t, tmpM);
-	title({datafile, 'Opto Stim', sprintf('Channel %d', channel)}, 'Interpreter', 'none');
-	xlabel('ms')
-	ylabel('Trial')
+	
 end
 
 

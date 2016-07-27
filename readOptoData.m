@@ -40,12 +40,17 @@ function [data, datainfo] = readOptoData(varargin)
 data = [];
 datafile = [];
 datainfo = [];
+DEMUX = 0;
 
 if nargin
 	if exist(varargin{1}, 'file') == 2
 		datafile = varargin{1};
 	else
 		error([mfilename ': datafile ' varargin{1} ' not found.']);
+	end
+	
+	if nargin == 2
+		DEMUX = 1;
 	end
 end
 
@@ -121,11 +126,13 @@ datainfo.dpos = dpos;
 
 % now, demultiplex the data if there are more than 1 channel in the data
 % traces
-if (datainfo.channels.nInputChannels > 1)  
-	nTrials = length(data);
-	for n = 1:nTrials
-		data{n}.datatrace = mcFastDeMux(data{n}.datatrace, ...
-										datainfo.channels.nInputChannels);
+if (datainfo.channels.nInputChannels > 1) 
+	if DEMUX
+		nTrials = length(data);
+		for n = 1:nTrials
+			data{n}.datatrace = mcFastDeMux(data{n}.datatrace, ...
+											datainfo.channels.nInputChannels);
+		end
 	end
 end
 
