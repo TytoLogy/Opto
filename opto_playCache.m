@@ -351,10 +351,15 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 
 	% build data matrixto plot
 	for c = 1:channels.nInputChannels
-		tmpY = resp{stimcache.trialRandomSequence(rep, trial), rep}(:, c)';
-		% filter data
-		tmpY = filtfilt(filtB, filtA, ...
-						sin2array(tmpY, 5, indev.Fs));
+		if channels.RecordChannels{c}
+			tmpY = resp{stimcache.trialRandomSequence(rep, trial), rep}(:, c)';
+			% filter data
+			tmpY = filtfilt(filtB, filtA, ...
+											sin2array(tmpY, 5, indev.Fs));
+		else
+			tmpY = 0 * ...
+					resp{stimcache.trialRandomSequence(rep, trial), rep}(:, c)';
+		end
 		% update plot
 		set(pH(c), 'YData', tmpY + c*yabsmax);
 	end
