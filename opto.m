@@ -493,8 +493,11 @@ function checkMonitorOnOff_Callback(hObject, eventdata, handles)
 		if val == 1
 			% turn on audio monitor for spikes using software trigger 1
 			RPtrig(handles.H.TDT.indev, 1);
-			% update values just to be sure
-			RPsettag(handles.H.TDT.indev, 'MonChan', handles.H.TDT.MonChan);
+			% update channel and gain values in RP circuit just to be sure
+			RPsettag(handles.H.TDT.indev, 'MonChan', ...
+										handles.H.TDT.channels.MonitorChannel);
+			RPsettag(handles.H.TDT.indev, 'MonOutChan', ...
+										handles.H.TDT.channels.MonitorOutputChannel);
 			RPsettag(handles.H.TDT.indev, ...
 											'MonGain', handles.H.TDT.MonitorGain);
 		else
@@ -514,7 +517,7 @@ function popupMonitorChannel_Callback(hObject, eventdata, handles)
 		RPsettag(handles.H.TDT.indev, 'MonChan', val);
 	end
 	% store value
-	handles.H.TDT.MonChan = val;
+	handles.H.TDT.channels.MonitorChannel = val;
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 function editMonGain_Callback(hObject, eventdata, handles)

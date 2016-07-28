@@ -101,7 +101,7 @@ fprintf('\t Nreps: %d', stimcache.nreps);
 % 	fprintf('\t sAM Freq range: %s', curve.sAMFREQrangestr);
 fprintf('\t saveStim: %d', stimcache.saveStim);
 fprintf('\t freezeStim: %d', stimcache.freezeStim);
-fprintf('\t display channel: %d\n', handles.H.TDT.MonChan);
+fprintf('\t display channel: %d\n', handles.H.TDT.channels.MonitorChannel);
 	
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -448,6 +448,7 @@ closeOptoTrialData(datafile, time_end);
 % 		end
 % 	end
 % 	
+
 %--------------------------------------------------------
 %--------------------------------------------------------
 % setup output data structure

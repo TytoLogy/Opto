@@ -11,35 +11,34 @@
 % 		'AMP'				opto stim amplitude
 % 						or some combination of these
 %-------------------------------------------------------------------------
-test.Type = 'OPTO';
+test.Type = 'FREQ';
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % OPTICAL settings
 %-------------------------------------------------------------------------
-test.opto.Enable = 1;
+test.opto.Enable = 0;
 test.opto.Delay = 100;
-test.opto.Dur = 50;
-test.opto.Amp = 1000;
+test.opto.Dur = 200;
+test.opto.Amp = 500; % mV
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Auditory stimulus settings
 %-------------------------------------------------------------------------
-% *** these are mostly ignored for OPTO stimuli!!!!
 % signal
-test.audio.signal.Type = 'noise';
-test.audio.signal.Fmin = 4000;
-test.audio.signal.Fmax = 80000;
+test.audio.signal.Type = 'tone';
+test.audio.signal.Frequency = 5000:2500:80000;
+test.audio.signal.RadVary = 0;
 test.audio.Delay = 100;
-test.audio.Duration = 200;
-test.audio.Level = 0;
-test.audio.Ramp = 1;
+test.audio.Duration = 100;
+test.audio.Level = 80;
+test.audio.Ramp = 5;
 test.audio.Frozen = 0;
-test.audio.ISI = 1000;
+test.audio.ISI = 200;
 
-test.Reps = 20;
-test.Randomize = 0;
+test.Reps = 10;
+test.Randomize = 1;
 
 test.saveStim = 0;
 
