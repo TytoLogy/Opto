@@ -183,7 +183,8 @@
 			[resp, ~] = mcFastDeMux(mcresp, TDT.channels.nInputChannels);
 			for c = 1:TDT.channels.nInputChannels
 				if TDT.channels.RecordChannels{c}
-					tmpY = filtfilt(filtB, filtA, sin2array(resp(:, c)', 5, indev.Fs));
+					tmpY = filtfilt(filtB, filtA, ...
+												sin2array(resp(:, c)', 5, indev.Fs));
 				else
 					tmpY =0*resp(:, c)';
 				end
