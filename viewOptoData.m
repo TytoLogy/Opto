@@ -36,10 +36,8 @@
 %--------------------------------------------------------------------------
 
 %% settings for processing data
-HPFreq = 400;
-LPFreq = 8000;
-
-channel = 10;
+HPFreq = 500;
+LPFreq = 6000;
 
 %% Read Data
 
@@ -50,48 +48,81 @@ if ispc
 	datapath = 'E:\Data\SJS\1012\20160727';
 	datafile = '1012_20160727_5_3_1_OPTO.dat';
 else 
-	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1058';
-	datafile = '1058_20160623_0_02_1500_FREQ.dat';
+	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1012/20160727';
+% 	datafile = '1012_20160727_5_3_1_OPTO.dat';
+	datafile = '1012_20160727_4_3_1_LEVEL.dat';	
 end
 
 % read in data
 [D, Dinf] = readOptoData(fullfile(datapath, datafile));
 
-%% Get test info
-Dinf.test.Type = char(Dinf.test.Type);
-
-fprintf('Test type: %s\n', Dinf.test.Type);
-
-% for FREQ test, find indices of stimuli with same frequency
-if strcmpi(Dinf.test.Type, 'FREQ')
-	freqlist = cell2mat(Dinf.test.stimcache.FREQ);
-	nfreqs = length(Dinf.test.stimcache.vrange);
-	stimindex = cell(nfreqs, 1);
-	for f = 1:nfreqs
-		stimindex{f} = find(Dinf.test.stimcache.vrange(f) == freqlist);
-	end
-	
-elseif strcmpi(Dinf.test.Type, 'OPTO')
-	
-else
-	error('%s: unsupported test type %s', mfilename, Dinf.test.Type);
-end
-
 %% define filter for data
+% sampling rate
 Fs = Dinf.indev.Fs;
-
-
-% build filter
+% build bandpass filter, store coefficients in filtB, filtA
 fband = [HPFreq LPFreq] ./ (0.5 * Fs);
 [filtB, filtA] = butter(5, fband);
 
-% Pull out trials, apply filter, store in matrix
-nchan = length(Dinf.channels.nRecordChannels);
-chanIndex =  find(Dinf.channels.RecordChannelList == channel);
-if isempty(chanIndex)
-	error('%s: channel %d was not recorded.', mfilename, channel);
+%% Get test info
+% convert ascii characters from binary file 
+Dinf.test.Type = char(Dinf.test.Type);
+fprintf('Test type: %s\n', Dinf.test.Type);
+
+% Some test-specific things...
+
+% for FREQ test, find indices of stimuli with same frequency
+switch upper(Dinf.test.Type)
+	case 'FREQ'
+		% list of frequencies, and # of freqs tested
+		freqlist = cell2mat(Dinf.test.stimcache.FREQ);
+		nfreqs = length(Dinf.test.stimcache.vrange);
+		% locate where trials for each frequency are located in the 
+		% stimulus cache list - this will be used to pull out trials of
+		% same frequency
+		stimindex = cell(nfreqs, 1);
+		for f = 1:nfreqs
+			stimindex{f} = find(Dinf.test.stimcache.vrange(f) == freqlist);
+		end
+		
+% for LEVEL test, find indices of stimuli with same level (dB SPL)
+	case 'LEVEL'
+		% list of legvels, and # of levels tested
+		levellist = Dinf.test.stimcache.LEVEL;
+		nlevels = length(Dinf.test.stimcache.vrange);
+		% locate where trials for each frequency are located in the 
+		% stimulus cache list - this will be used to pull out trials of
+		% same frequency
+		stimindex = cell(nlevels, 1);
+		for l = 1:nlevels
+			stimindex{l} = find(Dinf.test.stimcache.vrange(l) == levellist);
+		end
+
+
+% for OPTO test...
+	case 'OPTO'
+	
+	otherwise
+		error('%s: unsupported test type %s', mfilename, Dinf.test.Type);
 end
 
+
+%% Pull out trials, apply filter, store in matrix
+if isfield(Dinf.channels, 'nRecordChannels')
+	nchan = Dinf.channels.nRecordChannels;
+	channelList = Dinf.channels.RecordChannelList;
+else
+	nchan = Dinf.channels.nInputChannels;
+	channelList = Dinf.channels.InputChannels;
+end
+
+
+%% Plot data for one channel
+channelNumber = 10;
+
+channelIndex = find(channelList == channelNumber);
+if isempty(channelIndex)
+	error('Channel not recorded')
+end
 
 if strcmpi(Dinf.test.Type, 'FREQ')
 	% time vector for plotting
@@ -101,10 +132,31 @@ if strcmpi(Dinf.test.Type, 'FREQ')
 		ntrials = length(dlist);
 		tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
 		for n = 1:ntrials
-			tmpM(:, n) = filtfilt(filtB, filtA, D{dlist(n)}.datatrace(:, chanIndex));
+			tmpM(:, n) = filtfilt(filtB, filtA, ...
+											D{dlist(n)}.datatrace(:, channelIndex));
 		end
-		stackplot(t, tmpM);
-		title(sprintf('Channel %d, Freq %d', channel, Dinf.test.stimcache.vrange(f)));
+		stackplot(t, tmpM, 'colormode', 'black');
+		title(sprintf('Channel %d, Freq %d', channelNumber, ...
+									Dinf.test.stimcache.vrange(f)));
+	end
+end
+
+
+if strcmpi(Dinf.test.Type, 'LEVEL')
+	% time vector for plotting
+	t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
+% 	for l = 1:nlevels
+	for l = nlevels
+		dlist = stimindex{l};
+		ntrials = length(dlist);
+		tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
+		for n = 1:ntrials
+			tmpM(:, n) = filtfilt(filtB, filtA, ...
+											D{dlist(n)}.datatrace(:, channelIndex));
+		end
+		stackplot(t, tmpM, 'colormode', 'black');
+		title(sprintf('Channel %d, Level %d', channelNumber, ...
+									Dinf.test.stimcache.vrange(l)));
 	end
 end
 
@@ -114,14 +166,55 @@ if strcmpi(Dinf.test.Type, 'OPTO')
 	ntrials = Dinf.test.stimcache.nstims;
 	tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
 	for n = 1:ntrials
-			tmpM(:, n) = filtfilt(filtB, filtA, D{n}.datatrace(:, chanIndex));
+			tmpM(:, n) = filtfilt(filtB, filtA, D{n}.datatrace(:, channelIndex));
 	end
-	stackplot(t, tmpM);
-	title({datafile, 'Opto Stim', sprintf('Channel %d', channel)}, 'Interpreter', 'none');
+	stackplot(t, tmpM, 'colormode', 'black');
+	title({	datafile, 'Opto Stim', ...
+				sprintf('Channel %d', channelNumber)}, ...
+				'Interpreter', 'none');
 	xlabel('ms')
 	ylabel('Trial')
 end
 
+
+
+%% Plot data for all channels
+for c = 1:nchan
+	channelNumber = channelList(c);
+
+	if strcmpi(Dinf.test.Type, 'FREQ')
+		% time vector for plotting
+		t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
+		for f = 1:nfreqs
+			dlist = stimindex{f};
+			ntrials = length(dlist);
+			tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
+			for n = 1:ntrials
+				tmpM(:, n) = filtfilt(filtB, filtA, ...
+												D{dlist(n)}.datatrace(:, c));
+			end
+			stackplot(t, tmpM);
+			title(sprintf('Channel %d, Freq %d', channelNumber, ...
+										Dinf.test.stimcache.vrange(f)));
+		end
+	end
+
+	if strcmpi(Dinf.test.Type, 'OPTO')
+		% time vector for plotting
+		t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
+		ntrials = Dinf.test.stimcache.nstims;
+		tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
+		for n = 1:ntrials
+				tmpM(:, n) = filtfilt(filtB, filtA, D{n}.datatrace(:, c));
+		end
+		stackplot(t, tmpM);
+		title({	datafile, 'Opto Stim', ...
+					sprintf('Channel %d', channelNumber)}, ...
+					'Interpreter', 'none');
+		xlabel('ms')
+		ylabel('Trial')
+	end
+end
 
 %%
 % filter, plot data
