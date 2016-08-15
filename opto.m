@@ -907,6 +907,6 @@ function editComments_CreateFcn(hObject, eventdata, handles)
 	end
 %-------------------------------------------------------------------------
 
- ;
+ 
 	
 		
