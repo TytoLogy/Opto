@@ -226,10 +226,10 @@ RPsettag(outdev, 'AttenL', MAX_ATTEN);
 RPsettag(outdev, 'AttenR', MAX_ATTEN);
 RPsettag(outdev, 'Mute', 0);
 
-% build filter for plotting data
-fband = [handles.H.TDT.HPFreq handles.H.TDT.LPFreq] ./ ...
-					(0.5 * handles.H.TDT.indev.Fs);
-[filtB, filtA] = butter(3, fband);
+% % build filter for plotting data
+% fband = [handles.H.TDT.HPFreq handles.H.TDT.LPFreq] ./ ...
+% 					(0.5 * handles.H.TDT.indev.Fs);
+% [filtB, filtA] = butter(3, fband);
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -349,16 +349,14 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 								curvetype, stimcache.stimvar{sindex}, rep, ...
 								atten(L));
 
-	% build data matrixto plot
+	% build data matrix to plot from filtered data
+	[monresp, ~] = opto_readbuf(indev, 'monIndex', 'monData');
+	[pdata, ~] = mcFastDeMux(monresp, channels.nInputChannels);
 	for c = 1:channels.nInputChannels
 		if channels.RecordChannels{c}
-			tmpY = resp{stimcache.trialRandomSequence(rep, trial), rep}(:, c)';
-			% filter data
-			tmpY = filtfilt(filtB, filtA, ...
-											sin2array(tmpY, 5, indev.Fs));
+			tmpY = pdata(:, c)';
 		else
-			tmpY = 0 * ...
-					resp{stimcache.trialRandomSequence(rep, trial), rep}(:, c)';
+			tmpY = 0 * pdata(:, c)';
 		end
 		% update plot
 		set(pH(c), 'YData', tmpY + c*yabsmax);
