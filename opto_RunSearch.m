@@ -35,11 +35,11 @@
 								handles.H.audio, ...
 								handles.H.TDT.channels, ...
 								handles.H.opto);
-							
-		% build filter
-		fband = [handles.H.TDT.HPFreq handles.H.TDT.LPFreq] ./ ...
-							(0.5 * handles.H.TDT.indev.Fs);
-		[filtB, filtA] = butter(3, fband);
+% 							
+% 		% build filter
+% 		fband = [handles.H.TDT.HPFreq handles.H.TDT.LPFreq] ./ ...
+% 							(0.5 * handles.H.TDT.indev.Fs);
+% 		[filtB, filtA] = butter(3, fband);
 
 		% turn on audio monitor for spikes using software trigger 1
 		RPtrig(handles.H.TDT.indev, 1);
@@ -178,17 +178,25 @@
 			
 			% play stim, record data
 			[mcresp, ~] = opto_io(S, inpts, indev, outdev, zBUS);
-			[monresp, npts] = opto_readbuf(indev, 'monIndex', 'monData');
-			npts
+			[monresp, ~] = opto_readbuf(indev, 'monIndex', 'monData');
 			
 			% plot returned values
 			[resp, ~] = mcFastDeMux(mcresp, TDT.channels.nInputChannels);
+			[pdata, ~] = mcFastDeMux(monresp, TDT.channels.nInputChannels);
+% 			for c = 1:TDT.channels.nInputChannels
+% 				if TDT.channels.RecordChannels{c}
+% 					tmpY = filtfilt(filtB, filtA, ...
+% 												sin2array(resp(:, c)', 5, indev.Fs));
+% 				else
+% 					tmpY =0*resp(:, c)';
+% 				end
+% 				set(pH(c), 'YData', tmpY + c*yabsmax);
+% 			end
 			for c = 1:TDT.channels.nInputChannels
 				if TDT.channels.RecordChannels{c}
-					tmpY = filtfilt(filtB, filtA, ...
-												sin2array(resp(:, c)', 5, indev.Fs));
+					tmpY = pdata(:, c)';
 				else
-					tmpY =0*resp(:, c)';
+					tmpY =0*pdata(:, c)';
 				end
 				set(pH(c), 'YData', tmpY + c*yabsmax);
 			end
