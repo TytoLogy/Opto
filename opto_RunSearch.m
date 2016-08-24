@@ -178,6 +178,8 @@
 			
 			% play stim, record data
 			[mcresp, ~] = opto_io(S, inpts, indev, outdev, zBUS);
+			[monresp, npts] = opto_readbuf(indev, 'monIndex', 'monData');
+			npts
 			
 			% plot returned values
 			[resp, ~] = mcFastDeMux(mcresp, TDT.channels.nInputChannels);
