@@ -196,7 +196,7 @@
 				if TDT.channels.RecordChannels{c}
 					tmpY = pdata(:, c)';
 				else
-					tmpY =0*pdata(:, c)';
+					tmpY = -1e6*ones(size(pdata(:, c)'));
 				end
 				set(pH(c), 'YData', tmpY + c*yabsmax);
 			end

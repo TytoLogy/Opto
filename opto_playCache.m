@@ -356,7 +356,7 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 		if channels.RecordChannels{c}
 			tmpY = pdata(:, c)';
 		else
-			tmpY = 0 * pdata(:, c)';
+			tmpY = -1e6*ones(size(pdata(:, c)'));
 		end
 		% update plot
 		set(pH(c), 'YData', tmpY + c*yabsmax);
