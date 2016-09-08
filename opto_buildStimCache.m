@@ -136,8 +136,12 @@ switch c.curvetype
 				c = [];
 				return
 		end
+	
+	case 'OPTO-DUR'
 		
-	case {'OPTO', 'OPTO-DELAY', 'OPTO-DUR', 'OPTO-AMP'}
+		
+		
+	case {'OPTO', 'OPTO-DELAY', 'OPTO-AMP'}
 	
 	otherwise
 		error([mfilename ': unsupported curvetype ' c.curvetype])

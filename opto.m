@@ -22,7 +22,7 @@ function varargout = opto(varargin)
 
 % Edit the above text to modify the response to help opto
 
-% Last Modified by GUIDE v2.5 11-Jul-2016 15:40:53
+% Last Modified by GUIDE v2.5 08-Sep-2016 12:58:51
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -139,31 +139,49 @@ function popupAudioSignal_Callback(hObject, eventdata, handles)
 			handles.H.audio.Signal = 'noise';
 			guidata(hObject, handles);
 			% enable, make visible Fmax stuff, update Fmax val
-			enable_ui(handles.textAudioFmin);
-			update_ui_str(handles.textAudioFmin, 'Fmin (Hz)');
-			enable_ui(handles.editAudioFmin);
-			enable_ui(handles.textAudioFmax);
-			enable_ui(handles.editAudioFmax);
+% 			enable_ui(handles.textAudioFmin);
+% 			update_ui_str(handles.textAudioFmin, 'Fmin (Hz)');
+% 			enable_ui(handles.editAudioFmin);
+% 			enable_ui(handles.textAudioFmax);
+% 			enable_ui(handles.editAudioFmax);
+			handles = updateAudioControlsFromType(hObject, handles, stimString);
 			guidata(hObject, handles);
 		case 'TONE'
 			optomsg(handles, 'Tone stimulus selected');
 			handles.H.audio.Signal = 'tone';
 			guidata(hObject, handles);
 			% disable Fmax ctrls, change Fmin name to Freq, update val
-			enable_ui(handles.textAudioFmin);
-			update_ui_str(handles.textAudioFmin, 'Freq. (Hz)');
-			enable_ui(handles.editAudioFmin);
-			disable_ui(handles.textAudioFmax);
-			disable_ui(handles.editAudioFmax);
+% 			enable_ui(handles.textAudioFmin);
+% 			update_ui_str(handles.textAudioFmin, 'Freq. (Hz)');
+% 			enable_ui(handles.editAudioFmin);
+% 			disable_ui(handles.textAudioFmax);
+% 			disable_ui(handles.editAudioFmax);
+			handles = updateAudioControlsFromType(hObject, handles, stimString);
 			guidata(hObject, handles);
+		case '.WAV'
+			optomsg(handles, '.WAV file stimulus selected');
+			handles.H.audio.Signal = 'wav';
+			guidata(hObject, handles);
+			% disable Dur, Ramp;, Fmin, Fmax ctrls, update val
+% 			disable_ui(handles.textAudioDur);
+% 			disable_ui(handles.editAudioDur);
+% 			disable_ui(handles.textAudioRamp);
+% 			disable_ui(handles.editAudioRamp);
+% 			disable_ui(handles.textAudioFmin);
+% 			disable_ui(handles.editAudioFmin);
+% 			disable_ui(handles.textAudioFmax);
+% 			disable_ui(handles.editAudioFmax);
+			handles = updateAudioControlsFromType(hObject, handles, stimString);
+			guidata(hObject, handles);		
 		case 'OFF'
 			optomsg(handles, 'Audio stimulus OFF');
 			handles.H.audio.Signal = 'off';
 			guidata(hObject, handles);
-			disable_ui(handles.textAudioFmin);
-			disable_ui(handles.editAudioFmin);
-			disable_ui(handles.textAudioFmax);
-			disable_ui(handles.editAudioFmax);
+% 			disable_ui(handles.textAudioFmin);
+% 			disable_ui(handles.editAudioFmin);
+% 			disable_ui(handles.textAudioFmax);
+% 			disable_ui(handles.editAudioFmax);
+			handles = updateAudioControlsFromType(hObject, handles, stimString);
 			guidata(hObject, handles);
 	end
 	optomsg(handles, ['Stimulus type set to ' stimString]);
@@ -258,6 +276,10 @@ function editAudioFmax_Callback(hObject, eventdata, handles)
 	end
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
+function editAudioWavFile_Callback(hObject, eventdata, handles)
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -835,7 +857,7 @@ function editOptoAmp_CreateFcn(hObject, eventdata, handles)
 		 set(hObject,'BackgroundColor','white');
 	end
 %-------------------------------------------------------------------------
-	function popupAudioSignal_CreateFcn(hObject, eventdata, handles)
+function popupAudioSignal_CreateFcn(hObject, eventdata, handles)
 	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
 	end
@@ -860,6 +882,10 @@ function editAudioFmin_CreateFcn(hObject, eventdata, handles)
 		 set(hObject,'BackgroundColor','white');
 	end
 function editAudioFmax_CreateFcn(hObject, eventdata, handles)
+	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+		 set(hObject,'BackgroundColor','white');
+	end
+function editAudioWavFile_CreateFcn(hObject, eventdata, handles)
 	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
 	end
@@ -910,3 +936,8 @@ function editComments_CreateFcn(hObject, eventdata, handles)
  
 	
 		
+
+
+
+
+
