@@ -88,7 +88,7 @@ function opto_OpeningFcn(hObject, eventdata, handles, varargin)
 	% window position and size
  	set(handles.figure1, 'Position', [38 557 739 447]);
 	% audio stimulus selector
-	set(handles.popupAudioSignal, 'String', {'Noise'; 'Tone'; 'OFF'});
+	set(handles.popupAudioSignal, 'String', {'Noise'; 'Tone'; '.wav'; 'OFF'});
 	update_ui_val(handles.popupAudioSignal, 1);	
 	% channels 
 	set(handles.tableChannelSelect, 'Data', ...
