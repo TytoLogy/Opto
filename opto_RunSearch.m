@@ -143,9 +143,12 @@
 					tstr = sprintf('Noise [%d:%d] kHz, Rep %d', ...
 											0.001*H.noise.Fmin, ...
 											0.001*H.noise.Fmax, rep);
-				case 'OFF'
+				case 'OFF', '.WAV';
 					stim = syn_null(H.audio.Duration, outdev.Fs, 0);
 					tstr = sprintf('Off, Rep = %d', rep);
+				case '.WAV';
+					stim = syn_null(H.audio.Duration, outdev.Fs, 0);
+					tstr = sprintf('WAV, Rep = %d', rep);
 				otherwise
 					warning('unknown signal')
 			end
