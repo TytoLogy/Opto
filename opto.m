@@ -526,6 +526,8 @@ function checkMonitorOnOff_Callback(hObject, eventdata, handles)
 			% turn off audio monitor for spikes using software trigger 2
 			RPtrig(handles.H.TDT.indev, 2);
 		end
+	else
+		optomsg(handles, 'Cannot turn on Monitor: TDT not enabled!!!');
 	end
 	% store value
 	handles.H.TDT.MonEnable = val;
