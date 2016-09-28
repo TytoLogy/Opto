@@ -45,14 +45,16 @@ if nargin < 2
 end
 if ~isempty(varargin)
 	method = varargin{1};
+else
+	method = 'pchip';
 end
 
 [S_orig, Fs_orig] = audioread(wavfilename);
 
 % build time base for orig data
 t_orig = (0:(length(S_orig) - 1)) * (1/Fs_orig);
-
-[S_new, t_new] = resample(S_orig, t_orig, Fs_new);
+% resample original data
+[S_new, t_new] = resample(S_orig, t_orig, Fs_new, method);
 
 if nargout >= 2
 	varargout{1} = t_new;
