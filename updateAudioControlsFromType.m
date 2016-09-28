@@ -51,7 +51,24 @@ switch stimString
 		disable_ui(handles.editAudioFmax);
 		enable_ui(handles.textAudioWavFile);
 		enable_ui(handles.editAudioWavFile);
-	
+
+	case 'SEARCH'
+		% enable Fmax, Fmin, Dur, Ramp
+		enable_ui(handles.textAudioDelay);
+		enable_ui(handles.editAudioDelay);
+		enable_ui(handles.textAudioDur);
+		enable_ui(handles.editAudioDur);
+		enable_ui(handles.textAudioLevel);
+		enable_ui(handles.editAudioLevel);
+		enable_ui(handles.textAudioRamp);
+		enable_ui(handles.editAudioRamp);
+		enable_ui(handles.textAudioFmin);
+		enable_ui(handles.editAudioFmin);
+		enable_ui(handles.textAudioFmax);
+		enable_ui(handles.editAudioFmax);
+		enable_ui(handles.textAudioWavFile);
+		enable_ui(handles.editAudioWavFile);
+			
 	case 'OFF'
 		disable_ui(handles.textAudioDelay);
 		disable_ui(handles.editAudioDelay);

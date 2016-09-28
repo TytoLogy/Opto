@@ -58,56 +58,16 @@ function opto_OpeningFcn(hObject, eventdata, handles, varargin)
 	%----------------------------------------------------------------
 	handles.output = hObject;
 	%----------------------------------------------------------------
-	% initialize H struct (contains all internal application data)
+	% Initialize things
 	%----------------------------------------------------------------
-	handles.H = opto_InitH;
-	guidata(hObject, handles);
+	handles = opto_InitializeGUI(hObject, eventdata, handles);
 	%----------------------------------------------------------------
-	% Calibration data
-	%----------------------------------------------------------------
-	calfile = 'Optorig_TDTxxxx_4k-90k_5V_cal.mat';
-	% load the calibration data
-	tmpcal = load_cal(calfile);
-	% if tmpcal is a structure, load of calibration file was
-	% hopefully successful, so save it in the handles info
-	if isstruct(tmpcal)
-		handles.H.caldata = tmpcal;
-		% updatelimits based on calibration data
-		handles.H.Lim.F = [handles.H.caldata.Freqs(1) handles.H.caldata.Freqs(end)];
-		update_ui_str(handles.textCalibration, calfile);
-		% update settings
-		guidata(hObject, handles);
-	else
-		errordlg(['Error loading calibration file ' calfile], ...
-					'LoadCal error'); 
-	end
-	
-	%----------------------------------------------------------------
-	% update UI
-	%----------------------------------------------------------------
-	% window position and size
- 	set(handles.figure1, 'Position', [38 557 739 447]);
-	% audio stimulus selector
-	set(handles.popupAudioSignal, 'String', {'Noise'; 'Tone'; '.wav'; 'OFF'});
-	update_ui_val(handles.popupAudioSignal, 1);	
-	% channels 
-	set(handles.tableChannelSelect, 'Data', ...
-											handles.H.TDT.channels.RecordChannels);
-	set(handles.tableChannelSelect, 'ColumnName', 'Record');
-	guidata(hObject, handles)
-	
-	%----------------------------------------------------------------
-	% list of channels for monitor popup
-	%----------------------------------------------------------------
-	clist = cell(16, 1);
-	for c = 1:16
-		clist{c} = num2str(c);
-	end
-	set(handles.popupMonitorChannel, 'String', clist);
-
 	% Update handles structure
+	%----------------------------------------------------------------
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+
 %-------------------------------------------------------------------------
 % --- Outputs from this function are returned to the command line.
 function varargout = opto_OutputFcn(hObject, eventdata, handles) 
@@ -119,7 +79,7 @@ function varargout = opto_OutputFcn(hObject, eventdata, handles)
 	% Get default command line output from handles structure
 	varargout{1} = handles.output;
 %-------------------------------------------------------------------------
-
+%-------------------------------------------------------------------------
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -139,49 +99,37 @@ function popupAudioSignal_Callback(hObject, eventdata, handles)
 			handles.H.audio.Signal = 'noise';
 			guidata(hObject, handles);
 			% enable, make visible Fmax stuff, update Fmax val
-% 			enable_ui(handles.textAudioFmin);
-% 			update_ui_str(handles.textAudioFmin, 'Fmin (Hz)');
-% 			enable_ui(handles.editAudioFmin);
-% 			enable_ui(handles.textAudioFmax);
-% 			enable_ui(handles.editAudioFmax);
-			handles = updateAudioControlsFromType(hObject, handles, stimString);
+			handles = updateAudioControlsFromType(hObject, ...
+																	handles, stimString);
 			guidata(hObject, handles);
 		case 'TONE'
 			optomsg(handles, 'Tone stimulus selected');
 			handles.H.audio.Signal = 'tone';
 			guidata(hObject, handles);
 			% disable Fmax ctrls, change Fmin name to Freq, update val
-% 			enable_ui(handles.textAudioFmin);
-% 			update_ui_str(handles.textAudioFmin, 'Freq. (Hz)');
-% 			enable_ui(handles.editAudioFmin);
-% 			disable_ui(handles.textAudioFmax);
-% 			disable_ui(handles.editAudioFmax);
-			handles = updateAudioControlsFromType(hObject, handles, stimString);
+			handles = updateAudioControlsFromType(hObject, ...
+																	handles, stimString);
 			guidata(hObject, handles);
 		case '.WAV'
 			optomsg(handles, '.WAV file stimulus selected');
 			handles.H.audio.Signal = 'wav';
 			guidata(hObject, handles);
 			% disable Dur, Ramp;, Fmin, Fmax ctrls, update val
-% 			disable_ui(handles.textAudioDur);
-% 			disable_ui(handles.editAudioDur);
-% 			disable_ui(handles.textAudioRamp);
-% 			disable_ui(handles.editAudioRamp);
-% 			disable_ui(handles.textAudioFmin);
-% 			disable_ui(handles.editAudioFmin);
-% 			disable_ui(handles.textAudioFmax);
-% 			disable_ui(handles.editAudioFmax);
-			handles = updateAudioControlsFromType(hObject, handles, stimString);
-			guidata(hObject, handles);		
+			handles = updateAudioControlsFromType(hObject, ...
+																	handles, stimString);
+			guidata(hObject, handles);
+		case 'SEARCH'
+			optomsg(handles, 'Search stimulus selected');
+			handles.H.audio.Signal = 'Search';
+			% enable Fmax, Fmin, Dur, Ramp
+			handles = updateAudioControlsFromType(hObject, ...
+																	handles, stimString);
 		case 'OFF'
 			optomsg(handles, 'Audio stimulus OFF');
 			handles.H.audio.Signal = 'off';
 			guidata(hObject, handles);
-% 			disable_ui(handles.textAudioFmin);
-% 			disable_ui(handles.editAudioFmin);
-% 			disable_ui(handles.textAudioFmax);
-% 			disable_ui(handles.editAudioFmax);
-			handles = updateAudioControlsFromType(hObject, handles, stimString);
+			handles = updateAudioControlsFromType(hObject, ...
+																	handles, stimString);
 			guidata(hObject, handles);
 	end
 	optomsg(handles, ['Stimulus type set to ' stimString]);
@@ -277,6 +225,11 @@ function editAudioFmax_Callback(hObject, eventdata, handles)
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 function editAudioWavFile_Callback(hObject, eventdata, handles)
+	val = read_ui_str(hObject);
+	if ~isempty(val) && isstring(val)
+	else
+		optomsg(handles, '.wav file name must be a string!');
+		update_ui_str(hObject, handles.H.
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 
