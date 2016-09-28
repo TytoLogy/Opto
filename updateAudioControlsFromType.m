@@ -1,7 +1,41 @@
-function handles = updateAudioControlsFromType(hObject, handles, stimString)
+function handles = updateAudioControlsFromType(hObject, ...
+																	handles, stimString)
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+% Opto program
+%------------------------------------------------------------------------
+% updates GUI elements relevant to stimuli
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+% Input Arguments:
+%	hObject
+%	handles
+% 	stimString		'NOISE', 'TONE', 'WAV', 'SEARCH', 'OFF'
+% 
+% Output Arguments:
+% 	handles
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+% Sharad Shanbhag 
+% sshanbhag@neomed.edu
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+% Created: ? August, 2016 (SJS)
+%------------------------------------------------------------------------
+% Revisions
+%	28 Sept 2016 (SJS):
+% 		- added header comments/docs
+% 		- mods for wav file
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+
+% convert stimString to uppercase
 stimString = upper(stimString);
 
+% different actions for each type
 switch stimString
 	case 'NOISE'
 		% enable, make visible Fmax stuff, update Fmax val
@@ -18,6 +52,8 @@ switch stimString
 		enable_ui(handles.editAudioFmin);
 		enable_ui(handles.textAudioFmax);
 		enable_ui(handles.editAudioFmax);
+		disable_ui(handles.buttonAudioWavFile);
+		disable_ui(handles.textAudioWavFile);
 
 	case 'TONE'
 		% disable Fmax ctrls, change Fmin name to Freq, update val
@@ -34,6 +70,8 @@ switch stimString
 		enable_ui(handles.editAudioFmin);
 		disable_ui(handles.textAudioFmax);
 		disable_ui(handles.editAudioFmax);
+		disable_ui(handles.buttonAudioWavFile);
+		disable_ui(handles.textAudioWavFile);
 
 	case '.WAV'
 		% disable Dur, Ramp;, Fmin, Fmax ctrls, update val
@@ -49,8 +87,8 @@ switch stimString
 		disable_ui(handles.editAudioFmin);
 		disable_ui(handles.textAudioFmax);
 		disable_ui(handles.editAudioFmax);
+		enable_ui(handles.buttonAudioWavFile);
 		enable_ui(handles.textAudioWavFile);
-		enable_ui(handles.editAudioWavFile);
 
 	case 'SEARCH'
 		% enable Fmax, Fmin, Dur, Ramp
@@ -66,8 +104,8 @@ switch stimString
 		enable_ui(handles.editAudioFmin);
 		enable_ui(handles.textAudioFmax);
 		enable_ui(handles.editAudioFmax);
+		enable_ui(handles.buttonAudioWavFile);
 		enable_ui(handles.textAudioWavFile);
-		enable_ui(handles.editAudioWavFile);
 			
 	case 'OFF'
 		disable_ui(handles.textAudioDelay);
@@ -82,9 +120,10 @@ switch stimString
 		disable_ui(handles.editAudioFmin);
 		disable_ui(handles.textAudioFmax);
 		disable_ui(handles.editAudioFmax);
+		disable_ui(handles.buttonAudioWavFile);
 		disable_ui(handles.textAudioWavFile);
-		disable_ui(handles.editAudioWavFile);
 
 end
 
+% store changes, done!
 guidata(hObject, handles);
