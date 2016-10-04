@@ -58,5 +58,5 @@ H.opto.Amp = read_ui_str(handles.editOptoAmp, 'n');
 H.audio.ISI = read_ui_str(handles.editISI, 'n');
 
 % wav scale
-H.wav.scalef = read_ui_str(handles.editWavScale, 'n');
+H.wav.scalef = read_ui_str(handles.editAudioWavScale, 'n');
 

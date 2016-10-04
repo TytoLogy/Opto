@@ -55,7 +55,7 @@ switch stimString
 		disable_ui(handles.buttonAudioWavFile);
 		disable_ui(handles.textAudioWavFile);
 		disable_ui(handles.textAudioWavScale);
-		disable_ui(handles.editAudioWavFile);
+		disable_ui(handles.editAudioWavScale);
 
 	case 'TONE'
 		% disable Fmax ctrls, change Fmin name to Freq, update val
@@ -75,7 +75,7 @@ switch stimString
 		disable_ui(handles.buttonAudioWavFile);
 		disable_ui(handles.textAudioWavFile);
 		disable_ui(handles.textAudioWavScale);
-		disable_ui(handles.editAudioWavFile);
+		disable_ui(handles.editAudioWavScale);
 
 	case '.WAV'
 		% disable Dur, Ramp;, Fmin, Fmax ctrls, update val
@@ -94,7 +94,7 @@ switch stimString
 		enable_ui(handles.buttonAudioWavFile);
 		enable_ui(handles.textAudioWavFile);
 		enable_ui(handles.textAudioWavScale);
-		enable_ui(handles.editAudioWavFile);
+		enable_ui(handles.editAudioWavScale);
 
 	case 'SEARCH'
 		% enable Fmax, Fmin, Dur, Ramp
@@ -113,7 +113,7 @@ switch stimString
 		enable_ui(handles.buttonAudioWavFile);
 		enable_ui(handles.textAudioWavFile);
 		enable_ui(handles.textAudioWavScale);
-		enable_ui(handles.editAudioWavFile);
+		enable_ui(handles.editAudioWavScale);
 			
 	case 'OFF'
 		disable_ui(handles.textAudioDelay);
@@ -131,7 +131,7 @@ switch stimString
 		disable_ui(handles.buttonAudioWavFile);
 		disable_ui(handles.textAudioWavFile);
 		disable_ui(handles.textAudioWavScale);
-		disable_ui(handles.editAudioWavFile);
+		disable_ui(handles.editAudioWavScale);
 end
 % store changes, done!
 guidata(hObject, handles);
