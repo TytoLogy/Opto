@@ -2,9 +2,8 @@ function varargout = closeOptoTrialData(datafile, varargin)
 %--------------------------------------------------------------------------
 % out = closeOptoTrialData(datafile, time_end)
 %--------------------------------------------------------------------------
-%% TytoLogy:Experiments:opto Application
+% TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
-
 % Closes trial data for binary data file
 % 
 % Uses BinaryFileToolbox

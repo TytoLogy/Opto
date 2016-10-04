@@ -29,12 +29,12 @@ function handles = updateAudioControlsFromType(hObject, ...
 %	28 Sept 2016 (SJS):
 % 		- added header comments/docs
 % 		- mods for wav file
+%	04 Oct 2016 (SJS): added fields for wav scale factor
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
 % convert stimString to uppercase
 stimString = upper(stimString);
-
 % different actions for each type
 switch stimString
 	case 'NOISE'
@@ -54,6 +54,8 @@ switch stimString
 		enable_ui(handles.editAudioFmax);
 		disable_ui(handles.buttonAudioWavFile);
 		disable_ui(handles.textAudioWavFile);
+		disable_ui(handles.textAudioWavScale);
+		disable_ui(handles.editAudioWavFile);
 
 	case 'TONE'
 		% disable Fmax ctrls, change Fmin name to Freq, update val
@@ -72,6 +74,8 @@ switch stimString
 		disable_ui(handles.editAudioFmax);
 		disable_ui(handles.buttonAudioWavFile);
 		disable_ui(handles.textAudioWavFile);
+		disable_ui(handles.textAudioWavScale);
+		disable_ui(handles.editAudioWavFile);
 
 	case '.WAV'
 		% disable Dur, Ramp;, Fmin, Fmax ctrls, update val
@@ -89,6 +93,8 @@ switch stimString
 		disable_ui(handles.editAudioFmax);
 		enable_ui(handles.buttonAudioWavFile);
 		enable_ui(handles.textAudioWavFile);
+		enable_ui(handles.textAudioWavScale);
+		enable_ui(handles.editAudioWavFile);
 
 	case 'SEARCH'
 		% enable Fmax, Fmin, Dur, Ramp
@@ -106,6 +112,8 @@ switch stimString
 		enable_ui(handles.editAudioFmax);
 		enable_ui(handles.buttonAudioWavFile);
 		enable_ui(handles.textAudioWavFile);
+		enable_ui(handles.textAudioWavScale);
+		enable_ui(handles.editAudioWavFile);
 			
 	case 'OFF'
 		disable_ui(handles.textAudioDelay);
@@ -122,8 +130,8 @@ switch stimString
 		disable_ui(handles.editAudioFmax);
 		disable_ui(handles.buttonAudioWavFile);
 		disable_ui(handles.textAudioWavFile);
-
+		disable_ui(handles.textAudioWavScale);
+		disable_ui(handles.editAudioWavFile);
 end
-
 % store changes, done!
 guidata(hObject, handles);
