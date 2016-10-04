@@ -126,10 +126,12 @@ else
 	TDT = handles.H.TDT;
 	H = handles.H;
 	% make sure mute is off
-	RPsettag(outdev, 'Mute', 0);		
+	RPsettag(outdev, 'Mute', 0);
+	% set rep counter to 0
 	rep = 0;
+	% short pause (necessary?)
 	pause(0.001*H.audio.ISI);
-	% loop
+	% loop while Search Button is engaged
 	while get(hObject, 'Value')
 		rep = rep + 1;
 		% update the H stimulus info from GUI settings
@@ -182,30 +184,20 @@ else
 		% first, demux input data matrices
 		[resp, ~] = mcFastDeMux(mcresp, TDT.channels.nInputChannels);
 		[pdata, ~] = mcFastDeMux(monresp, TDT.channels.nInputChannels);
-% 			for c = 1:TDT.channels.nInputChannels
-% 				if TDT.channels.RecordChannels{c}
-% 					tmpY = filtfilt(filtB, filtA, ...
-% 												sin2array(resp(:, c)', 5, indev.Fs));
-% 				else
-% 					tmpY =0*resp(:, c)';
-% 				end
-% 				set(pH(c), 'YData', tmpY + c*yabsmax);
-% 			end
+		% then assign values to plot
 		for c = 1:TDT.channels.nInputChannels
 			if TDT.channels.RecordChannels{c}
 				tmpY = pdata(:, c)';
 			else 
-				% null values for unrecorded channels
+				% null values for unrecorded channels (set off of axes limit)
 				tmpY = -1e6*ones(size(pdata(:, c)'));
 			end
 			set(pH(c), 'YData', tmpY + c*yabsmax);
 		end
+		% set title string
 		title(ax, tstr, 'Interpreter', 'none');
+		% force drawing
 		drawnow
-		
-		fprintf('outdev:StimDur = %d\t npts = %d\n', ...
-						RPgettag(outdev, 'StimDur'), length(stim));
-		
 		% wait for ISI
 		pause(0.001*H.audio.ISI)
 	end	% END while get(hObject, 'Value')
