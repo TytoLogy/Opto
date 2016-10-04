@@ -233,7 +233,7 @@ function buttonAudioWavFile_Callback(hObject, eventdata, handles)
 		% try to load the wav file data
 		try
 			info = audioinfo(fullfile(pathnm, filenm));
-			wdata = audioread(fullfile(pathnm, filenm));
+			wdata = audioread(fullfile(pathnm, filenm))';
 			optomsg(handles, ['Loaded wav data from ' fullfile(pathnm, filenm)]);
 		catch errMsg
 			% on error, display error message, make sure wav struct
@@ -278,42 +278,6 @@ function editAudioWavScale_Callback(hObject, eventdata, handles)
 		update_ui_str(hObject, handles.H.wav.scalef);
 	end
 	guidata(hObject, handles);
-%-------------------------------------------------------------------------
-function wavout = correctWavFs(handles)
-% function to match wav sample rate to output device sample rate by
-% resampling wav data
-	if ~handles.H.wav.isloaded
-		optomsg(handles, 'cannot correct WavFs: no wav file loaded!')
-		wavout = [];
-		return;
-	elseif isempty(handles.H.wav.info)
-		optomsg(handles, 'cannot correct WavFs: empty info!')
-		wavout = [];
-		return;
-	elseif isempty(handles.H.TDT.outdev.Fs)
-		optomsg(handles, 'cannot correct WavFs: no outdev Fs info!')
-		wavout = [];
-		return;
-	end
-	% get original wav file samplerate
-	fsorig = handles.H.wav.info.SampleRate;
-	% get output device sample rate
-	fsnew = handles.H.TDT.outdev.Fs;
-	% check if resampling is necessary
-	if fsorig == fsnew
-		% if not, just return original data
-		optomsg(handles, 'original Fs matches desired Fs');
-		wavout = handles.H.wav;
-		return;
-	else
-		wavout = handles.H.wav;
-	end
-	% build time base for orig data
-	t_orig = (0:(length(wavout.data) - 1)) * (1/fsorig);
-	% resample original data
-	wavout.data = resample(wavout.data, t_orig, fsnew);
-	wavout.info.SampleRate = fsnew;
-	optomsg(handles, sprintf('New wav data Fs = %.4f', fsnew));
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 
@@ -600,8 +564,15 @@ function editMonGain_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 function buttonSearch_Callback(hObject, eventdata, handles)
+	% check if WAV is loaded and ensure that wav data sample
+	% rate matches the outdev Fs
+	if handles.H.wav.isloaded
+		handles.H.wav = correctWavFs(handles);
+		guidata(hObject, handles);
+	end
 	% execute RunSearch script
 	opto_RunSearch
+%-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 
 %-------------------------------------------------------------------------

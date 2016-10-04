@@ -114,7 +114,7 @@ else
 	set(ax, 'Color', 0.75*[1 1 1]);
 	set(fH, 'Color', 0.75*[1 1 1]);
 	set(fH, 'ToolBar', 'none');
-
+	
 	%------------------------------------------------------------
 	% main loop
 	%------------------------------------------------------------
@@ -125,13 +125,11 @@ else
 	zBUS = handles.H.TDT.zBUS;
 	TDT = handles.H.TDT;
 	H = handles.H;
-
 	% make sure mute is off
 	RPsettag(outdev, 'Mute', 0);		
-
 	rep = 0;
 	pause(0.001*H.audio.ISI);
-
+	% loop
 	while get(hObject, 'Value')
 		rep = rep + 1;
 		% update the H stimulus info from GUI settings
@@ -140,51 +138,14 @@ else
 		% evaluate the call within a different workspace, which is
 		% perhaps an even greater kludge...)
 		H = update_H_from_GUI(handles);
-
-		% generate [2XN] stimulus array. 
+		% generate stimulus
+		[stim, tstr] = opto_getSearchStim(H, outdev);
+		tstr = sprintf('%s, Rep %d', tstr, rep);
+		% convert to [2XN] stimulus array. 
 		% row 1 == output A on RZ6, row 2 = output B
-		switch upper(H.audio.Signal)
-			case 'TONE'
-				stim = synmonosine(	H.audio.Duration, ...
-											outdev.Fs, ...
-											H.tone.Frequency, ...
-											H.caldata.DAscale, ...
-											H.caldata);
-				tstr = sprintf('Tone %d Hz, Rep %d', ...
-										H.tone.Frequency, rep);
-			case 'NOISE'
-				stim = synmononoise_fft(	H.audio.Duration, ...
-													outdev.Fs, ...
-													H.noise.Fmin, ...
-													H.noise.Fmax, ...
-													H.caldata.DAscale, ...
-													H.caldata);
-				tstr = sprintf('Noise [%d:%d] kHz, Rep %d', ...
-										0.001*H.noise.Fmin, ...
-										0.001*H.noise.Fmax, rep);
-			case 'OFF', '.WAV';
-				stim = syn_null(H.audio.Duration, outdev.Fs, 0);
-				tstr = sprintf('Off, Rep = %d', rep);
-			case '.WAV';
-				if H.wav.isloaded
-					stim = H.wav.scalef * H.wav.data;
-				else
-					stim = syn_null(H.audio.Duration, outdev.Fs, 0);
-					optomsg(handles, '!!! wav not loaded !!!');
-				end
-				tstr = sprintf('%s, Rep = %d', H.wav.filenm, rep);
-			case 'SEARCH'
-				stimid = randi(r, 1);
-				
-				
-			otherwise
-				warning('unknown signal')
-		end
-		% ramp onset/offset
-		stim = sin2array(stim, H.audio.Ramp, outdev.Fs);
-		% build stimulus array (opto_io function expects 2Xn array)
-		S = [stim; syn_null(H.audio.Duration, outdev.Fs, 0)];
-
+		% (opto_io function expects 2Xn array)
+		S = [stim; zeros(size(stim))];
+		% calculate attenuation factor
 		if strcmpi(H.audio.Signal, 'OFF')
 			AttenL = 120;
 		else
@@ -213,12 +174,10 @@ else
 		% Set attenuation levels
 		RPsettag(outdev, 'AttenL', AttenL);
 		RPsettag(outdev, 'AttenR', AttenR);
-
 		% play stim, record data
 		[mcresp, ~] = opto_io(S, inpts, indev, outdev, zBUS);
 		% get the monitor response
 		[monresp, ~] = opto_readbuf(indev, 'monIndex', 'monData');
-
 		% plot returned values
 		% first, demux input data matrices
 		[resp, ~] = mcFastDeMux(mcresp, TDT.channels.nInputChannels);
@@ -241,9 +200,12 @@ else
 			end
 			set(pH(c), 'YData', tmpY + c*yabsmax);
 		end
-		title(ax, tstr);
+		title(ax, tstr, 'Interpreter', 'none');
 		drawnow
-
+		
+		fprintf('outdev:StimDur = %d\t npts = %d\n', ...
+						RPgettag(outdev, 'StimDur'), length(stim));
+		
 		% wait for ISI
 		pause(0.001*H.audio.ISI)
 	end	% END while get(hObject, 'Value')
