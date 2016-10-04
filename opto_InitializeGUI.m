@@ -65,7 +65,7 @@ end
 set(handles.figure1, 'Position', [38 557 739 447]);
 % audio stimulus selector (!!!ADD SEARCH!!!)
 set(handles.popupAudioSignal, 'String', ...
-								{'Noise'; 'Tone'; '.wav'; 'OFF'});
+								{'Noise'; 'Tone'; '.wav'; 'Search'; 'OFF'});
 update_ui_val(handles.popupAudioSignal, 1);	
 % channels 
 set(handles.tableChannelSelect, 'Data', ...
