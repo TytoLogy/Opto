@@ -1,5 +1,27 @@
 function buttonTest_Callback(hObject, eventdata, handles)
-% --- Executes on button press in buttonTest in the opto program
+%--------------------------------------------------------------------------
+% buttonTest_Callback(hObject, eventdata, handles)
+%--------------------------------------------------------------------------
+% TytoLogy:Experiments:opto Application
+%--------------------------------------------------------------------------
+%  Executes on button press in buttonTest in the opto program
+% 
+%--------------------------------------------------------------------------
+% Input Arguments:
+% 
+% Output Arguments:
+%
+% See Also: 
+%--------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------
+% Sharad J. Shanbhag
+% sshanbhag@neomed.edu
+%--------------------------------------------------------------------------
+% Revision History
+%	4 Oct 2016 (SJS): added comments/header
+%--------------------------------------------------------------------------
+
 % indev frequency (Hz) = 48828.125
 % outdev frequency (Hz) = 195312.5
 

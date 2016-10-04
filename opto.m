@@ -22,7 +22,7 @@ function varargout = opto(varargin)
 
 % Edit the above text to modify the response to help opto
 
-% Last Modified by GUIDE v2.5 28-Sep-2016 14:19:10
+% Last Modified by GUIDE v2.5 04-Oct-2016 13:25:50
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -236,34 +236,57 @@ function buttonAudioWavFile_Callback(hObject, eventdata, handles)
 			wdata = audioread(fullfile(pathnm, filenm));
 			optomsg(handles, ['Loaded wav data from ' fullfile(pathnm, filenm)]);
 		catch errMsg
-			% on error, tmpcal is empty
-			optomsg(handles, errMsg);
+			% on error, display error message, make sure wav struct
+			% in handles is not loaded
+			optomsg(handles, errMsg.message);
+			handles.H.wav.filenm = '';
+			handles.H.wav.pathnm = '';
+			handles.H.wav.isloaded = 0;
+			handles.H.wav.data = [];
+			handles.H.wav.info = [];
+			update_ui_str(handles.textAudioWavFile, filenm);
+			guidata(hObject, handles);
 			return
 		end
 		% update wav struct in handles
-		handles.wav.filenm = filenm;
-		handles.wav.pathnm = pathnm;
-		handles.wav.isloaded = 1;
-		handles.wav.data = wdata;
-		handles.wav.info = info;
+		handles.H.wav.filenm = filenm;
+		handles.H.wav.pathnm = pathnm;
+		handles.H.wav.isloaded = 1;
+		handles.H.wav.data = wdata;
+		handles.H.wav.info = info;
 		update_ui_str(handles.textAudioWavFile, filenm);
 		guidata(hObject, handles);
 		% check is hardware is running...
 		if handles.H.TDT.outdev.status
 			% if so, resample wav data
-			handles.wav = correctWavFs(handles);
+			handles.H.wav = correctWavFs(handles);
 			guidata(hObject, handles);
 		end
 	else
 		optomsg(handles, 'load wav cancelled');
 	end
 %-------------------------------------------------------------------------
+function editAudioWavScale_Callback(hObject, eventdata, handles)
+	val = read_ui_str(hObject, 'n');
+	if between(val, 0, 10)
+		handles.H.wav.scalef = val;
+		guidata(hObject, handles);
+		optomsg(handles, sprintf('Wav scale factor Fmax: %.0f', ...
+													handles.H.wav.scalef));
+	else
+		optomsg(handles, 'invalid wav scale factor');
+		update_ui_str(hObject, handles.H.wav.scalef);
+	end
+	guidata(hObject, handles);
+%-------------------------------------------------------------------------
 function wavout = correctWavFs(handles)
-	if ~handles.wav.isloaded
+% function to match wav sample rate to output device sample rate by
+% resampling wav data
+	if ~handles.H.wav.isloaded
 		optomsg(handles, 'cannot correct WavFs: no wav file loaded!')
 		wavout = [];
 		return;
-	elseif isempty(handles.wav.info)
+	elseif isempty(handles.H.wav.info)
 		optomsg(handles, 'cannot correct WavFs: empty info!')
 		wavout = [];
 		return;
@@ -273,17 +296,17 @@ function wavout = correctWavFs(handles)
 		return;
 	end
 	% get original wav file samplerate
-	fsorig = handles.wav.info.SampleRate;
+	fsorig = handles.H.wav.info.SampleRate;
 	% get output device sample rate
 	fsnew = handles.H.TDT.outdev.Fs;
 	% check if resampling is necessary
 	if fsorig == fsnew
 		% if not, just return original data
 		optomsg(handles, 'original Fs matches desired Fs');
-		wavout = handles.wav;
+		wavout = handles.H.wav;
 		return;
 	else
-		wavout = handles.wav;
+		wavout = handles.H.wav;
 	end
 	% build time base for orig data
 	t_orig = (0:(length(wavout.data) - 1)) * (1/fsorig);
@@ -291,6 +314,7 @@ function wavout = correctWavFs(handles)
 	wavout.data = resample(wavout.data, t_orig, fsnew);
 	wavout.info.SampleRate = fsnew;
 	optomsg(handles, sprintf('New wav data Fs = %.4f', fsnew));
+%-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 
 
@@ -852,59 +876,77 @@ function textTestScript_CreateFcn(hObject, eventdata, handles)
 	end
 %-------------------------------------------------------------------------
 function editISI_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
 	end
 %-------------------------------------------------------------------------
 function editOptoDelay_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
 	end
 function editOptoDur_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
 	end
 function editOptoAmp_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
 	end
 %-------------------------------------------------------------------------
 function popupAudioSignal_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
 	end
 function editAudioDelay_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
 	end
 function editAudioDur_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
 	end
 function editAudioLevel_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
 	end
 function editAudioRamp_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
 	end
 function editAudioFmin_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
 	end
 function editAudioFmax_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
 	end
 function textAudioWavFile_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
+		 set(hObject,'BackgroundColor','white');
+	end
+function editAudioWavScale_CreateFcn(hObject, eventdata, handles)
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor','white');
 	end
 %-------------------------------------------------------------------------
 function popupMonitorChannel_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-	    set(hObject,'BackgroundColor','white');
+	if ispc && isequal(get(hObject,'BackgroundColor'), ...
+								get(0,'defaultUicontrolBackgroundColor'))
+		 set(hObject,'BackgroundColor','white');
 	end
 %-------------------------------------------------------------------------
 function editAnimal_CreateFcn(hObject, eventdata, handles)
@@ -944,13 +986,4 @@ function editComments_CreateFcn(hObject, eventdata, handles)
 		set(hObject,'BackgroundColor','white');
 	end
 %-------------------------------------------------------------------------
-
- 
-	
-		
-
-
-
-
-
 

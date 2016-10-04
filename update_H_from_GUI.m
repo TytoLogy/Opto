@@ -1,4 +1,27 @@
 function H = update_H_from_GUI(handles)
+%--------------------------------------------------------------------------
+% H = update_H_from_GUI(handles)
+%--------------------------------------------------------------------------
+% TytoLogy:Experiments:opto Application
+%--------------------------------------------------------------------------
+%  updates H struct from GUI
+% 
+%--------------------------------------------------------------------------
+% Input Arguments:
+% 
+% Output Arguments:
+%
+% See Also: 
+%--------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------
+% Sharad J. Shanbhag
+% sshanbhag@neomed.edu
+%--------------------------------------------------------------------------
+% Revision History
+%	4 Oct 2016 (SJS): added comments/header, wav scalef read
+%--------------------------------------------------------------------------
+
 H = handles.H;
 
 % get stimulus type and set H.audio.Signal to appropriate string
@@ -34,5 +57,6 @@ H.opto.Amp = read_ui_str(handles.editOptoAmp, 'n');
 % ISI
 H.audio.ISI = read_ui_str(handles.editISI, 'n');
 
-
+% wav scale
+H.wav.scalef = read_ui_str(handles.editWavScale, 'n');
 
