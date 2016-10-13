@@ -8,6 +8,7 @@ if isempty(varargin)
 	hL = [];
 	mode = 'NEW';
 	colormode = 'DEFAULT';
+
 else
 	hF = [];
 	hAx = [];
@@ -51,10 +52,9 @@ else
 	end
 end
 
-
+% scale Y data
 [npts, nchan] = size(Y);
 yabsmax = max(max(abs(Y)));
-
 
 if strcmpi(mode, 'NEW')
 	figure(hF);
