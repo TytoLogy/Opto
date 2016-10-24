@@ -21,7 +21,17 @@ data = [	0	0.000	0.001; ...
 			200	0.938	5789; ...
 			250	1.014	7620; ...
 		];
-	
+
+% diameter of sensor (mm)
+diameter = 5;
+area = pi * (diameter/2)^2;
+
+data = [data data(:, 3)./area];
+
+
+
+%%
+
 % LINEAR SCALE
 figure(1)
 % plot dial setting vs. power
