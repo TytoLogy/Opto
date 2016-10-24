@@ -8,13 +8,15 @@ if isempty(varargin)
 	hL = [];
 	mode = 'NEW';
 	colormode = 'DEFAULT';
-
+	yabsshift = 0;
+	
 else
 	hF = [];
 	hAx = [];
 	hL = [];
 	mode = 'NEW';
 	colormode = 'DEFAULT';
+	yabsshift = 0;
 	
 	j = 1;
 	while j <= length(varargin)
@@ -39,6 +41,9 @@ else
 				else
 					j = j + 2;
 				end
+			case 'YABSSHIFT'
+				yabsshift = varargin{j+1};
+				j = j + 2;
 			otherwise
 				error('%s: unknown setting %s', mfilename, varargin{j});
 		end
@@ -55,6 +60,7 @@ end
 % scale Y data
 [npts, nchan] = size(Y);
 yabsmax = max(max(abs(Y)));
+yabsmax = yabsmax + yabsmax*yabsshift;
 
 if strcmpi(mode, 'NEW')
 	figure(hF);
