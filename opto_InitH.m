@@ -95,7 +95,7 @@ channels.RecordChannels = num2cell(true(channels.nInputChannels, 1));
 channels.nRecordChannels = sum(cell2mat(channels.RecordChannels));
 channels.RecordChannelList = find(cell2mat(channels.RecordChannels));
 
-% configurationi
+% configuration
 % lock file
 config.TDTLOCKFILE = fullfile(pwd, 'tdtlockfile.mat');
 config.CONFIGNAME = 'RZ6OUT200K_RZ5DIN';
