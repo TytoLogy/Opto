@@ -116,6 +116,9 @@ switch c.curvetype
 				% vary phase randomly from stim to stim 1 = yes, 0 = no
 				% (consistent phase each time)
 				c.radvary = signal.RadVary;
+				
+			case 'wav'
+				
 			otherwise
 				warning([mfilename ': unsupported stimtype ' c.stimtype ' for curvetype ' c.curvetype])
 				c = [];
