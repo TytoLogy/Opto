@@ -6,9 +6,10 @@ function H = opto_InitH
 % 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
-% Input Arguments:
+% Input Arguments: none
 %
 % Output Arguments:
+%	H		struct containing settings for opto program
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -17,24 +18,49 @@ function H = opto_InitH
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 % Revisions
+%	28 Mar 2017 (SJS):
+%		- added constants struct to hold various bits of information
 %------------------------------------------------------------------------
 
+%------------------------------------------------------------------------
+% Some constants
+%------------------------------------------------------------------------
+tmp = {	'LEVEL', ...
+			'FREQ', ...
+			'FRA', ...
+			'OPTO', ...
+			'OPTO-DELAY', ...
+			'OPTO-DUR', ...
+			'OPTO-AMP', ...
+			'STANDALONE' ...
+		};
+constants = struct(	...
+					'TestTypes', [] ...
+						);
+constants.TestTypes = tmp;
+clear tmp
+
+%------------------------------------------------------------------------
+% Define the default "stimulus" structs - these will hold the initial
+% settings for different stimuli (e.g. opto, tone, wav)
+%------------------------------------------------------------------------
+% opto -> optical output settings
 opto = struct(	'Enable', 0, ...
 					'Delay', 0, ...
 					'Dur', 100, ...
 					'Amp', 50, ...
 					'Channel', 10);
-
+% noise -> noise acoustic stimulus
 noise = struct(	'Type', 'noise', ...
 						'Fmin', 4000, ...
 						'Fmax', 80000, ...
 						'PeakAmplitude', 1);
-					
+% tone -> tone acoustic stimulus
 tone = struct(	'Type', 'tone', ...
 					'Frequency', 5000, ...
 					'RadVary', 1, ...
 					'PeakAmplitude', 1);
-
+% wav -> pre-recorded wav file stimulus (e.g., vocalization)
 wav = struct(	'Type', 'wav', ...
 					'filenm', 'P100_11.wav', ...
 					'pathnm', 'C:\TytoLogy\Experiments\Opto', ...
@@ -42,7 +68,9 @@ wav = struct(	'Type', 'wav', ...
 					'data', [], ...
 					'info', [], ...
 					'scalef', 0);
-
+% audio is the struct that holds information about the type of 
+% acoustic stimulus as well as features common to all types of 
+% acoustic stimuli 
 audio = struct(	'Signal', 'noise', ...
 						'Delay', 100, ...
 						'Duration', 200, ...
@@ -52,12 +80,15 @@ audio = struct(	'Signal', 'noise', ...
 						'ISI', 100, ...
 						'AttenL', 0, ...
 						'AttenR', 120);
-					
-		
-% fake calibration data initially			
+
+%------------------------------------------------------------------------
+% fake calibration data initially
+%------------------------------------------------------------------------
 caldata = fake_caldata('Freqs', 3000:1000:96000);
 
+%------------------------------------------------------------------------
 % input device
+%------------------------------------------------------------------------
 indev = struct(	'hardware', 'RZ5D', ...
 						'C', [], ...
 						'handle', [], ...
@@ -66,7 +97,9 @@ indev = struct(	'hardware', 'RZ5D', ...
 						'Circuit_Path', 'C:\TytoLogy\Toolboxes\TDTToolbox\Circuits\RZ5D', ...
 						'Circuit_Name', 'RZ5D_50k_16In_1Out_zBus.rcx', ...
 						'Dnum', 1	);
+%------------------------------------------------------------------------
 % output device
+%------------------------------------------------------------------------
 outdev = struct(	'hardware', 'RZ6', ...
 						'C', [], ...
 						'handle', [], ...
@@ -75,14 +108,21 @@ outdev = struct(	'hardware', 'RZ6', ...
 						'Circuit_Path', 'C:\TytoLogy\Toolboxes\TDTToolbox\Circuits\RZ6', ...
 						'Circuit_Name', 'RZ6_2ChannelOutputAtten_zBus', ...
 						'Dnum', 1	);
-					
+%------------------------------------------------------------------------
+% TDT zBus device
+%------------------------------------------------------------------------
 zBUS.C =[];
 zBUS.handle = [];
 zBUS.status = 0;
-
+%------------------------------------------------------------------------
+% TDT attenuators (not in all setups)
+%------------------------------------------------------------------------
 PA5L = [];
 PA5R = [];
 
+%------------------------------------------------------------------------
+% Hardware settings
+%------------------------------------------------------------------------
 % -- TDT I/O channels ---- default TDT hardware = 'NO_TDT'
 channels.OutputChannelL = 1;
 channels.OutputChannelR = 2;
@@ -95,7 +135,9 @@ channels.RecordChannels = num2cell(true(channels.nInputChannels, 1));
 channels.nRecordChannels = sum(cell2mat(channels.RecordChannels));
 channels.RecordChannelList = find(cell2mat(channels.RecordChannels));
 
+%------------------------------------------------------------------------
 % configuration
+%------------------------------------------------------------------------
 % lock file
 config.TDTLOCKFILE = fullfile(pwd, 'tdtlockfile.mat');
 config.CONFIGNAME = 'RZ6OUT200K_RZ5DIN';
@@ -103,7 +145,9 @@ config.CONFIGNAME = 'RZ6OUT200K_RZ5DIN';
 config.ioFunc = @opto_io;
 config.TDTsetFunc = @opto_TDTsettings;
 config.setattenFunc = @RZ6setatten;
-
+%------------------------------------------------------------------------
+% master TDT interface struct
+%------------------------------------------------------------------------
 TDT = struct(	'Enable', 0, ...
 					'indev', indev, ...
 					'outdev', outdev, ...
@@ -122,7 +166,9 @@ TDT = struct(	'Enable', 0, ...
 					'LPEnable', 1, ...				% enable low pass filter
 					'LPFreq', 10000, ...				% low pass frequency
 					'MonEnable', 0	);
-
+%------------------------------------------------------------------------
+% animal information struct
+%------------------------------------------------------------------------
 animal.Animal = '000';
 animal.Unit = '0';
 animal.Rec = '0';
@@ -134,10 +180,17 @@ animal.ML = '0';
 animal.Depth = '0';
 animal.comments = '';
 
+%------------------------------------------------------------------------
+% test script and data destination
+%------------------------------------------------------------------------
 TestScript = fullfile(pwd, 'defaultscript.m');
 DefaultOutputDir = 'E:\Data\SJS';
 
-H = struct(	'opto', opto, ...
+%------------------------------------------------------------------------
+% build overall H struct
+%------------------------------------------------------------------------
+H = struct(	'constants', constants, ...
+				'opto', opto, ...
 				'noise', noise, ...
 				'tone', tone, ...
 				'wav', wav, ...

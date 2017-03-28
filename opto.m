@@ -630,19 +630,25 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 		optomsg(handles, ['Writing data to file: ' datafile]);
 	end
 	
-	[stimcache, stimseq] = opto_buildStimCache(test, handles.H.TDT, ...
+	% check if test type is 'STANDALONE'
+	if any(strcmpi(test.Type, handles.H.constants.TestTypes))
+		run(test.Script);
+	
+	else
+		% not standalone, so build cache
+		[stimcache, stimseq] = opto_buildStimCache(test, handles.H.TDT, ...
 																handles.H.caldata);
-	handles.H.stimcache = stimcache;
-	handles.H.stimseq = stimseq;
-	guidata(hObject, handles);
-	save stims.mat stimcache stimseq
-	% add stimseq to test struct (kludgey...)
-	test.stimseq = stimseq;
+		handles.H.stimcache = stimcache;
+		handles.H.stimseq = stimseq;
+		guidata(hObject, handles);
+		save stims.mat stimcache stimseq
+		% add stimseq to test struct (kludgey...)
+		test.stimseq = stimseq;
 	
-	% Play stimuli in cache, record neural data
-	testdata = opto_playCache(handles, datafile, stimcache, test); %#ok<NASGU>
-	save('testdata.mat', 'testdata', '-MAT');
-	
+		% Play stimuli in cache, record neural data
+		testdata = opto_playCache(handles, datafile, stimcache, test); %#ok<NASGU>
+		save('testdata.mat', 'testdata', '-MAT');
+	end
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 function buttonEditTestScript_Callback(hObject, eventdata, handles)
