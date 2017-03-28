@@ -35,6 +35,12 @@ function [curvedata, varargout] = noise_opto(handles, datafile)
 
 disp 'running noise_opto!'
 
+curvedata = [];
+if nargout > 1
+	varargout = {};
+end
+return
+
 %--------------------------------------------------------
 %--------------------------------------------------------
 % local copies of structs and vars
