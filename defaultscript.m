@@ -10,6 +10,8 @@
 % 		'DUR'				opto stim duration
 % 		'AMP'				opto stim amplitude
 % 						or some combination of these
+%
+% *** for STANDALONE type, see default_standalone.m ***
 %-------------------------------------------------------------------------
 test.Type = 'LEVEL';
 
