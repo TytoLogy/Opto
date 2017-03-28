@@ -632,7 +632,8 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	
 	% check if test type is 'STANDALONE'
 	if any(strcmpi(test.Type, handles.H.constants.TestTypes))
-		run(test.Script);
+		testdata = test.Function(handles, datafile); %#ok<NASGU>
+		save('testdata.mat', 'testdata', '-MAT');
 	
 	else
 		% not standalone, so build cache

@@ -1,24 +1,15 @@
-function [curvedata, varargout] = opto_playCache(handles, datafile, ...
-											stimcache, test, varargin)
+function [curvedata, varargout] = noise_opto(handles, datafile)
 %--------------------------------------------------------------------------
-% [curvedata, rawdata] = opto_playCache(handles, datafile, ...
-% 											stimcache, test, varargin)
+% [curvedata, rawdata] = noise_opto(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
-% Runs through stimuli in stimcache
+% Standalone experiment script (relies on hardware setup in handles)
 %
 %--------------------------------------------------------------------------
 % Input Arguments:
 %	H		exp handles from calling gui (H)
 %	datafile		name (full path + '.dat' filename) for data
-%	stimcache	struct containing stimuli and info
-% 	test		test struct
-% 
-% 	Optional:
-% 	 varargin{1}		figure handle to response plot
-% 	 varargin{2}		figure handle for raster plot 
-% 	 varargin{3}		handle to text object
 % 
 % Output Arguments:
 % 	curvedata	data structure	
@@ -26,7 +17,7 @@ function [curvedata, varargout] = opto_playCache(handles, datafile, ...
 % 					{nTrials, nreps}
 %
 %--------------------------------------------------------------------------
-% See Also: opto, HPSearch, HPSearch_Run
+% See Also: opto, opto_playCache, HPSearch, HPSearch_Run
 %--------------------------------------------------------------------------
 
 %--------------------------------------------------------------------------
@@ -38,10 +29,11 @@ function [curvedata, varargout] = opto_playCache(handles, datafile, ...
 % jpena@einstein.edu
 %--------------------------------------------------------------------------
 % Revision History:
-%	25 May, 2016 (SJS) created from HPCurve_playCache of HPSearch program
+%	28 March, 2017 (SJS) created from opto_playCache
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
+disp 'running noise_opto!'
 
 %--------------------------------------------------------
 %--------------------------------------------------------

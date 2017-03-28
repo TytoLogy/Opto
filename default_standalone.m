@@ -5,7 +5,7 @@
 %-------------------------------------------------------------------------
 % indicate that this is a standalone script
 test.Type = 'STANDALONE';
-test.Script = 'noise_opto.m';
+test.Function = @noise_opto;
 
 %{
 %-------------------------------------------------------------------------
