@@ -35,48 +35,179 @@ function [curvedata, varargout] = noise_opto(handles, datafile)
 
 disp 'running noise_opto!'
 
-curvedata = [];
-if nargout > 1
-	varargout = {};
-end
-return
-
 %--------------------------------------------------------
 %--------------------------------------------------------
-% local copies of structs and vars
-%--------------------------------------------------------
-%--------------------------------------------------------
-
-% hardware structs
-indev = handles.H.TDT.indev;
-outdev = handles.H.TDT.outdev;
-zBUS = handles.H.TDT.zBUS;
-channels = handles.H.TDT.channels;
-% function handles
-setattenfunc = handles.H.TDT.config.setattenFunc;
-iofunc = handles.H.TDT.config.ioFunc;
-
-% stimulus structs - get these from test struct!!!!
-audio = test.audio;
-opto = test.opto;
-caldata = handles.H.caldata;
-
-%--------------------------------------------------------
-%--------------------------------------------------------
-% Setup Plots using the _configurePlots script
-%--------------------------------------------------------
-%--------------------------------------------------------
-% 	HPCurve_configurePlots
-
-%--------------------------------------------------------
-%--------------------------------------------------------
-% settings and constants, some defined in _constants script
+% settings and constants
 %--------------------------------------------------------
 %--------------------------------------------------------
 L = 1;
 R = 2; %#ok<NASGU>
 MAX_ATTEN = 120; 
+% assign temporary outputs
+curvedata = []; %#ok<NASGU>
+if nargout > 1
+	varargout = {};
+end
 
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% local copies of structs and vars
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+%------------------------------------
+% hardware structs
+%------------------------------------
+indev = handles.H.TDT.indev;
+outdev = handles.H.TDT.outdev;
+zBUS = handles.H.TDT.zBUS;
+channels = handles.H.TDT.channels;
+%------------------------------------
+% function handles
+%------------------------------------
+% setattenfunc is the method to set output signal attenuation
+setattenfunc = handles.H.TDT.config.setattenFunc;
+% iofunc is used for stimulus output, spike input
+iofunc = handles.H.TDT.config.ioFunc;
+%------------------------------------
+% calibration data
+%------------------------------------
+caldata = handles.H.caldata;
+
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+%% define stimulus (optical, audio) structs
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+%------------------------------------
+% OPTICAL settings
+%	Enable	0 -> optical stim OFF, 1 -> optical stim ON
+%	Delay		onset of optical stim from start of sweep (ms)
+% 	Dur		duration (ms) of optical stimulus
+% 	Amp		amplitude (mV) of optical stim
+% 					*** IMPORTANT NOTE ***
+% 					This method of amplitude control will only work with the 
+% 					Thor Labs fiber-coupled LED driver.
+% 					For the Shanghai Dream Laser, output level can only be 
+% 					controlled using the rotary potentiometer on the Laser power
+% 					supply. If using the Shanghai Dream Laser for stimulation,
+% 					set Amp to 5000 millivolts (5 V)
+% 
+% 	To test a range of values (for Delay, Dur, Amp), use a vector of values
+% 	instead of a single number (e.g., [20 40 60] or 20:20:60)
+%------------------------------------
+opto.Enable = 1;
+opto.Delay = 0;
+opto.Dur = 100;
+opto.Amp = 0:25:100;
+%------------------------------------
+% Auditory stimulus settings
+%------------------------------------
+% signal
+audio.signal.Type = 'noise';
+audio.signal.Fmin = 4000;
+audio.signal.Fmax = 80000;
+audio.Delay = 100;
+audio.Duration = 200;
+audio.Level = 0:10:60;
+audio.Ramp = 1;
+audio.Frozen = 0;
+%------------------------------------
+% Presentation settings
+%------------------------------------
+test.Reps = 10;
+test.Randomize = 1;
+audio.ISI = 1000;
+
+%------------------------------------
+% Experiment settings
+%------------------------------------
+% save output stimuli? (0 = no, 1 = yes)
+test.saveStim = 0;
+
+%------------------------------------
+% acquisition/sweep settings
+%------------------------------------
+test.AcqDuration = 1000;
+test.SweepPeriod = 1001;
+
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% build list of unique stimuli
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% varied variables for opto and audio
+optovar = opto.Amp;
+audiovar = audio.Level;
+% total # of varied variables
+nCombinations = numel(optovar) * numel(audiovar);
+% create list to hold parameters for varied variables
+stimList = repmat(	...
+							struct(	'opto', opto, ...
+										'audio', audio ...
+									), ...
+							nCombinations, 1);
+% assign values - in this case, inner loop cycles through audio variables,  
+% outer loop cycles through optical variables
+sindex = 1;
+for oindex = 1:numel(optovar)
+	for aindex = 1:numel(audiovar)
+		stimList(sindex).opto.Amp = optovar(oindex);
+		stimList(sindex).audio.Level = audiovar(aindex);
+		sindex = sindex + 1;
+	end
+end
+% # of total trials;
+nTotalTrials = nCombinations * Reps;
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% randomize in blocks (if necessary) by creating a randomized list of 
+% indices of the different stimuli within stimList
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% preallocate stimIndices
+stimIndices = zeros(nTotalTrials, 1);
+% and assign values
+if Randomize
+	% assign random permutations to stimindices
+	for r = 1:Reps
+		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
+							randperm(nCombinations);
+	end
+else
+	% assign blocked indices to stimindices
+	for r = 1:Reps
+		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
+							1:nCombinations;
+	end
+end
+
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% some stimulus things
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% If noise is frozen, save noise spectrum for future synthesis
+% need to do this AFTER stimList has been built to avoid using up
+% extra memory
+if audio.Frozen
+	[audio.signal.S0, audio.signal.Smag0, audio.signal.Sphase0] = ...
+								synmononoise_fft(audio.Duration, outdev.Fs, ...
+															audio.signal.Fmin, ...
+															audio.signal.Fmax, ...
+															caldata.DAscale, caldata);
+	% ramp the sound on and off (important!) and compute RMS
+	audio.signal.S0 = sin2array(audio.signal.S0, audio.Ramp, outdev.Fs);
+	audio.signal.rms = rms(audio.signal.S0);
+end
+
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% Setup Plots using the _configurePlots script
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% 	HPCurve_configurePlots
+
+%{
 % make sure we have lowercase stimtype and curvetype
 curvetype = upper(stimcache.curvetype);
 stimtype = lower(stimcache.stimtype);
@@ -100,67 +231,70 @@ fprintf('\t Nreps: %d', stimcache.nreps);
 fprintf('\t saveStim: %d', stimcache.saveStim);
 fprintf('\t freezeStim: %d', stimcache.freezeStim);
 fprintf('\t display channel: %d\n', handles.H.TDT.channels.MonitorChannel);
-	
-%--------------------------------------------------------
-%--------------------------------------------------------
+%}
+
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 % calculations of samples for various things
-%--------------------------------------------------------
-%--------------------------------------------------------
-%-------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 % First, get the # of points to send out and to collect
 % for multi-channel data, the number of samples will be
 % given by the product of the # channels and # sample in the acquisition
 % period (tdt.nChannels * AcqDuration * Fs / 1000)
 % acqpts = tdt.nChannels * ms2samples(tdt.AcqDuration, indev.Fs);
-%-------------------------------------------------------
-acqpts = ms2samples(test.AcqDuration, indev.Fs);
+%
+% ¡¡¡ Note that if stimulus duration is a variable, this will have to put
+% within the stimulus output loop!!!
+%-------------------------------------------------------------------------
+acqpts = ms2samples(AcqDuration, indev.Fs);
 outpts = ms2samples(audio.Duration, outdev.Fs); %#ok<NASGU>
-%-------------------------------------------------------
 % stimulus start and stop in samples
-%-------------------------------------------------------
 stim_start = ms2samples(audio.Delay, outdev.Fs);
 stim_end = stim_start + ms2samples(audio.Duration, outdev.Fs); %#ok<NASGU>
 
-%--------------------------------------------------------
-%--------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 % initialize some cells and arrays for storing data and variables
-%--------------------------------------------------------
-%--------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 % resp = raw data traces
-resp = cell(stimcache.ntrials, stimcache.nreps);
-% index of dependent (varying) parameter
-depvars = zeros(stimcache.ntrials, stimcache.nreps);
-depvars_sort = zeros(stimcache.ntrials, stimcache.nreps);
+resp = cell(nTotalTrials, 1);
 	
-%--------------------------------------------------------
-%--------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 % Write data file header - this will create the binary data file
-%--------------------------------------------------------
-%--------------------------------------------------------
-% initialize the data file. write data file header
-% remove the big Sn from stimcache before storing in test
-test.stimcache = rmfield(stimcache, 'Sn');
-% remove redundant elements from test, store in test opts
-testopts = rmfield(test, {'audio', 'opto'});
-writeOptoDataFileHeader(datafile, testopts, audio, opto, channels, ...
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% add elements to test for storage
+test.stimIndices = stimIndices;
+test.stimList = stimList;
+test.nCombinations = nCombinations;
+test.optovar_name = 'Amp';
+test.optovar = opto.Amp;
+test.audiovar_name = 'Level';
+test.audiovar = opto.audio.Level;
+% and write header to data file
+writeOptoDataFileHeader(datafile, test, audio, opto, channels, ...
 								 caldata, indev, outdev);
 
-%--------------------------------------------------------
-%--------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 % Initialize cancel/pause button
-%--------------------------------------------------------
-%--------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 [PanelHandle, cancelButton, pauseButton] = cancelpausepanel;
 	
-%--------------------------------------------------------
-%--------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 % Initialize flags and counters
-%--------------------------------------------------------
-%--------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 % RasterIndex = RASTERLIM;
 cancelFlag = 0;
 pauseFlag = 0; %#ok<NASGU>
-sindex = 1;
+sindex = 0;
 
 if stimcache.saveStim
 	stimWriteFlag = 1; %#ok<NASGU>
@@ -168,11 +302,11 @@ else
 	stimWriteFlag = 0; %#ok<NASGU>
 end
 
-%--------------------------------------------------------
-%--------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 %  setup hardware
-%--------------------------------------------------------
-%--------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 %--------------------------------------------------------
 % STIMULUS and Acquisition (timing)
 %--------------------------------------------------------
@@ -185,11 +319,11 @@ RPsettag(outdev, 'StimDelay', ms2bin(audio.Delay, outFs));
 % Set the Stimulus Duration
 RPsettag(outdev, 'StimDur', ms2bin(audio.Duration, outFs));
 % Set the length of time to acquire data
-RPsettag(indev, 'AcqDur', ms2bin(test.AcqDuration, inFs));
+RPsettag(indev, 'AcqDur', ms2bin(AcqDuration, inFs));
 % Set the total sweep period time - input
-RPsettag(indev, 'SwPeriod', ms2bin(test.SweepPeriod, inFs));
+RPsettag(indev, 'SwPeriod', ms2bin(SweepPeriod, inFs));
 % Set the total sweep period time - output
-RPsettag(outdev, 'SwPeriod', ms2bin(test.SweepPeriod, outFs));
+RPsettag(outdev, 'SwPeriod', ms2bin(SweepPeriod, outFs));
 % Set the sweep count to 1
 RPsettag(indev, 'SwCount', 1);
 RPsettag(outdev, 'SwCount', 1);
@@ -229,10 +363,11 @@ RPsettag(outdev, 'Mute', 0);
 % 					(0.5 * handles.H.TDT.indev.Fs);
 % [filtB, filtA] = butter(3, fband);
 
-%--------------------------------------------------------
-%--------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 % Set up figure for plotting incoming data
-%--------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 % generate figure, axes
 if isempty(handles.H.fH) || ~ishandle(handles.H.fH)
 	handles.H.fH = figure;
@@ -247,7 +382,7 @@ figure(fH);
 ax = handles.H.ax;
 % set up plot
 % calculate # of points to acquire (in units of samples)
-xv = linspace(0, test.AcqDuration, acqpts);
+xv = linspace(0, AcqDuration, acqpts);
 xlim([0, acqpts]);
 yabsmax = 5;
 tmpData = zeros(acqpts, channels.nInputChannels);
@@ -272,38 +407,75 @@ set(ax, 'Color', 0.75*[1 1 1]);
 set(fH, 'Color', 0.75*[1 1 1]);
 set(fH, 'ToolBar', 'none');
 
-%--------------------------------------------------------
-%--------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 % Main Data Loop
 %--------------------------------------------------
 % This is the core of the data acquisition and 
 % stimulus presentation 
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+
 %--------------------------------------------------------
 %--------------------------------------------------------
+% Initialize flags and counters
+%--------------------------------------------------------
+%--------------------------------------------------------
+% RasterIndex = RASTERLIM;
+cancelFlag = 0;
+pauseFlag = 0; %#ok<NASGU>
+sindex = 0;
+
+if test.saveStim
+	stimWriteFlag = 1; %#ok<NASGU>
+else
+	stimWriteFlag = 0; %#ok<NASGU>
+end
+
 
 %-------------------------------------------------------
 % loop through stims
 %-------------------------------------------------------
-while ~cancelFlag && (sindex <= stimcache.nstims)	
-	rep = stimcache.repnum(sindex);
-	trial = stimcache.trialnum(sindex);
-
-	% get the attenuator values
-	atten = stimcache.atten{sindex};
-	% stimulus 
-	Sn = [stimcache.Sn{sindex}; zeros(size(stimcache.Sn{sindex}));];
+while ~cancelFlag && (sindex <= nTotalTrials)
+	% increment counter (was initialized to 0)
+	sindex = sindex + 1;
+	rep = ceil(sindex/nCombinations);
+	
+	% get current stimulus settings from stimList (using stimIndices to 
+	% index into stimList)
+	Stim = stimList(stimIndices(sindex));
+	
+	% synthesize stimulus 
+	if ~audio.Frozen
+		Sn = synmononoise_fft(Stim.audio.Duration, outdev.Fs, ...
+										Stim.audio.signal.Fmin, ...
+										Stim.audio.signal.Fmax, ...
+										caldata.DAscale, caldata);
+		% ramp the sound on and off (important!)
+		Sn = sin2array(Sn, Stim.audio.Ramp, outdev.Fs);
+		rmsval = rms(Sn);
+	else
+		Sn = audio.signal.S0;
+		rmsval = audio.signal.rms;
+	end
+	% need to add dummy channel to Sn since iofunction needs stereo signal
+	Sn = [Sn; zeros(size(Sn)];
+		
+	% get the attenuator settings for the desired SPL
+	atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
 	% set the attenuators
-	setattenfunc(outdev, [atten(L) 120]);
+	setattenfunc(outdev, [atten 120]);
+	
 	% set opto stim
-	if stimcache.opto{sindex}.Enable
+	if Stim.opto.Enable
 		% turn on opto trigger
 		RPsettag(indev, 'OptoEnable', 1);
 		% set opto params
 		RPsettag(indev, 'OptoDelay', ...
-								ms2bin(stimcache.opto{sindex}.Delay, indev.Fs));
+								ms2bin(Stim.opto.Delay, indev.Fs));
 		RPsettag(indev, 'OptoDur', ...
-								ms2bin(stimcache.opto{sindex}.Dur, indev.Fs));
-		RPsettag(indev, 'OptoAmp', 0.001*stimcache.opto{sindex}.Amp);
+								ms2bin(Stim.opto.Dur, indev.Fs));
+		RPsettag(indev, 'OptoAmp', 0.001*Stim.opto.Amp);
 	else
 		% ensure opto trigger is OFF
 		RPsettag(indev, 'OptoEnable', 0);
@@ -319,33 +491,26 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 		% demultiplex the returned vector and store the response
 		% mcDeMux returns an array that is [nChannels, nPoints]
 		tmpD = mcFastDeMux(rawdata, channels.nInputChannels);
-		resp{stimcache.trialRandomSequence(rep, trial), rep} = tmpD;
+		resp{stimIndices(sindex)} = tmpD;
 		recdata = tmpD(:, channels.RecordChannelList);
 	else
-		resp{stimcache.trialRandomSequence(rep, trial), rep} =  rawdata;
+		resp{stimIndices(sindex)} =  rawdata;
 		recdata = rawdata;
 	end
 
 	% Save Data
 	writeOptoTrialData(datafile, ...
-					recdata, ...
-					stimcache.stimvar{sindex}, ...
-					trial, rep);
-
-	% store the dependent variable parameters for later use
-	depvars(trial, rep) = stimcache.stimvar{sindex};
-	depvars_sort(stimcache.trialRandomSequence(rep, trial), rep) = ...
-															stimcache.stimvar{sindex};
+								recdata, ...
+								[Stim.audio.Level Stim.opto.Amp], ...
+								sindex, rep);
 
 	% This is code for letting the user know what in
 	% tarnation is going on in text at bottom of window
 	optomsg(handles, sprintf('%s = %d repetition = %d  atten = %.0f', ...
-								curvetype, stimcache.stimvar{sindex}, rep, ...
-								atten(L)) );
+								curvetype, sindex, rep, atten(L)) );
 	% also, create title for plot for more info
 	tstr = sprintf('%s: %d  Rep: %d  Atten:%.0f', ...
-								curvetype, stimcache.stimvar{sindex}, rep, ...
-								atten(L));
+								curvetype, sindex, rep, atten(L));
 
 	% build data matrix to plot from filtered data
 	[monresp, ~] = opto_readbuf(indev, 'monIndex', 'monData');
@@ -375,9 +540,7 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 	update_ui_str(pauseButton, 'Pause');
 
 	% pause for the inter-stimulus interval
-	pause(0.001*test.audio.ISI);
-	% increment counter
-	sindex = sindex + 1;
+	pause(0.001*audio.ISI);
 end %%% End of REPS LOOP
 
 if cancelFlag
