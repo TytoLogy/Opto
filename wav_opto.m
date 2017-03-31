@@ -1,12 +1,15 @@
-function [curvedata, varargout] = noise_opto(handles, datafile)
+handles.H = opto_initH;
+% function [curvedata, varargout] = wav_opto(handles, datafile)
 %--------------------------------------------------------------------------
 % [curvedata, rawdata] = noise_opto(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
 % Standalone experiment script (relies on hardware setup in handles)
-% Demonstrates playback of noise in conjunction with optical stimulus
-% (for optogenetic experiments)
+% Demonstrates playback of .WAV format files (assume 16 bit, uncompressed)
+%
+% Designed for versions of Matlab that have the audioread() function
+% (v. 2015 and higher ????)
 %
 %--------------------------------------------------------------------------
 % Input Arguments:
@@ -19,7 +22,7 @@ function [curvedata, varargout] = noise_opto(handles, datafile)
 % 					{nTrials, nreps}
 %
 %--------------------------------------------------------------------------
-% See Also: wav_opto,opto, opto_playCache, HPSearch, HPCurve_playCache
+% See Also: noise_opto, opto, opto_playCache
 %--------------------------------------------------------------------------
 
 %--------------------------------------------------------------------------
@@ -30,15 +33,14 @@ function [curvedata, varargout] = noise_opto(handles, datafile)
 % sshanbhag@neomed.edu
 % jpena@einstein.edu
 %--------------------------------------------------------------------------
-% Created:	28 March, 2017 (SJS) from opto_buildStimCache and
-%				opto_playStimCache
+% Created:	31 March, 2017 (SJS) from noise_opto
 %
 % Revision History:
-%	31 March, 2017 (SJS): minor fixes, added comments
+%	31 March, 2017 (SJS) created from noise_opto
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
-disp 'running noise_opto!'
+disp 'running wav_opto!'
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -46,7 +48,7 @@ disp 'running noise_opto!'
 %--------------------------------------------------------
 %--------------------------------------------------------
 L = 1;
-R = 2; %#ok<NASGU>
+R = 2;
 MAX_ATTEN = 120; 
 % assign temporary outputs
 curvedata = []; 
@@ -106,13 +108,34 @@ opto.Dur = 100;
 opto.Amp = 0:25:100;
 %------------------------------------
 % Auditory stimulus settings
+%
+% list of all possible .wav files:
+% 	LFH_1.wav
+% 	LFH_2.wav
+% 	LFH_3.wav
+% 	MFV_1.wav
+% 	MFV_2.wav
+% 	MFV_3.wav
+% 	noisy_1.wav
+% 	noisy_2.wav
+% 	noisy_3.wav
+% 	p100_3_11_v1.wav
+% 	p100_3_11_v2.wav
+% 	p100_3_11_v3.wav
+% 	P100_11.wav
 %------------------------------------
 % signal
-audio.signal.Type = 'noise';
-audio.signal.Fmin = 4000;
-audio.signal.Fmax = 80000;
+audio.signal.Type = 'wav';
+audio.signal.WavPath = 'C:\TytoLogy\Experiments\Wavs';
+audio.signal.WavFile = {	'LFH_1.wav', ...
+								'MFV_1.wav', ...
+								'noisy_1.wav', ...
+								'p100_3_11_v1.wav' };
+audio.signal.WavInfo = fullfile(audio.signal.WavPath, 'wavinfo.mat');
 audio.Delay = 100;
-audio.Duration = 200;
+% Duration is variable for WAV files - this information
+% will be found in the audio.signal.WavInfo
+% audio.Duration = 200;
 audio.Level = 0:10:60;
 audio.Ramp = 1;
 audio.Frozen = 0;
@@ -131,6 +154,7 @@ test.saveStim = 0;
 
 %------------------------------------
 % acquisition/sweep settings
+% will have to be adjusted to deal with wav file durations
 %------------------------------------
 test.AcqDuration = 1000;
 test.SweepPeriod = 1001;
@@ -142,9 +166,10 @@ test.SweepPeriod = 1001;
 %-------------------------------------------------------------------------
 % varied variables for opto and audio
 optovar = opto.Amp;
-audiovar = audio.Level;
+audiolevelvar = audio.Level;
+audiowavvar = audio.signal.WavFile;
 % total # of varied variables
-nCombinations = numel(optovar) * numel(audiovar);
+nCombinations = numel(optovar) * numel(audiolevelvar);
 % create list to hold parameters for varied variables
 stimList = repmat(	...
 							struct(	'opto', opto, ...
@@ -155,9 +180,9 @@ stimList = repmat(	...
 % outer loop cycles through optical variables
 sindex = 1;
 for oindex = 1:numel(optovar)
-	for aindex = 1:numel(audiovar)
+	for aindex = 1:numel(audiolevelvar)
 		stimList(sindex).opto.Amp = optovar(oindex);
-		stimList(sindex).audio.Level = audiovar(aindex);
+		stimList(sindex).audio.Level = audiolevelvar(aindex);
 		sindex = sindex + 1;
 	end
 end
@@ -454,7 +479,7 @@ while ~cancelFlag && (sindex <= nTotalTrials)
 		rmsval = audio.signal.rms;
 	end
 	% need to add dummy channel to Sn since iofunction needs stereo signal
-	Sn = [Sn; zeros(size(Sn))]; %#ok<AGROW>
+	Sn = [Sn; zeros(size(Sn))];
 		
 	% get the attenuator settings for the desired SPL
 	atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
@@ -557,55 +582,6 @@ time_end = now;
 %--------------------------------------------------------
 %--------------------------------------------------------
 closeOptoTrialData(datafile, time_end);
-
-%{
-%						Unnecessary?
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% % Compute mean spike count as a function of depvars and std error bars
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 	if ~cancelFlag
-% 		spike_times = cell(curve.nTrials, curve.nreps);
-% 		spike_counts = zeros(curve.nTrials, curve.nreps);
-% 
-% 		% find the start and end times for counting spikes
-% 		spike_start = ms2samples(analysis.spikeStartTime, indev.Fs);
-% 		spike_end = ms2samples(analysis.spikeEndTime, indev.Fs);
-% 
-% 		if tdt.nChannels > 1
-% 			% loop through the reps
-% 			for q=1:curve.nreps
-% 				% loop through the completed trials (values for the curve)
-% 				for r=1:size(resp, 1)			
-% 					% threshold the data within the spike analysis window
-% 					spikes = spikeschmitt2(resp{r, q}(spike_start:spike_end, SPIKECHAN), ...
-% 													analysis.spikeThreshold, ...
-% 													analysis.spikeWindow, indev.Fs);
-% 					% convert to milliseconds, accounting for offset due to the
-% 					% start of the analysis window
-% 					spike_times{r,q} = analysis.spikeStartTime + 1000*dt*spikes;
-% 					spike_counts(r,q) = length(spike_times{r,q});
-% 				end
-% 			end
-% 		else
-% 			% loop through the reps
-% 			for q=1:curve.nreps
-% 				% loop through the completed trials (values for the curve)
-% 				for r=1:size(resp, 1)			
-% 					% threshold the data within the spike analysis window
-% 					spikes = spikeschmitt2(resp{r, q}(spike_start:spike_end), ...
-% 													analysis.spikeThreshold, ...
-% 													analysis.spikeWindow, indev.Fs);
-% 					% convert to milliseconds, accounting for offset due to the
-% 					% start of the analysis window
-% 					spike_times{r,q} = analysis.spikeStartTime + 1000*dt*spikes;
-% 					spike_counts(r,q) = length(spike_times{r,q});
-% 				end
-% 			end
-% 		end
-% 	end
-%
-%}
 
 %--------------------------------------------------------
 %--------------------------------------------------------
