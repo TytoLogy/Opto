@@ -104,7 +104,9 @@ wavInfo = repmat(	struct(	'Filename',					'', ...
 									'Artist',					[], ...
 									'BitsPerSample',			[], ...
 									'OnsetBin',					[], ...
-									'OffsetBin',				[] ...
+									'OffsetBin',				[], ...
+									'PeakRMS',					[], ...
+									'PeakRMSBin',				[] ...
 								), nFiles, 1);
 % loop through files
 for f = 1:nFiles
@@ -117,12 +119,14 @@ for f = 1:nFiles
 	
 	wav = audioread(wname);
 	
-	findWavOnsetOffset
-	
-	pause
-	
+	% compute rms of signal in blocks, then plot it
+	wavrms = block_rms(wav, ms2bin(5, tmp.SampleRate));
+	[tmp.PeakRMS, tmp.PeakRMSBin] = max(wavrms);
+
+	onoff = findWavOnsetOffset(wav, tmp.SampleRate);
+	tmp.OnsetBin = onoff(1);
+	tmp.OffsetBin = onoff(2);
 	wavInfo(f) = tmp;
-	
 end
 
 
