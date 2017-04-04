@@ -1,6 +1,6 @@
-% function out = findWavOnsetOffset(varargin)
+function out = findWavOnsetOffset(wav, Fs, varargin)
 %--------------------------------------------------------------------------
-% out = findWavOnsetOffset(varargin)
+% out = findWavOnsetOffset(wav, Fs, threshold, rmswin_ms, meanwin)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -24,85 +24,120 @@
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
-load('wavinfo.mat');
-tmp = wavInfo(6);
-wav = audioread(tmp.Filename);
+	rmswin_ms = 0.1;
+	meanwin = 5;
+	threshold = 0.1;
 
-figure(314)
-dt = (1/tmp.SampleRate);
-t_wav = 1000 * dt * ( 0:(tmp.TotalSamples - 1) );
-plot(t_wav, wav, 'b.');
+	if nargin >= 3
+		threshold = varargin{1};
+	end
+	if nargin >= 4
+		rmswin_ms = varargin{2};
+	end
+	if nargin ==4
+		meanwin = varargin{3};
+	end
 
-rmswin_ms = 0.1;
+	onset = rmsonset(wav, Fs, rmswin_ms, meanwin, threshold, 'ONSET');
+	if isrow(wav)
+		wav = fliplr(wav);
+	else
+		wav = flipud(wav);
+	end
+	tmp = rmsonset(wav, Fs, rmswin_ms, meanwin, threshold, 'OFFSET');
+	offset = length(wav) - tmp;
+	
+	out = [onset offset];
 
-wavrms = block_rms(wav, ms2bin(rmswin_ms, tmp.SampleRate));
-t_rms = rmswin_ms * (0:(length(wavrms) - 1));
+end
+%--------------------------------------------------------------------------
+%--------------------------------------------------------------------------
+function out = rmsonset(wav, Fs, rmswin_ms, meanwin, threshold, ptitle)
+%--------------------------------------------------------------------------
+	% plot signal
+	figure(314);
+	dt = (1/Fs);
+	t_wav = 1000 * dt * ( 0:(length(wav) - 1) );
+	plot(t_wav, wav, 'b.');
+	title(ptitle)
 
-dwavrmsdt = diff(wavrms) ./ rmswin_ms;
-dwavrmsdt = [dwavrmsdt(1); dwavrmsdt];
-
-hold on
-plot(t_rms, wavrms, 'g');
-plot(t_rms, dwavrmsdt, 'r');
-hold off
-
-meanwin = 5;
-rmsonsetbin = 0;
-rmsonsetval = [];
-av = zeros(length(t_rms), 1);
-for n = 1:(length(t_rms) - meanwin)
-	av(n) = mean(dwavrmsdt(n:(n+meanwin)));
+	% compute rms of signal in blocks, then plot it
+	wavrms = block_rms(wav, ms2bin(rmswin_ms, Fs));
+	t_rms = rmswin_ms * (0:(length(wavrms) - 1));
 	hold on
-		plot(t_rms(n), av(n), 'r+')
+		plot(t_rms, wavrms, 'g');
 	hold off
-	if (rmsonsetbin == 0) && (av(n) > 0.1)
-		rmsonsetbin = n;
-		rmsonsetval = av(n);
-	end
-end
 
-onsettime = t_rms(rmsonsetbin)-(meanwin*rmswin_ms);
-if onsettime < 0
-	onsettime = t_rms(rmsonsetbin);
-elseif rmsonsetbin == 0
-	rmsonsetbin = 1;
-	onsettime = t_rms(1);
-end
+	% compute 1st derivative of rms
+	dwavrmsdt = diff(wavrms) ./ rmswin_ms;
+	dwavrmsdt = [dwavrmsdt(1); dwavrmsdt];
 
-hold on
-	plot(t_rms(rmsonsetbin), rmsonsetval, 'm*', 'MarkerSize', 9)
-	onPlot = plot(onsettime, rmsonsetval, 'k*', 'MarkerSize', 9);
-hold off
-
-qopts = struct('Default', 'No', 'Interpreter', 'none');
-ptopts = struct('Resize', 'on', 'WindowStyle', 'normal', 'Interpreter', 'none');
-
-butt = 'No';
-while strcmpi(butt, 'No')
-
-	butt = questdlg(	'Accept Onset?', ...
-							'Find onset', ...
-							'Yes', 'No', ...
-							qopts);
-	tmpcell = inputdlg('onset (ms)', 'New Onset', 1, {num2str(onsettime)});
-	if isempty(tmpcell)
-		newval = onsettime;
-	else
-		newval = str2num(tmpcell{1});
-	end
-	if between(newval, 0, max(t_wav))
-		delete(onPlot);
+	% find first avg derivative value above threshold
+	rmsonsetbin = 0;
+	rmsonsetval = [];
+	av = zeros(length(t_rms), 1);
+	for n = 1:(length(t_rms) - meanwin)
+		av(n) = mean(dwavrmsdt(n:(n+meanwin)));
 		hold on
-			onsettime = newval;
-			rmsonsetval = av(t_rms==onsettime);
-			onPlot = plot(onsettime, rmsonsetval, 'k*', 'MarkerSize', 9);
+			plot(t_rms(n), av(n), 'r+')
 		hold off
-		butt = questdlg(	'Accept Onset?', ...
-							'Find onset', ...
-							'Yes', 'No', ...
-							qopts);	
-	else
-		errdlg('Invalid onset', 'find onset')
-		butt = 'No';
+		if (rmsonsetbin == 0) && (av(n) > threshold)
+			rmsonsetbin = n;
+			rmsonsetval = av(n);
+		end
 	end
+	if rmsonsetbin == 0
+		rmsonsetbin = 1;
+		onsettime = t_rms(rmsonsetbin);
+		rmsonsetval = av(rmsonsetbin);
+	else
+		% check onset
+		onsettime = t_rms(rmsonsetbin)-(meanwin*rmswin_ms);
+	end
+	if onsettime < 0
+		onsettime = t_rms(rmsonsetbin);
+	elseif rmsonsetbin == 0
+		rmsonsetbin = 1;
+		onsettime = t_rms(1);
+		rmsonsetval = av(rmsonsetbin);
+	end
+	% plot onset
+	hold on
+		plot(t_rms(rmsonsetbin), rmsonsetval, 'm*', 'MarkerSize', 9)
+		onPlot = plot(onsettime, rmsonsetval, 'k*', 'MarkerSize', 9);
+	hold off
+	drawnow
+	
+% 	% check with user
+% 	qopts = struct('Default', 'No', 'Interpreter', 'none');
+% 	ptopts = struct('Resize', 'on', 'WindowStyle', 'normal', 'Interpreter', 'none');
+% 	butt = 'No';
+% 	while strcmpi(butt, 'No')
+% 
+% 		butt = questdlg(	'Accept Onset?', ...
+% 								'Find onset', ...
+% 								'Yes', 'No', ...
+% 								qopts);
+% 		if strcmpi(butt, 'No')
+% 			tmpcell = inputdlg('onset (ms)', 'New Onset', 1, {num2str(onsettime)});
+% 			if isempty(tmpcell)
+% 				newval = onsettime;
+% 			else
+% 				newval = str2num(tmpcell{1});
+% 			end
+% 			if between(newval, 0, max(t_wav))
+% 				delete(onPlot);
+% 				onsettime = newval;
+% 				rmsonsetval = av(t_rms==onsettime);
+% 				hold on
+% 					onPlot = plot(onsettime, rmsonsetval, 'k*', 'MarkerSize', 9);
+% 				hold off
+% 			else
+% 				errdlg('Invalid onset', 'find onset')
+% 				butt = 'No';
+% 			end
+% 		end
+% 	end
+	% return onset bin
+	out =  ms2bin(onsettime, Fs);
 end
