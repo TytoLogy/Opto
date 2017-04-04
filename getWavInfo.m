@@ -26,12 +26,12 @@ function wavinfo = getWavInfo(varargin)
 %--------------------------------------------------------------------------
 
 %--------------------------------------------------------------------------
-% if file name was given as input
+% Load info file?
 %--------------------------------------------------------------------------
 % check if infofile name was provided
 if nargin
 	% if so, load wavinfo
-	infofile = varargin{1}
+	infofile = varargin{1};
 	if exist(infofile, 'file')
 		load(infofile, '-MAT', 'wavinfo');
 		return
