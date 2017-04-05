@@ -24,35 +24,74 @@ function out = findWavOnsetOffset(wav, Fs, varargin)
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
+	%------------------------------------------------------------------------
+	% defaults
+	%------------------------------------------------------------------------
+	userconfirm = 0;
 	rmswin_ms = 0.1;
 	meanwin = 5;
 	threshold = 0.1;
+	
+	%------------------------------------------------------------------------
+	% check input arguments
+	%------------------------------------------------------------------------
+	nvararg = length(varargin);
+	if nvararg
+		aindex = 1;
+		while aindex <= nvararg
+			switch(upper(varargin{aindex}))
 
-	if nargin >= 3
-		threshold = varargin{1};
-	end
-	if nargin >= 4
-		rmswin_ms = varargin{2};
-	end
-	if nargin ==4
-		meanwin = varargin{3};
+				% select if user confirms selection
+				case 'USERCONFIRM'
+					userconfirm = 1;
+					aindex = aindex + 1;
+
+				case 'THRESHOLD'
+					threshold = varargin{aindex + 1};
+					aindex = aindex + 2;
+
+				case 'RMSWIN'
+					rmswin_ms = varargin{aindex + 1};
+					aindex = aindex + 2;
+
+				case 'MEANWIN'
+					meanwin = varargin{aindex + 1};
+					aindex = aindex + 2;
+
+				otherwise
+					error('%s: Unknown option %s', mfilename, varargin{aindex});
+			end
+		end
 	end
 
-	onset = rmsonset(wav, Fs, rmswin_ms, meanwin, threshold, 'ONSET');
+	%------------------------------------------------------------------------
+	% find onset
+	%------------------------------------------------------------------------
+	onset = rmsonset(wav, Fs, userconfirm, rmswin_ms, meanwin, ...
+																		threshold, 'ONSET');
+	%------------------------------------------------------------------------
+	% find offset
+	%------------------------------------------------------------------------
+	% flip wav around
 	if isrow(wav)
 		wav = fliplr(wav);
 	else
 		wav = flipud(wav);
 	end
-	tmp = rmsonset(wav, Fs, rmswin_ms, meanwin, threshold, 'OFFSET');
+	% then use "onset" to find offset
+	tmp = rmsonset(wav, Fs, userconfirm, rmswin_ms, meanwin, ...
+																		threshold, 'OFFSET');
+	% subtract from total length to give offset
 	offset = length(wav) - tmp;
-	
+	% build output
 	out = [onset offset];
+	
+end	% END of findWavOnset
 
-end
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
-function out = rmsonset(wav, Fs, rmswin_ms, meanwin, threshold, ptitle)
+function out = rmsonset(wav, Fs, userconfirm, rmswin_ms, ...
+														meanwin, threshold, ptitle)
 %--------------------------------------------------------------------------
 	% plot signal
 	figure(314);
@@ -108,36 +147,39 @@ function out = rmsonset(wav, Fs, rmswin_ms, meanwin, threshold, ptitle)
 	hold off
 	drawnow
 	
-% 	% check with user
-% 	qopts = struct('Default', 'No', 'Interpreter', 'none');
-% 	ptopts = struct('Resize', 'on', 'WindowStyle', 'normal', 'Interpreter', 'none');
-% 	butt = 'No';
-% 	while strcmpi(butt, 'No')
-% 
-% 		butt = questdlg(	'Accept Onset?', ...
-% 								'Find onset', ...
-% 								'Yes', 'No', ...
-% 								qopts);
-% 		if strcmpi(butt, 'No')
-% 			tmpcell = inputdlg('onset (ms)', 'New Onset', 1, {num2str(onsettime)});
-% 			if isempty(tmpcell)
-% 				newval = onsettime;
-% 			else
-% 				newval = str2num(tmpcell{1});
-% 			end
-% 			if between(newval, 0, max(t_wav))
-% 				delete(onPlot);
-% 				onsettime = newval;
-% 				rmsonsetval = av(t_rms==onsettime);
-% 				hold on
-% 					onPlot = plot(onsettime, rmsonsetval, 'k*', 'MarkerSize', 9);
-% 				hold off
-% 			else
-% 				errdlg('Invalid onset', 'find onset')
-% 				butt = 'No';
-% 			end
-% 		end
-% 	end
+	if userconfirm
+		% check with user
+		qopts = struct('Default', 'No', 'Interpreter', 'none');
+% 		ptopts = struct('Resize', 'on', 'WindowStyle', 'normal', 'Interpreter', 'none');
+		butt = 'No';
+		while strcmpi(butt, 'No')
+
+			butt = questdlg(	'Accept Onset?', ...
+									'Find onset', ...
+									'Yes', 'No', ...
+									qopts);
+			if strcmpi(butt, 'No')
+				tmpcell = inputdlg('onset (ms)', 'New Onset', 1, {num2str(onsettime)});
+				if isempty(tmpcell)
+					newval = onsettime;
+				else
+					newval = str2num(tmpcell{1}); %#ok<ST2NM>
+				end
+				if between(newval, 0, max(t_wav))
+					delete(onPlot);
+					onsettime = newval;
+					rmsonsetval = av(t_rms==onsettime);
+					hold on
+						onPlot = plot(onsettime, rmsonsetval, 'k*', 'MarkerSize', 9);
+					hold off
+				else
+					errdlg('Invalid onset', 'find onset')
+					butt = 'No';
+				end
+			end
+		end
+	end
+	
 	% return onset bin
 	out =  ms2bin(onsettime, Fs);
 end
