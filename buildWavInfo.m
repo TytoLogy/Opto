@@ -1,6 +1,6 @@
 function [wavInfo, varargout] = buildWavInfo(varargin)
 %--------------------------------------------------------------------------
-% wavinfo = buildWavInfo(wavDir, wavInfoFile)
+% wavinfo = buildWavInfo(wavDir, wavInfoFile, RMSwin)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -12,10 +12,35 @@ function [wavInfo, varargout] = buildWavInfo(varargin)
 %						 		directory
 %
 % 		wavDir				path to directory with .WAV files
+% 								if empty <''>, user will be prompted to provide
+% 								directory
+% 								
 % 		wavInfoFile			path/name of wavInfoFile to create
-%
+% 								if empty <''> user will be prompted to provide
+% 								filename
+% 
+% 		RMSwin				rms window size (milliseconds) for computing rms in
+% 								PeakRMS
+% 								
 % Output Arguments:
-%		wavInfo				struct array with information about wavfiles		
+%		wavInfo				struct array with information about wavfiles
+% 
+%	Fields in struct wavInfo:
+% 			Filename						name of file
+% 			CompressionMethod			compressed?
+% 			NumChannels					# of audio channels
+% 			SampleRate					sampling rate
+% 			TotalSamples				length of audio in samples
+% 			Duration						duration of audio in seconds
+% 			Title							metadata
+% 			Comment						metadata
+% 			Artist						metadata
+% 			BitsPerSample				bit depth
+% 			OnsetBin						sound onset sample
+% 			OffsetBin					sound offset sample
+% 			PeakRMS						max RMS value
+% 			PeakRMSTime					max RMS value time
+% 			PeakRMSWin					window size (ms) used to compute RMS
 %--------------------------------------------------------------------------
 % See Also: getWavInfo, opto
 %--------------------------------------------------------------------------
@@ -28,12 +53,15 @@ function [wavInfo, varargout] = buildWavInfo(varargin)
 % Created:	4 April, 2017 (SJS)
 %
 % Revision History:
+%	5 Apr 2017:	changed PeakRMSBin to PeakRMSTime, added PeakRMSWin to 
+%					wavInfo struct
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
 wavDir = ''; %#ok<NASGU>
 wavInfoFile = '';
 wavInfo = [];
+rmswin = 5;
 
 %--------------------------------------------------------------------------
 % process inputs
@@ -42,23 +70,30 @@ wavInfo = [];
 if nargin
 	% if so, use that directory
 	wavDir = varargin{1};
-	if ~exist(wavDir, 'dir')
-		error('%s: could not find directory %s', mfilename, wavDir);
+	if ~isempty(wavDir)
+		if ~exist(wavDir, 'dir')
+			error('%s: could not find directory %s', mfilename, wavDir);
+		end
 	end
-	if nargin == 2
+	if nargin >= 2
 		wavInfoFile = varargin{2};
-		if exist(wavInfoFile, 'file')
-			warning('%s: wav info file %s exists!', mfilename, wavInfoFile);
-			butt = questdlg(	'Overwrite existing wav info file?', ...
-									'Wav Info Exists!', ...
-									'Yes', 'No', 'Cancel', ...
-									struct('Default', 'No', 'Interpreter', 'none'));
-			if strcmpi(butt, 'No')
-				wavInfoFile = '';
-			elseif strcmpi(butt, 'Cancel')
-				return
+		if ~isempty(wavInfoFile)
+			if exist(wavInfoFile, 'file')
+				warning('%s: wav info file %s exists!', mfilename, wavInfoFile);
+				butt = questdlg(	'Overwrite existing wav info file?', ...
+										'Wav Info Exists!', ...
+										'Yes', 'No', 'Cancel', ...
+										struct('Default', 'No', 'Interpreter', 'none'));
+				if strcmpi(butt, 'No')
+					wavInfoFile = '';
+				elseif strcmpi(butt, 'Cancel')
+					return
+				end
 			end
 		end
+	end
+	if nargin == 5
+		rmswin = varargin{3};
 	end
 else
 	% otherwise, get directory name
@@ -82,16 +117,19 @@ if isempty(wavInfoFile)
 	end
 end
 
-
+% find wav files in wavDir directory
 wavFiles = dir([wavDir filesep '*.wav']);
+nFiles = length(wavFiles);
 if isempty(wavFiles)
 	error('%s: no .WAV files in %s!', mfilename, wavDir);
+else
+	fprintf('%s: found %d .WAV files in %s\n', mfilename, nFiles);
 end
 
 %--------------------------------------------------------------------------
 % process files
 %--------------------------------------------------------------------------
-nFiles = length(wavFiles);
+
 % preallocate wavInfo
 wavInfo = repmat(	struct(	'Filename',					'', ...
 									'CompressionMethod',		'', ...
@@ -106,7 +144,8 @@ wavInfo = repmat(	struct(	'Filename',					'', ...
 									'OnsetBin',					[], ...
 									'OffsetBin',				[], ...
 									'PeakRMS',					[], ...
-									'PeakRMSBin',				[] ...
+									'PeakRMSTime',				[], ...
+									'PeakRMSWin',				rmswin ...
 								), nFiles, 1);
 % loop through files
 for f = 1:nFiles
@@ -116,19 +155,18 @@ for f = 1:nFiles
 	fprintf('Processing file %s\n', wname);
 	tmp.OnsetBin = 1;
 	tmp.OffsetBin = tmp.TotalSamples;
-	
+	% read in wav data
 	wav = audioread(wname);
-	
-	% compute rms of signal in blocks, then plot it
-	wavrms = block_rms(wav, ms2bin(5, tmp.SampleRate));
-	[tmp.PeakRMS, tmp.PeakRMSBin] = max(wavrms);
-
+	% compute rms of signal in blocks, then find max value and location bin
+	wavrms = block_rms(wav, ms2bin(rmswin, tmp.SampleRate));
+	[tmp.PeakRMS, PeakRMSBin] = max(wavrms);
+	tmp.PeakRMSTime = PeakRMSBin * rmswin;
+	tmp.PeakRMSWin = rmswin;
 	onoff = findWavOnsetOffset(wav, tmp.SampleRate);
 	tmp.OnsetBin = onoff(1);
 	tmp.OffsetBin = onoff(2);
 	wavInfo(f) = tmp;
 end
-
 
 %--------------------------------------------------------------------------
 % Save wavInfo to wavInfoFile

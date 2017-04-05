@@ -1,14 +1,26 @@
 function out = findWavOnsetOffset(wav, Fs, varargin)
 %--------------------------------------------------------------------------
-% out = findWavOnsetOffset(wav, Fs, threshold, rmswin_ms, meanwin)
+% out = findWavOnsetOffset(wav, Fs, 'UserConfirm', 'Threshold', threshold, 
+% 												 'RMSWin', rmswin_ms, 'MeanWin', meanwin)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
-%
+% finds onset, offset of audio signal wav sampled at Fs samples/sec
 %--------------------------------------------------------------------------
 % Input Arguments:
-%
+%	wav	audio signal
+%	Fs		sample rate (samples/sec)
+% 
+% 	Optional Inputs:
+% 	'UserConfirm'		if included as input, automatically detected onset and 
+% 							offset will need to be confirmed by user
+% 	'Threshold'			threshold dV/dt value to detect change from background
+% 							mean RMS value. Default: 0.1 V/ms
+% 	'RMSWin'				window for computing RMS. Default: 0.1 ms
+% 	'MeanWin'			# bins for computing mean for threshold. Default: 5 bins
+% 	
 % Output Arguments:
+%	 [onset offset] bins in 1X2 vector
 %--------------------------------------------------------------------------
 % See Also: getWavInfo, opto
 %--------------------------------------------------------------------------
