@@ -1,4 +1,4 @@
-function wavinfo = getWavInfo(varargin)
+function wavInfo = getWavInfo(varargin)
 %--------------------------------------------------------------------------
 % [curvedata, rawdata] = noise_opto(handles, datafile)
 %--------------------------------------------------------------------------
@@ -33,7 +33,7 @@ if nargin
 	% if so, load wavinfo
 	infofile = varargin{1};
 	if exist(infofile, 'file')
-		load(infofile, '-MAT', 'wavinfo');
+		load(infofile, '-MAT', 'wavInfo');
 		return
 	else
 		error('%s: could not load file %s', mfilename, infofile);
@@ -43,11 +43,11 @@ else
 	[filenm, pathnm] = uigetfile({'*.mat'; '*.*'}, ...
 											'Load wav info file...');
 	if filenm
-		load(fullfile(pathnm, filenm), '-MAT', 'wavinfo');
+		load(fullfile(pathnm, filenm), '-MAT', 'wavInfo');
 		return
 	else
 		fprintf('%s: load wavinfo cancelled\n', mfilename);
-		wavinfo = [];
+		wavInfo = [];
 		return
 	end
 end

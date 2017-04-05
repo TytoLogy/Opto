@@ -1,5 +1,4 @@
-handles.H = opto_initH;
-% function [curvedata, varargout] = wav_opto(handles, datafile)
+function [curvedata, varargout] = wav_opto(handles, datafile)
 %--------------------------------------------------------------------------
 % [curvedata, rawdata] = noise_opto(handles, datafile)
 %--------------------------------------------------------------------------
@@ -52,9 +51,9 @@ R = 2;
 MAX_ATTEN = 120; 
 % assign temporary outputs
 curvedata = []; 
-if nargout > 1
-	varargout = {};
-end
+% if nargout > 1
+% 	varargout = {};
+% end
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -131,12 +130,14 @@ audio.signal.WavFile = {	'LFH_1.wav', ...
 									'MFV_1.wav', ...
 									'noisy_1.wav', ...
 									'p100_3_11_v1.wav' };
-audio.signal.WavInfo = fullfile(audio.signal.WavPath, 'wavinfo.mat');
+% wavInfo = getWavInfo(fullfile(audio.signal.WavPath, 'wavinfo.mat'));
+wavInfo = getWavInfo('/Users/sshanbhag/Work/Code/Matlab/dev/TytoLogy/Experiments/Calls/wavinfo.mat');
 audio.Delay = 100;
 % Duration is variable for WAV files - this information
 % will be found in the audio.signal.WavInfo
-% audio.Duration = 200;
-audio.Level = 0:10:60;
+% For now, this will be a dummy value
+audio.Duration = 200;
+audio.Level = 75;
 audio.Ramp = 1;
 audio.Frozen = 0;
 %------------------------------------
@@ -166,10 +167,11 @@ test.SweepPeriod = 1001;
 %-------------------------------------------------------------------------
 % varied variables for opto and audio
 optovar = opto.Amp;
-audiolevelvar = audio.Level;
 audiowavvar = audio.signal.WavFile;
 % total # of varied variables
-nCombinations = numel(optovar) * numel(audiolevelvar);
+nCombinations = numel(optovar) * numel(audiowavvar);
+% # of total trials;
+nTotalTrials = nCombinations * test.Reps;
 % create list to hold parameters for varied variables
 stimList = repmat(	...
 							struct(	'opto', opto, ...
@@ -178,16 +180,15 @@ stimList = repmat(	...
 							nCombinations, 1);
 % assign values - in this case, inner loop cycles through audio variables,  
 % outer loop cycles through optical variables
-sindex = 1;
+sindex = 0;
 for oindex = 1:numel(optovar)
-	for aindex = 1:numel(audiolevelvar)
-		stimList(sindex).opto.Amp = optovar(oindex);
-		stimList(sindex).audio.Level = audiolevelvar(aindex);
+	for aindex = 1:numel(audiowavvar)
 		sindex = sindex + 1;
+		stimList(sindex).opto.Amp = optovar(oindex);
+		stimList(sindex).audio.signal.WavFile = audiowavvar{aindex};
 	end
 end
-% # of total trials;
-nTotalTrials = nCombinations * Reps;
+
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % randomize in blocks (if necessary) by creating a randomized list of 
@@ -197,15 +198,15 @@ nTotalTrials = nCombinations * Reps;
 % preallocate stimIndices
 stimIndices = zeros(nTotalTrials, 1);
 % and assign values
-if Randomize
+if test.Randomize
 	% assign random permutations to stimindices
-	for r = 1:Reps
+	for r = 1:test.Reps
 		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
 							randperm(nCombinations);
 	end
 else
 	% assign blocked indices to stimindices
-	for r = 1:Reps
+	for r = 1:test.Reps
 		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
 							1:nCombinations;
 	end
@@ -229,6 +230,18 @@ if audio.Frozen
 	audio.signal.S0 = sin2array(audio.signal.S0, audio.Ramp, outdev.Fs);
 	audio.signal.rms = rms(audio.signal.S0);
 end
+
+% check durations of stimuli
+% first, create a vector stimulus durations
+[tmp{1:numel(audiowavvar)}] = deal(wavInfo.Duration);
+durations = cell2mat(tmp);
+clear tmp;
+maxDur = max(1000*durations);
+if maxDur > test.AcqDuration
+	error('%s: max wav duration (%d) is > AcqDuration (%d)', mfilename, ...
+							maxDur, test.AcqDuration);
+end
+
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -278,11 +291,11 @@ fprintf('\t display channel: %d\n', handles.H.TDT.channels.MonitorChannel);
 % ¡¡¡ Note that if stimulus duration is a variable, this will have to put
 % within the stimulus output loop!!!
 %-------------------------------------------------------------------------
-acqpts = ms2samples(AcqDuration, indev.Fs);
-outpts = ms2samples(audio.Duration, outdev.Fs); %#ok<NASGU>
+acqpts = ms2samples(test.AcqDuration, indev.Fs);
+outpts = ms2samples(audio.Duration, outdev.Fs); 
 % stimulus start and stop in samples
 stim_start = ms2samples(audio.Delay, outdev.Fs);
-stim_end = stim_start + ms2samples(audio.Duration, outdev.Fs); %#ok<NASGU>
+stim_end = stim_start + ms2samples(audio.Duration, outdev.Fs); 
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -303,8 +316,8 @@ test.stimList = stimList;
 test.nCombinations = nCombinations;
 test.optovar_name = 'Amp';
 test.optovar = opto.Amp;
-test.audiovar_name = 'Level';
-test.audiovar = opto.audio.Level;
+test.audiovar_name = 'WavFile';
+test.audiovar = audio.signal.WavFile;
 % and write header to data file
 writeOptoDataFileHeader(datafile, test, audio, opto, channels, ...
 								 caldata, indev, outdev);
