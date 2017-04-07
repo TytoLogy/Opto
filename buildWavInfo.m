@@ -123,7 +123,7 @@ nFiles = length(wavFiles);
 if isempty(wavFiles)
 	error('%s: no .WAV files in %s!', mfilename, wavDir);
 else
-	fprintf('%s: found %d .WAV files in %s\n', mfilename, nFiles);
+	fprintf('%s: found %d .WAV files in %s\n', mfilename, nFiles, wavDir);
 end
 
 %--------------------------------------------------------------------------
@@ -162,7 +162,11 @@ for f = 1:nFiles
 	[tmp.PeakRMS, PeakRMSBin] = max(wavrms);
 	tmp.PeakRMSTime = PeakRMSBin * rmswin;
 	tmp.PeakRMSWin = rmswin;
-	onoff = findWavOnsetOffset(wav, tmp.SampleRate);
+	onoff = findWavOnsetOffset(wav, tmp.SampleRate, ...
+															'UserConfirm', ...
+															'WAVName', wavFiles(f).name, ...
+															'Threshold', 0.02, ...
+															'Method', 'rms');
 	tmp.OnsetBin = onoff(1);
 	tmp.OffsetBin = onoff(2);
 	wavInfo(f) = tmp;
