@@ -1,17 +1,35 @@
 function wavInfo = getWavInfo(varargin)
 %--------------------------------------------------------------------------
-% [curvedata, rawdata] = noise_opto(handles, datafile)
+% wavInfo = getWavInfo(filename)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
 %
 %--------------------------------------------------------------------------
 % Input Arguments:
-% 
-% Output Arguments:
+%	filename		name of mat file with wavInfo struct
 %
+% Output Arguments:
+%		wavInfo				struct array with information about wavfiles
+% 
+%	Fields in struct wavInfo:
+% 			Filename						name of file
+% 			CompressionMethod			compressed?
+% 			NumChannels					# of audio channels
+% 			SampleRate					sampling rate
+% 			TotalSamples				length of audio in samples
+% 			Duration						duration of audio in seconds
+% 			Title							metadata
+% 			Comment						metadata
+% 			Artist						metadata
+% 			BitsPerSample				bit depth
+% 			OnsetBin						sound onset sample
+% 			OffsetBin					sound offset sample
+% 			PeakRMS						max RMS value
+% 			PeakRMSTime					max RMS value time
+% 			PeakRMSWin					window size (ms) used to compute RMS
 %--------------------------------------------------------------------------
-% See Also: noise_opto, opto, opto_playCache
+% See Also: getWavInfo, noise_opto, opto, opto_playCache
 %--------------------------------------------------------------------------
 
 %--------------------------------------------------------------------------
