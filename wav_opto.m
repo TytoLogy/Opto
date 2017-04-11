@@ -107,32 +107,28 @@ opto.Dur = 100;
 opto.Amp = 0:25:100;
 %------------------------------------
 % Auditory stimulus settings
-%
-% list of all possible .wav files:
-% 	LFH_1.wav
-% 	LFH_2.wav
-% 	LFH_3.wav
-% 	MFV_1.wav
-% 	MFV_2.wav
-% 	MFV_3.wav
-% 	noisy_1.wav
-% 	noisy_2.wav
-% 	noisy_3.wav
-% 	p100_3_11_v1.wav
-% 	p100_3_11_v2.wav
-% 	p100_3_11_v3.wav
-% 	P100_11.wav
 %------------------------------------
-% signal
+%% signal
 audio.signal.Type = 'wav';
 audio.signal.WavPath = 'C:\TytoLogy\Experiments\Wavs';
-audio.signal.WavFile = {	'LFH_1.wav', ...
-									'MFV_1.wav', ...
-									'noisy_1.wav', ...
-									'p100_3_11_v1.wav' };
-% wavInfo = getWavInfo(fullfile(audio.signal.WavPath, 'wavinfo.mat'));
-wavInfo = getWavInfo('/Users/sshanbhag/Work/Code/Matlab/dev/TytoLogy/Experiments/Calls/wavinfo.mat');
+% get stimuli
+wavInfo = getWavInfo(fullfile(audio.signal.WavPath, 'wavinfo.mat'));
+nwavs = length(wavInfo);
+% create list of filenames - need to do a bit of housekeeping
+audio.signal.WavFile = cell(nwavs, 1);
+tmp = {};
+[tmp{1:nwavs, 1}] = deal(wavInfo.Filename);
+for n = 1:nwavs
+	[~, basename] = fileparts(tmp{n});
+	audio.signal.WavFile{n} = [basename '.wav'];
+	wavInfo(n).Filename = audio.signal.WavFile{n};
+end
+
+
 audio.Delay = 100;
+
+%%
+
 % Duration is variable for WAV files - this information
 % will be found in the audio.signal.WavInfo
 % For now, this will be a dummy value
