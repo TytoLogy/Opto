@@ -105,29 +105,46 @@ opto.Enable = 1;
 opto.Delay = 0;
 opto.Dur = 100;
 opto.Amp = 0:25:100;
+
 %------------------------------------
 % Auditory stimulus settings
 %------------------------------------
-%% signal
+% noise signal
+noise.signal.Type = 'noise';
+noise.signal.Fmin = 4000;
+noise.signal.Fmax = 80000;
+noise.Delay = 100;
+noise.Duration = 200;
+noise.Level = 75;
+noise.Ramp = 1;
+noise.Frozen = 0;
+
+% null signal
+null.signal.Type = 'null';
+null.Delay = 100;
+null.Duration = 200;
+null.Level = 0;
+
+% wav signal
 audio.signal.Type = 'wav';
 audio.signal.WavPath = 'C:\TytoLogy\Experiments\Wavs';
 % get stimuli
 wavInfo = getWavInfo(fullfile(audio.signal.WavPath, 'wavinfo.mat'));
-nwavs = length(wavInfo);
+nWavs = length(wavInfo);
 % create list of filenames - need to do a bit of housekeeping
-audio.signal.WavFile = cell(nwavs, 1);
+audio.signal.WavFile = cell(nWavs, 1);
 tmp = {};
-[tmp{1:nwavs, 1}] = deal(wavInfo.Filename);
-for n = 1:nwavs
+[tmp{1:nWavs, 1}] = deal(wavInfo.Filename);
+% assign wav filenames to wavInfo
+for n = 1:nWavs
 	[~, basename] = fileparts(tmp{n});
 	audio.signal.WavFile{n} = [basename '.wav'];
+	% make sure Filename in wavInfo matches
 	wavInfo(n).Filename = audio.signal.WavFile{n};
 end
-
-
+clear tmp;
+% Delay 
 audio.Delay = 100;
-
-%%
 
 % Duration is variable for WAV files - this information
 % will be found in the audio.signal.WavInfo
@@ -156,6 +173,7 @@ test.saveStim = 0;
 test.AcqDuration = 1000;
 test.SweepPeriod = 1001;
 
+
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % build list of unique stimuli
@@ -164,8 +182,9 @@ test.SweepPeriod = 1001;
 % varied variables for opto and audio
 optovar = opto.Amp;
 audiowavvar = audio.signal.WavFile;
-% total # of varied variables
-nCombinations = numel(optovar) * numel(audiowavvar);
+% total # of varied variables (increase # of audio vars by 2
+% to account for additional noise and null stimuli)
+nCombinations = numel(optovar) * (numel(audiowavvar) + 2);
 % # of total trials;
 nTotalTrials = nCombinations * test.Reps;
 % create list to hold parameters for varied variables
@@ -181,7 +200,15 @@ for oindex = 1:numel(optovar)
 	for aindex = 1:numel(audiowavvar)
 		sindex = sindex + 1;
 		stimList(sindex).opto.Amp = optovar(oindex);
-		stimList(sindex).audio.signal.WavFile = audiowavvar{aindex};
+		% assign audio stim 1 to null
+		if aindex == 1
+			stimList(sindex).audio = null;
+		% assign audio stim 2 to noise
+		elseif aindex == 2
+			stimList(sindex).audio = noise;
+		else
+			stimList(sindex).audio.signal.WavFile = audiowavvar{aindex};
+		end
 	end
 end
 
@@ -213,21 +240,7 @@ end
 % some stimulus things
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% If noise is frozen, save noise spectrum for future synthesis
-% need to do this AFTER stimList has been built to avoid using up
-% extra memory
-if audio.Frozen
-	[audio.signal.S0, audio.signal.Smag0, audio.signal.Sphase0] = ...
-								synmononoise_fft(audio.Duration, outdev.Fs, ...
-															audio.signal.Fmin, ...
-															audio.signal.Fmax, ...
-															caldata.DAscale, caldata);
-	% ramp the sound on and off (important!) and compute RMS
-	audio.signal.S0 = sin2array(audio.signal.S0, audio.Ramp, outdev.Fs);
-	audio.signal.rms = rms(audio.signal.S0);
-end
-
-% check durations of stimuli
+% check durations of wav stimuli
 % first, create a vector stimulus durations
 [tmp{1:numel(audiowavvar)}] = deal(wavInfo.Duration);
 durations = cell2mat(tmp);
@@ -238,6 +251,23 @@ if maxDur > test.AcqDuration
 							maxDur, test.AcqDuration);
 end
 
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% If noise is frozen, save noise spectrum for future synthesis
+% need to do this AFTER stimList has been built to avoid using up
+% extra memory
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+if noise.Frozen
+	[noise.signal.S0, noise.signal.Smag0, noise.signal.Sphase0] = ...
+								synmononoise_fft(noise.Duration, outdev.Fs, ...
+															noise.signal.Fmin, ...
+															noise.signal.Fmax, ...
+															caldata.DAscale, caldata);
+	% ramp the sound on and off (important!) and compute RMS
+	noise.signal.S0 = sin2array(noise.signal.S0, noise.Ramp, outdev.Fs);
+	noise.signal.rms = rms(noise.signal.S0);
+end
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -288,10 +318,10 @@ fprintf('\t display channel: %d\n', handles.H.TDT.channels.MonitorChannel);
 % within the stimulus output loop!!!
 %-------------------------------------------------------------------------
 acqpts = ms2samples(test.AcqDuration, indev.Fs);
-outpts = ms2samples(audio.Duration, outdev.Fs); 
+% outpts = ms2samples(audio.Duration, outdev.Fs); 
 % stimulus start and stop in samples
-stim_start = ms2samples(audio.Delay, outdev.Fs);
-stim_end = stim_start + ms2samples(audio.Duration, outdev.Fs); 
+% stim_start = ms2samples(audio.Delay, outdev.Fs);
+% stim_end = stim_start + ms2samples(audio.Duration, outdev.Fs); 
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -300,30 +330,6 @@ stim_end = stim_start + ms2samples(audio.Duration, outdev.Fs);
 %-------------------------------------------------------------------------
 % resp = raw data traces
 resp = cell(nTotalTrials, 1);
-	
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-% Write data file header - this will create the binary data file
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-% add elements to test for storage
-test.stimIndices = stimIndices;
-test.stimList = stimList;
-test.nCombinations = nCombinations;
-test.optovar_name = 'Amp';
-test.optovar = opto.Amp;
-test.audiovar_name = 'WavFile';
-test.audiovar = audio.signal.WavFile;
-% and write header to data file
-writeOptoDataFileHeader(datafile, test, audio, opto, channels, ...
-								 caldata, indev, outdev);
-
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-% Initialize cancel/pause button
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-[PanelHandle, cancelButton, pauseButton] = cancelpausepanel;
 	
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -342,11 +348,11 @@ RPsettag(outdev, 'StimDelay', ms2bin(audio.Delay, outFs));
 % Set the Stimulus Duration
 RPsettag(outdev, 'StimDur', ms2bin(audio.Duration, outFs));
 % Set the length of time to acquire data
-RPsettag(indev, 'AcqDur', ms2bin(AcqDuration, inFs));
+RPsettag(indev, 'AcqDur', ms2bin(test.AcqDuration, inFs));
 % Set the total sweep period time - input
-RPsettag(indev, 'SwPeriod', ms2bin(SweepPeriod, inFs));
+RPsettag(indev, 'SwPeriod', ms2bin(test.SweepPeriod, inFs));
 % Set the total sweep period time - output
-RPsettag(outdev, 'SwPeriod', ms2bin(SweepPeriod, outFs));
+RPsettag(outdev, 'SwPeriod', ms2bin(test.SweepPeriod, outFs));
 % Set the sweep count to 1
 RPsettag(indev, 'SwCount', 1);
 RPsettag(outdev, 'SwCount', 1);
@@ -388,6 +394,61 @@ RPsettag(outdev, 'Mute', 0);
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+% Load and condition wav stimuli
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+wavS0 = cell(nWavs, 1);
+tmpFs = zeros(nWavs, 1);
+for n = 1:nWavs
+	tmpfile = fullfile(audio.signal.WavPath, wavInfo(n).Filename);
+	[wavS0{n}, tmpFs(n)] = audioread(tmpfile);
+	
+	% check to make sure sample rate of signal matches
+	% hardware output sample rate
+	if outFs ~= tmpFs(n)
+		% if not, resample...
+		fprintf('Resampling %s\n', wavInfo(n).Filename);
+		wavS0{n} = correctFs(wavS0{n}, tmpFs(n), outFs);
+		% and adjust other information
+		wavInfo(n).SampleRate = outFs;
+		wavInfo(n).TotalSamples = length(wavS0{n});
+		onsettime = wavInfo(n).OnsetBin / tmpFs(n);
+		offsettime = wavInfo(n).OffsetBin / tmpFs(n);
+		wavInfo(n).OnsetBin = ms2bin(1000*onsettime, outFs);
+		wavInfo(n).OffsetBin = ms2bin(1000*offsettime, outFs);
+	end
+	
+end
+
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% Write data file header - this will create the binary data file
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% add elements to test for storage
+test.stimIndices = stimIndices;
+test.nCombinations = nCombinations;
+test.optovar_name = 'Amp';
+test.optovar = opto.Amp;
+test.audiovar_name = 'WavFile';
+test.audiovar = audio.signal.WavFile;
+% and write header to data file
+writeOptoDataFileHeader(datafile, test, audio, opto, channels, ...
+								 caldata, indev, outdev);
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% Write wav information to mat file
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% create mat filename
+[fpath, fname] = fileparts(datafile);
+matfile = fullfile(fpath, [fname '_wavinfo.mat']);
+save(matfile, 'audio', 'noise', 'null', ...
+					'stimList', 'stimIndices', 'wavInfo', '-MAT');
+
+
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 % Set up figure for plotting incoming data
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -405,7 +466,7 @@ figure(fH);
 ax = handles.H.ax;
 % set up plot
 % calculate # of points to acquire (in units of samples)
-xv = linspace(0, AcqDuration, acqpts);
+xv = linspace(0, test.AcqDuration, acqpts);
 xlim([0, acqpts]);
 yabsmax = 5;
 tmpData = zeros(acqpts, channels.nInputChannels);
@@ -439,6 +500,13 @@ set(fH, 'ToolBar', 'none');
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% Initialize cancel/pause button
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+[PanelHandle, cancelButton, pauseButton] = cancelpausepanel;
+
 %--------------------------------------------------------
 %--------------------------------------------------------
 % Initialize flags and counters
@@ -446,7 +514,7 @@ set(fH, 'ToolBar', 'none');
 %--------------------------------------------------------
 % RasterIndex = RASTERLIM;
 % flag to cancel experiment
-cancelFlag = 0;
+cancelFlag = read_ui_val(cancelButton);
 % flag to pause experiment
 pauseFlag = 0; %#ok<NASGU>
 % index through stimuli
@@ -472,24 +540,35 @@ while ~cancelFlag && (sindex <= nTotalTrials)
 	% index into stimList)
 	Stim = stimList(stimIndices(sindex));
 	
-	% synthesize stimulus
-	if ~audio.Frozen
-		% de novo
-		Sn = synmononoise_fft(Stim.audio.Duration, outdev.Fs, ...
-										Stim.audio.signal.Fmin, ...
-										Stim.audio.signal.Fmax, ...
-										caldata.DAscale, caldata);
-		% ramp the sound on and off (important!)
-		Sn = sin2array(Sn, Stim.audio.Ramp, outdev.Fs);
-		rmsval = rms(Sn);
-	else
-		% use same noise
-		Sn = audio.signal.S0;
-		rmsval = audio.signal.rms;
+	% set audio stimulus
+	switch(upper(Stim.audio.signal.Type))
+		case 'NOISE'
+			% synthesize stimulus
+			if ~Stim.audio.Frozen
+				% de novo
+				Sn = synmononoise_fft(Stim.audio.Duration, outdev.Fs, ...
+												Stim.audio.signal.Fmin, ...
+												Stim.audio.signal.Fmax, ...
+												caldata.DAscale, caldata);
+				% ramp the sound on and off (important!)
+				Sn = sin2array(Sn, Stim.audio.Ramp, outdev.Fs);
+				rmsval = rms(Sn);
+			else
+				% use same noise
+				Sn = noise.signal.S0;
+				rmsval = noise.signal.rms;
+			end
+			
+		case 'NULL'
+			Sn = syn_null(Stim.audio.Duration, outdev.Fs, 0);
+			% dummy rms val
+			rmsval = 0;
+			
+		case 'WAV'
+			Sn = wavS0{strcmpi(
 	end
 	% need to add dummy channel to Sn since iofunction needs stereo signal
 	Sn = [Sn; zeros(size(Sn))];
-		
 	% get the attenuator settings for the desired SPL
 	atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
 	% set the attenuators
