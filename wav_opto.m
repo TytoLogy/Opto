@@ -47,13 +47,15 @@ disp 'running wav_opto!'
 %--------------------------------------------------------
 %--------------------------------------------------------
 L = 1;
-R = 2;
+R = 2; %#ok<NASGU>
 MAX_ATTEN = 120; 
 % assign temporary outputs
 curvedata = []; 
 % if nargout > 1
 % 	varargout = {};
 % end
+
+curvetype = 'Wav + Opto';
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -102,9 +104,9 @@ caldata = handles.H.caldata;
 % 	instead of a single number (e.g., [20 40 60] or 20:20:60)
 %------------------------------------
 opto.Enable = 1;
-opto.Delay = 0;
+opto.Delay = 100;
 opto.Dur = 100;
-opto.Amp = 0:25:100;
+opto.Amp = 0:100;
 
 %------------------------------------
 % Auditory stimulus settings
@@ -156,7 +158,7 @@ audio.Frozen = 0;
 %------------------------------------
 % Presentation settings
 %------------------------------------
-test.Reps = 10;
+test.Reps = 5;
 test.Randomize = 1;
 audio.ISI = 1000;
 
@@ -171,7 +173,7 @@ test.saveStim = 0;
 % will have to be adjusted to deal with wav file durations
 %------------------------------------
 test.AcqDuration = 1000;
-test.SweepPeriod = 1001;
+test.SweepPeriod = 1005;
 
 
 %-------------------------------------------------------------------------
@@ -197,7 +199,7 @@ stimList = repmat(	...
 % outer loop cycles through optical variables
 sindex = 0;
 for oindex = 1:numel(optovar)
-	for aindex = 1:numel(audiowavvar)
+	for aindex = 1:(numel(audiowavvar) + 2)
 		sindex = sindex + 1;
 		stimList(sindex).opto.Amp = optovar(oindex);
 		% assign audio stim 1 to null
@@ -207,7 +209,7 @@ for oindex = 1:numel(optovar)
 		elseif aindex == 2
 			stimList(sindex).audio = noise;
 		else
-			stimList(sindex).audio.signal.WavFile = audiowavvar{aindex};
+			stimList(sindex).audio.signal.WavFile = audiowavvar{aindex-2};
 		end
 	end
 end
@@ -402,6 +404,10 @@ tmpFs = zeros(nWavs, 1);
 for n = 1:nWavs
 	tmpfile = fullfile(audio.signal.WavPath, wavInfo(n).Filename);
 	[wavS0{n}, tmpFs(n)] = audioread(tmpfile);
+	% need to make sure wav data is in row vector form
+	if ~isrow(wavS0{n})
+		wavS0{n} = wavS0{n}';
+	end
 	
 	% check to make sure sample rate of signal matches
 	% hardware output sample rate
@@ -417,6 +423,9 @@ for n = 1:nWavs
 		wavInfo(n).OnsetBin = ms2bin(1000*onsettime, outFs);
 		wavInfo(n).OffsetBin = ms2bin(1000*offsettime, outFs);
 	end
+	
+	% apply *short* ramp to ensure wav start and end is 0
+	wavS0{n} = sin2array(wavS0{n}, 1, outFs);
 	
 end
 
@@ -444,7 +453,8 @@ writeOptoDataFileHeader(datafile, test, audio, opto, channels, ...
 [fpath, fname] = fileparts(datafile);
 matfile = fullfile(fpath, [fname '_wavinfo.mat']);
 save(matfile, 'audio', 'noise', 'null', ...
-					'stimList', 'stimIndices', 'wavInfo', '-MAT');
+					'stimList', 'stimIndices', 'wavInfo', ...
+					'wavS0', '-MAT');
 
 
 %-------------------------------------------------------------------------
@@ -499,6 +509,7 @@ set(fH, 'ToolBar', 'none');
 % stimulus presentation 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+RPtagnames(indev)
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -532,43 +543,82 @@ end
 %-------------------------------------------------------
 %-------------------------------------------------------
 while ~cancelFlag && (sindex <= nTotalTrials)
+	%--------------------------------------------------
 	% increment counter (was initialized to 0)
+	%--------------------------------------------------
 	sindex = sindex + 1;
 	rep = ceil(sindex/nCombinations);
 	
-	% get current stimulus settings from stimList (using stimIndices to 
-	% index into stimList)
+	%--------------------------------------------------
+	% get current stimulus settings from stimList,using stimIndices to 
+	% index into stimList
+	%--------------------------------------------------
 	Stim = stimList(stimIndices(sindex));
+	stimtype = Stim.audio.signal.Type;
 	
-	% set audio stimulus
-	switch(upper(Stim.audio.signal.Type))
+	fprintf('sindex: %d\t rep: %d\tType: %s\n', sindex, rep, stimtype);
+	fprintf('\taudio:\tDelay:%d\tLevel:%d', ...
+			Stim.audio.Delay, Stim.audio.Level)
+	if strcmpi(stimtype, 'wav')
+		fprintf('\t%s\n', Stim.audio.signal.WavFile);
+	else
+		fprintf('\n');
+	end
+	fprintf('\topto:\tEnable:%d\tDelay:%d\tDur:%d\tAmp:%d\n', ...
+			Stim.opto.Enable, Stim.opto.Delay, Stim.opto.Dur, Stim.opto.Amp)
+
+	%--------------------------------------------------
+	% set audio stimulus based on type
+	%--------------------------------------------------
+	switch(upper(stimtype))
 		case 'NOISE'
-			% synthesize stimulus
+			% noise, bandwidth determined by signal.Fmin,Fmax
 			if ~Stim.audio.Frozen
-				% de novo
+				% synthesize stimulus de novo
 				Sn = synmononoise_fft(Stim.audio.Duration, outdev.Fs, ...
 												Stim.audio.signal.Fmin, ...
 												Stim.audio.signal.Fmax, ...
 												caldata.DAscale, caldata);
 				% ramp the sound on and off (important!)
 				Sn = sin2array(Sn, Stim.audio.Ramp, outdev.Fs);
+				% compute rms value for use in setting SPL value
 				rmsval = rms(Sn);
 			else
-				% use same noise
+				% use previously generated, "Frozen" noise
 				Sn = noise.signal.S0;
 				rmsval = noise.signal.rms;
 			end
-			
+			% set optoDelayCorr to 0 (only needed for WAV)
+			optoDelayCorr = 0;
 		case 'NULL'
+			% no audio stimulus
 			Sn = syn_null(Stim.audio.Duration, outdev.Fs, 0);
 			% dummy rms val
 			rmsval = 0;
-			
+			% set optoDelayCorr to 0 (only needed for WAV)
+			optoDelayCorr = 0;			
 		case 'WAV'
-			Sn = wavS0{strcmpi(
+			% wav file.  locate waveform in wavS0{} cell array by
+			% finding corresponding location of Stim.audio.signal.WavFile 
+			% in the main audio struct, audio.signal.WavFile{}
+			wavindex = find(strcmpi(Stim.audio.signal.WavFile, ...
+												audio.signal.WavFile));
+			Sn = wavS0{wavindex};
+			% use peak rms value for figuring atten
+			rmsval = wavInfo(wavindex).PeakRMS;
+			% will need to apply a correction factor to OptoDelay
+			% due to variability in in the wav stimulus onset
+			optoDelayCorr = wavInfo(wavindex).OnsetBin;
+		otherwise
+			fprintf('unknown type %s\n', stimtype);
+			keyboard
 	end
+	figure(99)
+	plot(Sn);
+	drawnow
+	
 	% need to add dummy channel to Sn since iofunction needs stereo signal
-	Sn = [Sn; zeros(size(Sn))];
+	Sn = [Sn; zeros(size(Sn))]; %#ok<AGROW>
 	% get the attenuator settings for the desired SPL
 	atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
 	% set the attenuators
@@ -579,8 +629,9 @@ while ~cancelFlag && (sindex <= nTotalTrials)
 		% turn on opto trigger
 		RPsettag(indev, 'OptoEnable', 1);
 		% set opto params
+		% apply opto delay correction if WAV stim
 		RPsettag(indev, 'OptoDelay', ...
-								ms2bin(Stim.opto.Delay, indev.Fs));
+							optoDelayCorr + ms2bin(Stim.opto.Delay, indev.Fs));
 		RPsettag(indev, 'OptoDur', ...
 								ms2bin(Stim.opto.Dur, indev.Fs));
 		RPsettag(indev, 'OptoAmp', 0.001*Stim.opto.Amp);
@@ -590,7 +641,11 @@ while ~cancelFlag && (sindex <= nTotalTrials)
 	end
 
 	% play the sound and return the response
-	[rawdata, ~] = iofunc(Sn, acqpts, indev, outdev, zBUS);
+	try
+		[rawdata, ~] = iofunc(Sn, acqpts, indev, outdev, zBUS);
+	catch
+		keyboard
+	end
 	
 	% demux the response if necessary and store response data in cell array
 	% 	Note: by indexing the response using row values from the 
@@ -619,7 +674,7 @@ while ~cancelFlag && (sindex <= nTotalTrials)
 	% also, create title for plot for more info
 	tstr = sprintf('%s: %d  Rep: %d  Atten:%.0f', ...
 								curvetype, sindex, rep, atten(L));
-
+							
 	% build data matrix to plot from filtered data
 	[monresp, ~] = opto_readbuf(indev, 'monIndex', 'monData');
 	[pdata, ~] = mcFastDeMux(monresp, channels.nInputChannels);
@@ -650,7 +705,15 @@ while ~cancelFlag && (sindex <= nTotalTrials)
 	% pause for the inter-stimulus interval
 	pause(0.001*audio.ISI);
 end %%% End of REPS LOOP
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 
+
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% check if loop was completed or user-cancelled
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 if cancelFlag
 	optomsg(handles, 'Test Stopped');
 else
@@ -677,9 +740,6 @@ closeOptoTrialData(datafile, time_end);
 %--------------------------------------------------------
 %--------------------------------------------------------
 if ~cancelFlag
-	if nargout == 2
-		varargout{1} = resp;
-	end
 	curvedata.depvars = depvars;
 	curvedata.depvars_sort = depvars_sort;
 
@@ -687,6 +747,9 @@ if ~cancelFlag
 		[pathstr, fbase] = fileparts(datafile);
 		curvedata.stimfile = fullfile(pathstr, [fbase '_stim.mat']);
 	end
+end
+if nargout == 2
+	varargout{1} = resp;
 end
 
 %--------------------------------------------------------

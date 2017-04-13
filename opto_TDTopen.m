@@ -20,8 +20,8 @@ function [ outhandles, outflag ] = opto_TDTopen(config, varargin)
 
 %--------------------------------------------------------------------------
 %  Go Ashida & Sharad Shanbhag 
-%   ashida@umd.edu
-% sshanbhag@neomed.edu
+%	ashida@umd.edu
+%	sshanbhag@neomed.edu
 %--------------------------------------------------------------------------
 % Original Version (HPSearch_TDTopen): 2009-2011 by SJS
 % Upgraded Version (HPSearch2_TDTopen): 2011-2012 by GA
@@ -102,7 +102,7 @@ if ~TDTINIT || TDTINIT_FORCE
     outhandles.outdev.status = 0;
 
     %------------------------------------------------------------------
-    % setting zBUS/indev/outdev/PA5 structure (containig function handles)
+    % setting zBUS/indev/outdev/PA5 structure (containing function handles)
     % accoring to the config info. Note: setiodev() is defined at the end 
     %------------------------------------------------------------------
     [ zbus, idev, odev, pa5 ] = setiodev(config);
