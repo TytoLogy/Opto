@@ -1,5 +1,9 @@
 handles.H = opto_InitH;
 
+msgFig = figure(99);
+handles.textMsg = uicontrol(msgFig, 'Style', 'text', ...
+									'String', '----', 'Position', [20 20 140 20]);
+
 try
 	[outhandles, ~] = opto_TDTopen(	handles.H.TDT.config, ...
 												handles.H.TDT.indev, ...
