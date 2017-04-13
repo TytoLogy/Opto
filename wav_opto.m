@@ -106,7 +106,7 @@ caldata = handles.H.caldata;
 opto.Enable = 1;
 opto.Delay = 100;
 opto.Dur = 100;
-opto.Amp = 0:100;
+opto.Amp = [0 100];
 
 %------------------------------------
 % Auditory stimulus settings
@@ -174,7 +174,6 @@ test.saveStim = 0;
 %------------------------------------
 test.AcqDuration = 1000;
 test.SweepPeriod = 1005;
-
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -556,7 +555,8 @@ while ~cancelFlag && (sindex <= nTotalTrials)
 	Stim = stimList(stimIndices(sindex));
 	stimtype = Stim.audio.signal.Type;
 	
-	fprintf('sindex: %d\t rep: %d\tType: %s\n', sindex, rep, stimtype);
+	fprintf('sindex: %d\t rep: %d(%d)\tType: %s\n', sindex, rep, ...
+						test.Reps, stimtype);
 	fprintf('\taudio:\tDelay:%d\tLevel:%d', ...
 			Stim.audio.Delay, Stim.audio.Level)
 	if strcmpi(stimtype, 'wav')
@@ -613,9 +613,6 @@ while ~cancelFlag && (sindex <= nTotalTrials)
 			fprintf('unknown type %s\n', stimtype);
 			keyboard
 	end
-	figure(99)
-	plot(Sn);
-	drawnow
 	
 	% need to add dummy channel to Sn since iofunction needs stereo signal
 	Sn = [Sn; zeros(size(Sn))]; %#ok<AGROW>
@@ -672,8 +669,8 @@ while ~cancelFlag && (sindex <= nTotalTrials)
 	optomsg(handles, sprintf('%s = %d repetition = %d  atten = %.0f', ...
 								curvetype, sindex, rep, atten(L)) );
 	% also, create title for plot for more info
-	tstr = sprintf('%s: %d  Rep: %d  Atten:%.0f', ...
-								curvetype, sindex, rep, atten(L));
+	tstr = sprintf('%s: %d  Rep: %d(%d)  Atten:%.0f', ...
+								curvetype, sindex, rep, test.Reps, atten(L));
 							
 	% build data matrix to plot from filtered data
 	[monresp, ~] = opto_readbuf(indev, 'monIndex', 'monData');
