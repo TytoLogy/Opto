@@ -133,6 +133,14 @@ WavesToPlay = {	'MFV_tonal_normalized.wav', ...
 						'P100_1_Flat_USV.wav', ...
 						'P100_9_LFH.wav' ...
 					};
+nWavs = length(WavesToPlay);
+% and scaling factors (to achieve desired amplitude)
+WavScaleFactors = [	2.5, ... 
+							1, ...
+							1, ...
+							2	...
+						];
+					
 audio.signal.Type = 'wav';
 audio.signal.WavPath = 'C:\TytoLogy\Experiments\Wavs';
 
@@ -152,7 +160,7 @@ wavInfo = repmat( AllwavInfo(1), length(WavesToPlay), 1);
 for w = 1:length(WavesToPlay)
 	wavInfo(w) = AllwavInfo(strcmp(WavesToPlay(w), AllwavNames));
 end
-nWavs = length(wavInfo);
+
 
 % create list of filenames - need to do a bit of housekeeping
 audio.signal.WavFile = cell(nWavs, 1);
@@ -164,6 +172,7 @@ for n = 1:nWavs
 	audio.signal.WavFile{n} = [basename '.wav'];
 	% make sure Filename in wavInfo matches
 	wavInfo(n).Filename = audio.signal.WavFile{n};
+	wavInfo(n).ScaleFactor = WavScaleFactors(n);
 end
 clear tmp;
 % Delay 
@@ -623,7 +632,7 @@ while ~cancelFlag && (sindex < nTotalTrials)
 			% in the main audio struct, audio.signal.WavFile{}
 			wavindex = find(strcmpi(Stim.audio.signal.WavFile, ...
 												audio.signal.WavFile));
-			Sn = wavS0{wavindex};
+			Sn = wavS0{wavindex} * wavInfo(wavindex).ScaleFactor;
 			% use peak rms value for figuring atten
 			rmsval = wavInfo(wavindex).PeakRMS;
 			% will need to apply a correction factor to OptoDelay
@@ -637,7 +646,7 @@ while ~cancelFlag && (sindex < nTotalTrials)
 			% due to variability in in the wav stimulus onset
 			% compute correction based on outdev.Fs
 			optoDelayCorr = wavInfo(wavindex).OnsetBin;
-			correctedDelay = Stim.audio.Delay - optoDelayCorr;
+			correctedDelay = ms2bin(Stim.audio.Delay, outFs) - optoDelayCorr;
 			if correctedDelay < 0
 				warning('%s: correctedDelay < 0! Using 0 as min value', ...
 								mfilename);
