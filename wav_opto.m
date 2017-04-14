@@ -366,8 +366,8 @@ resp = cell(nTotalTrials, 1);
 % query the sample rate from the circuit - do this instead of using the
 % stored Fs within indev and outdev in order to ensure accuracy!
 inFs = RPsamplefreq(indev);
-outFs = RPsamplefreq(outdev); 
-% Set the Stimulus Delay
+outFs = RPsamplefreq(outdev);
+% Set the Stimulus Delay (might be adjusted for each wav file in loop)
 RPsettag(outdev, 'StimDelay', ms2bin(audio.Delay, outFs));
 % Set the Stimulus Duration
 RPsettag(outdev, 'StimDur', ms2bin(audio.Duration, outFs));
@@ -612,15 +612,11 @@ while ~cancelFlag && (sindex < nTotalTrials)
 				Sn = noise.signal.S0;
 				rmsval = noise.signal.rms;
 			end
-			% set optoDelayCorr to 0 (only needed for WAV)
-			optoDelayCorr = 0;
 		case 'NULL'
 			% no audio stimulus
 			Sn = syn_null(Stim.audio.Duration, outdev.Fs, 0);
 			% dummy rms val
 			rmsval = 0;
-			% set optoDelayCorr to 0 (only needed for WAV)
-			optoDelayCorr = 0;			
 		case 'WAV'
 			% wav file.  locate waveform in wavS0{} cell array by
 			% finding corresponding location of Stim.audio.signal.WavFile 
@@ -636,9 +632,20 @@ while ~cancelFlag && (sindex < nTotalTrials)
 % 								                 outdev.Fs ), ...
 % 										   indev.Fs);
 %  			optoDelayCorr = 0;
+
+			% will need to apply a correction factor to OptoDelay
+			% due to variability in in the wav stimulus onset
 			% compute correction based on outdev.Fs
 			optoDelayCorr = wavInfo(wavindex).OnsetBin;
-
+			correctedDelay = Stim.audio.Delay - optoDelayCorr;
+			if correctedDelay < 0
+				warning('%s: correctedDelay < 0! Using 0 as min value', ...
+								mfilename);
+				correctedDelay = 0;
+			end
+			% update the Stimulus Delay
+			RPsettag(outdev, 'StimDelay', correctedDelay);
+			
 		otherwise
 			fprintf('unknown type %s\n', stimtype);
 			keyboard
