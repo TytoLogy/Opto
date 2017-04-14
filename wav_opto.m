@@ -106,10 +106,10 @@ caldata = handles.H.caldata;
 opto.Enable = 1;
 opto.Delay = 100;
 opto.Dur = 100;
-opto.Amp = [0 100];
+opto.Amp = 100;
 
 %------------------------------------
-% Auditory stimulus settings
+% AUDITORY stimulus settings
 %------------------------------------
 % noise signal
 noise.signal.Type = 'noise';
@@ -127,12 +127,33 @@ null.Delay = 100;
 null.Duration = 200;
 null.Level = 0;
 
-% wav signal
+% Specify wav signal
+WavesToPlay = {	'MFV_tonal_normalized.wav', ...
+						'P100_11_Noisy.wav', ...
+						'P100_1_Flat_USV.wav', ...
+						'P100_9_LFH.wav' ...
+					};
 audio.signal.Type = 'wav';
 audio.signal.WavPath = 'C:\TytoLogy\Experiments\Wavs';
-% get stimuli
-wavInfo = getWavInfo(fullfile(audio.signal.WavPath, 'wavinfo.mat'));
+
+% select only waves in list
+% get information about stimuli
+AllwavInfo = getWavInfo(fullfile(audio.signal.WavPath, 'wavinfo.mat'));
+% create list of ALL filenames - need to do a bit of housekeeping
+AllwavNames = {};
+[AllwavNames{1:length(AllwavInfo), 1}] = deal(AllwavInfo.Filename);
+% need to strip paths from filenames
+for w = 1:length(AllwavNames)
+	[~, basename] = fileparts(AllwavNames{w});
+	AllwavNames{w} = [basename '.wav'];
+end
+% select only waves in list
+wavInfo = repmat( AllwavInfo(1), length(WavesToPlay), 1);
+for w = 1:length(WavesToPlay)
+	wavInfo(w) = AllwavInfo(strcmp(WavesToPlay(w), AllwavNames));
+end
 nWavs = length(wavInfo);
+
 % create list of filenames - need to do a bit of housekeeping
 audio.signal.WavFile = cell(nWavs, 1);
 tmp = {};
@@ -158,9 +179,9 @@ audio.Frozen = 0;
 %------------------------------------
 % Presentation settings
 %------------------------------------
-test.Reps = 5;
-test.Randomize = 1;
-audio.ISI = 1000;
+test.Reps = 1;
+test.Randomize = 0;
+audio.ISI = 500;
 
 %------------------------------------
 % Experiment settings
@@ -224,12 +245,14 @@ stimIndices = zeros(nTotalTrials, 1);
 % and assign values
 if test.Randomize
 	% assign random permutations to stimindices
+	disp('Randomizing stimulus order');
 	for r = 1:test.Reps
 		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
 							randperm(nCombinations);
 	end
 else
 	% assign blocked indices to stimindices
+	disp('NON random stimulus order');
 	for r = 1:test.Reps
 		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
 							1:nCombinations;
@@ -508,7 +531,6 @@ set(fH, 'ToolBar', 'none');
 % stimulus presentation 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-RPtagnames(indev)
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -541,7 +563,7 @@ end
 % loop through stims
 %-------------------------------------------------------
 %-------------------------------------------------------
-while ~cancelFlag && (sindex <= nTotalTrials)
+while ~cancelFlag && (sindex < nTotalTrials)
 	%--------------------------------------------------
 	% increment counter (was initialized to 0)
 	%--------------------------------------------------
@@ -552,6 +574,8 @@ while ~cancelFlag && (sindex <= nTotalTrials)
 	% get current stimulus settings from stimList,using stimIndices to 
 	% index into stimList
 	%--------------------------------------------------
+	fprintf('sindex: %d (%d)\n', sindex, nTotalTrials);
+	fprintf('stimIndices(%d): %d\n', sindex, stimIndices(sindex));
 	Stim = stimList(stimIndices(sindex));
 	stimtype = Stim.audio.signal.Type;
 	
@@ -608,7 +632,13 @@ while ~cancelFlag && (sindex <= nTotalTrials)
 			rmsval = wavInfo(wavindex).PeakRMS;
 			% will need to apply a correction factor to OptoDelay
 			% due to variability in in the wav stimulus onset
+% 			optoDelayCorr = ms2bin( bin2ms( wavInfo(wavindex).OnsetBin, ...
+% 								                 outdev.Fs ), ...
+% 										   indev.Fs);
+%  			optoDelayCorr = 0;
+			% compute correction based on outdev.Fs
 			optoDelayCorr = wavInfo(wavindex).OnsetBin;
+
 		otherwise
 			fprintf('unknown type %s\n', stimtype);
 			keyboard
@@ -626,11 +656,15 @@ while ~cancelFlag && (sindex <= nTotalTrials)
 		% turn on opto trigger
 		RPsettag(indev, 'OptoEnable', 1);
 		% set opto params
-		% apply opto delay correction if WAV stim
-		RPsettag(indev, 'OptoDelay', ...
-							optoDelayCorr + ms2bin(Stim.opto.Delay, indev.Fs));
+% 		% apply opto delay correction if WAV stim
+% 		RPsettag(indev, 'OptoDelay', ...
+% 							optoDelayCorr + ms2bin(Stim.opto.Delay, indev.Fs));
+		% set opto Delay
+		RPsettag(indev, 'OptoDelay', ms2bin(Stim.opto.Delay, indev.Fs));
+		% set opto stimulus duration
 		RPsettag(indev, 'OptoDur', ...
 								ms2bin(Stim.opto.Dur, indev.Fs));
+		% set opto stimulus Amplitude (need to convert to Volts!!)
 		RPsettag(indev, 'OptoAmp', 0.001*Stim.opto.Amp);
 	else
 		% ensure opto trigger is OFF
@@ -666,11 +700,20 @@ while ~cancelFlag && (sindex <= nTotalTrials)
 
 	% This is code for letting the user know what in
 	% tarnation is going on in text at bottom of window
-	optomsg(handles, sprintf('%s = %d repetition = %d  atten = %.0f', ...
-								curvetype, sindex, rep, atten(L)) );
+	wtype = '';
+	if strcmpi(stimtype, 'wav')
+		wtype = sprintf('%s', Stim.audio.signal.WavFile);
+	end
+	if Stim.opto.Enable
+		wtype = [wtype sprintf('+ Opto %d mV', Stim.opto.Amp)]; %#ok<AGROW>
+	end
+	optomsg(handles, sprintf('%s, %s repetition = %d  atten = %.0f', ...
+								curvetype, [stimtype ' ' wtype], rep, atten(L)) );
 	% also, create title for plot for more info
-	tstr = sprintf('%s: %d  Rep: %d(%d)  Atten:%.0f', ...
-								curvetype, sindex, rep, test.Reps, atten(L));
+	tstr = {sprintf('%s: %d  Rep: %d(%d)  Atten:%.0f', ...
+								curvetype, sindex, rep, test.Reps, atten(L)), ...
+				sprintf('Type: %s %s', stimtype, wtype)};
+ 	title(ax, tstr, 'Interpreter', 'none');
 							
 	% build data matrix to plot from filtered data
 	[monresp, ~] = opto_readbuf(indev, 'monIndex', 'monData');
@@ -684,7 +727,6 @@ while ~cancelFlag && (sindex <= nTotalTrials)
 		% update plot
 		set(pH(c), 'YData', tmpY + c*yabsmax);
 	end
- 	title(ax, tstr);
 	drawnow
 
 	% check state of cancel button
@@ -737,13 +779,12 @@ closeOptoTrialData(datafile, time_end);
 %--------------------------------------------------------
 %--------------------------------------------------------
 if ~cancelFlag
-	curvedata.depvars = depvars;
-	curvedata.depvars_sort = depvars_sort;
-
-	if stimcache.saveStim
-		[pathstr, fbase] = fileparts(datafile);
-		curvedata.stimfile = fullfile(pathstr, [fbase '_stim.mat']);
-	end
+% 	curvedata.depvars = depvars;
+% 	curvedata.depvars_sort = depvars_sort;
+% 	if stimcache.saveStim
+% 		[pathstr, fbase] = fileparts(datafile);
+% 		curvedata.stimfile = fullfile(pathstr, [fbase '_stim.mat']);
+% 	end
 end
 if nargout == 2
 	varargout{1} = resp;
@@ -759,7 +800,6 @@ close(PanelHandle)
 % turn off monitor using software trigger 2 sent to indev
 RPtrig(indev, 2);
 
-	
 %--------------------------------------------------------
 %--------------------------------------------------------
 % save cancel flag status in curvedata
