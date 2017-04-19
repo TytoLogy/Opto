@@ -62,7 +62,8 @@ end
 % update UI
 %----------------------------------------------------------------
 % window position and size
-set(handles.figure1, 'Position', [38 557 739 447]);
+set(handles.figure1, 'Units', 'characters');
+set(handles.figure1, 'Position', [10  46 148.4 34.538]);
 % audio stimulus selector (!!!ADD SEARCH!!!)
 set(handles.popupAudioSignal, 'String', ...
 								{'Noise'; 'Tone'; '.wav'; 'Search'; 'OFF'});
