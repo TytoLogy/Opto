@@ -106,7 +106,7 @@ caldata = handles.H.caldata;
 opto.Enable = 1;
 opto.Delay = 100;
 opto.Dur = 100;
-opto.Amp = 100;
+opto.Amp = 250;
 
 %------------------------------------
 % AUDITORY stimulus settings
@@ -188,8 +188,8 @@ audio.Frozen = 0;
 %------------------------------------
 % Presentation settings
 %------------------------------------
-test.Reps = 1;
-test.Randomize = 0;
+test.Reps = 10;
+test.Randomize = 1;
 audio.ISI = 500;
 
 %------------------------------------

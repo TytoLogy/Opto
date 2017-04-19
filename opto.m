@@ -631,7 +631,9 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	end
 	
 	% check if test type is 'STANDALONE'
-	if any(strcmpi(test.Type, handles.H.constants.TestTypes))
+% 	if any(strcmpi(test.Type, handles.H.constants.TestTypes))
+	if strcmpi(test.Type, 'STANDALONE')
+		% run test.Function (function handle in test struct)
 		testdata = test.Function(handles, datafile); %#ok<NASGU>
 		save('testdata.mat', 'testdata', '-MAT');
 	
