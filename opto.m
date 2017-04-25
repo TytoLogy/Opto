@@ -660,7 +660,8 @@ function buttonEditTestScript_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function buttonLoadTestScript_Callback(hObject, eventdata, handles)
 	[filename, pathname, findex] = uigetfile('*.m', ...
-															'Select Test Script File');
+														'Select Test Script File', ...
+														'Scripts'	);
 	if findex
 		handles.H.TestScript = fullfile(pathname, filename);
 		update_ui_str(handles.textTestScript, handles.H.TestScript);

@@ -1,4 +1,4 @@
-function [data, datainfo] = readOptoData(varargin)
+function [data, varargout] = readOptoData(varargin)
 %------------------------------------------------------------------------
 % [data, datainfo] = readOptoData(varargin)
 %------------------------------------------------------------------------
@@ -37,11 +37,14 @@ function [data, datainfo] = readOptoData(varargin)
 %	*Documentation!
 %--------------------------------------------------------------------------
 
+% define some things
 data = [];
 datafile = [];
 datainfo = [];
+wavinfo_matfile = [];
 DEMUX = 0;
 
+% check inputs
 if nargin
 	if exist(varargin{1}, 'file') == 2
 		datafile = varargin{1};
@@ -54,16 +57,24 @@ if nargin
 	end
 end
 
+% have user select data file if one was not provided
 if isempty(datafile)
 	[datafile, datapath] = uigetfile('*.dat','Select data file');
 	if datafile == 0
 		disp('user cancelled datafile load')
+		if nargout > 1
+			varargout{1} = datainfo;
+		end
 		return
 	end
 	datafile = fullfile(datapath, datafile);
 end
 
+% build wavinfo_matfile name
+[datapath, basename] = fileparts(datafile);
+wavinfo_matfile = fullfile(datapath, [basename '_wavinfo.mat']);
 
+% open file
 fp = fopen(datafile, 'r');
 
 try
@@ -76,9 +87,16 @@ catch errMsg
 	return;
 end
 
-[numreps, numtrials] = size(datainfo.test.stimcache.trialRandomSequence);
-nettrials = numreps*numtrials;
-
+% check if stimcache exists
+if isfield(datainfo.test, 'stimcache')
+	% if so, get # of reps and trials from size of trialRandomSequence
+	[numreps, numtrials] = size(datainfo.test.stimcache.trialRandomSequence);
+else
+	% otherwise, compute from Reps and nCombinations
+	numreps = datainfo.test.Reps;
+	numtrials = datainfo.test.nCombinations;
+end
+nettrials = numreps*numtrials;	
 disp([mfilename sprintf(': reading %d reps, %d trials', numreps, numtrials)]);
 
 try
@@ -123,8 +141,7 @@ datainfo.status = status;
 datainfo.nread = nread;
 datainfo.dpos = dpos;
 
-
-% now, demultiplex the data if there are more than 1 channel in the data
+% now, demultiplex the data if there is more than 1 channel in the data
 % traces
 if (datainfo.channels.nInputChannels > 1) 
 	if DEMUX
@@ -136,6 +153,15 @@ if (datainfo.channels.nInputChannels > 1)
 	end
 end
 
-	
+if exist(wavinfo_matfile, 'file')
+	load(wavinfo_matfile, 'stimList');
+	datainfo.stimList = stimList;
+else
+	datainfo.stimList = [];
+end
+
+if nargout == 2
+	varargout{1} = datainfo;
+end
 
 

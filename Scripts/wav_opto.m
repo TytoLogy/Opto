@@ -103,10 +103,16 @@ caldata = handles.H.caldata;
 % 	To test a range of values (for Delay, Dur, Amp), use a vector of values
 % 	instead of a single number (e.g., [20 40 60] or 20:20:60)
 %------------------------------------
-opto.Enable = 1;
+% opto.Enable = 1;
+% opto.Delay = 100;
+% opto.Dur = 100;
+% opto.Amp = 250;
+
+opto.Enable = 0;
 opto.Delay = 100;
 opto.Dur = 100;
-opto.Amp = 250;
+opto.Amp = 0;
+
 
 %------------------------------------
 % AUDITORY stimulus settings
@@ -182,13 +188,13 @@ audio.Delay = 100;
 % will be found in the audio.signal.WavInfo
 % For now, this will be a dummy value
 audio.Duration = 200;
-audio.Level = 75;
+audio.Level = 80;
 audio.Ramp = 1;
 audio.Frozen = 0;
 %------------------------------------
 % Presentation settings
 %------------------------------------
-test.Reps = 10;
+test.Reps = 20;
 test.Randomize = 1;
 audio.ISI = 500;
 
