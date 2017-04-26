@@ -35,6 +35,7 @@ function handles = updateAudioControlsFromType(hObject, ...
 
 % convert stimString to uppercase
 stimString = upper(stimString);
+
 % different actions for each type
 switch stimString
 	case 'NOISE'
@@ -50,6 +51,7 @@ switch stimString
 		update_ui_str(handles.textAudioFmin, 'Fmin (Hz)');
 		enable_ui(handles.textAudioFmin);
 		enable_ui(handles.editAudioFmin);
+		update_ui_str(handles.editAudioFmin, handles.H.noise.Fmin);
 		enable_ui(handles.textAudioFmax);
 		enable_ui(handles.editAudioFmax);
 		disable_ui(handles.buttonAudioWavFile);
@@ -70,6 +72,7 @@ switch stimString
 		update_ui_str(handles.textAudioFmin, 'Freq. (Hz)');
 		enable_ui(handles.textAudioFmin);
 		enable_ui(handles.editAudioFmin);
+		update_ui_str(handles.editAudioFmin, handles.H.tone.Frequency);		
 		disable_ui(handles.textAudioFmax);
 		disable_ui(handles.editAudioFmax);
 		disable_ui(handles.buttonAudioWavFile);
@@ -93,6 +96,7 @@ switch stimString
 		disable_ui(handles.editAudioFmax);
 		enable_ui(handles.buttonAudioWavFile);
 		enable_ui(handles.textAudioWavFile);
+		update_ui_str(handles.textAudioWavFile, handles.H.wav.filenm);
 		enable_ui(handles.textAudioWavScale);
 		enable_ui(handles.editAudioWavScale);
 

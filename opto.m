@@ -22,7 +22,7 @@ function varargout = opto(varargin)
 
 % Edit the above text to modify the response to help opto
 
-% Last Modified by GUIDE v2.5 04-Oct-2016 13:25:50
+% Last Modified by GUIDE v2.5 19-Apr-2017 14:14:58
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -631,7 +631,9 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	end
 	
 	% check if test type is 'STANDALONE'
-	if any(strcmpi(test.Type, handles.H.constants.TestTypes))
+% 	if any(strcmpi(test.Type, handles.H.constants.TestTypes))
+	if strcmpi(test.Type, 'STANDALONE')
+		% run test.Function (function handle in test struct)
 		testdata = test.Function(handles, datafile); %#ok<NASGU>
 		save('testdata.mat', 'testdata', '-MAT');
 	
@@ -658,7 +660,8 @@ function buttonEditTestScript_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function buttonLoadTestScript_Callback(hObject, eventdata, handles)
 	[filename, pathname, findex] = uigetfile('*.m', ...
-															'Select Test Script File');
+														'Select Test Script File', ...
+														'Scripts'	);
 	if findex
 		handles.H.TestScript = fullfile(pathname, filename);
 		update_ui_str(handles.textTestScript, handles.H.TestScript);
@@ -965,3 +968,10 @@ function editComments_CreateFcn(hObject, eventdata, handles)
 	end
 %-------------------------------------------------------------------------
 
+
+
+% --- Executes during object deletion, before destroying properties.
+function figure1_DeleteFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
