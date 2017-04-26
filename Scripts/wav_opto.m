@@ -1,6 +1,6 @@
 function [curvedata, varargout] = wav_opto(handles, datafile)
 %--------------------------------------------------------------------------
-% [curvedata, rawdata] = noise_opto(handles, datafile)
+% [curvedata, rawdata] = wav_opto(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
