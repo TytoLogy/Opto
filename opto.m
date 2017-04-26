@@ -614,9 +614,13 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 									handles.H.animal.Pen, ...
 									handles.H.animal.Depth, ...
 									test.Type); %#ok<*NODEF>
+	% check if default output directory exists
 	if ~exist(handles.H.DefaultOutputDir, 'dir')
+		% if not, create it
 		mkdir(handles.H.DefaultOutputDir);
 	end
+	
+	
 	
 	defaultfile = fullfile(handles.H.DefaultOutputDir, defaultfile);
 
