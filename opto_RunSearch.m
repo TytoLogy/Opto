@@ -153,7 +153,8 @@ else
 		else
 			% if signal type is .wav, use Level as attenuation factor
 			if strcmpi(H.audio.Signal, '.wav')
-				AttenL = H.audio.Level;
+				%AttenL = H.audio.Level;
+				AttenL = 0;
 			else
 				% otherwise, calculate atten to achieve desired output level
 				AttenL = figure_mono_atten(H.audio.Level, ...
