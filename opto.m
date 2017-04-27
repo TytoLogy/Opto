@@ -19,8 +19,7 @@ function varargout = opto(varargin)
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
-
-% Edit the above text to modify the response to help opto
+%-------------------------------------------------------------------------
 
 % Last Modified by GUIDE v2.5 19-Apr-2017 14:14:58
 
@@ -43,7 +42,12 @@ else
 end
 % End initialization code - DO NOT EDIT
 %-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 
+
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % --- Executes just before opto is made visible.
 function opto_OpeningFcn(hObject, eventdata, handles, varargin)
@@ -67,7 +71,9 @@ function opto_OpeningFcn(hObject, eventdata, handles, varargin)
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 
+%-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % --- Outputs from this function are returned to the command line.
 function varargout = opto_OutputFcn(hObject, eventdata, handles) 
@@ -80,6 +86,8 @@ function varargout = opto_OutputFcn(hObject, eventdata, handles)
 	varargout{1} = handles.output;
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -280,8 +288,11 @@ function editAudioWavScale_Callback(hObject, eventdata, handles)
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 
 
+
+%-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % OPTO Stimulus Settings
@@ -345,7 +356,6 @@ function editOptoAmp_Callback(hObject, eventdata, handles)
 		RPsettag(handles.H.TDT.indev, 'OptoAmp', 0.001*handles.H.opto.Amp);
 	end
 %-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
 function editISI_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	if val < 0
@@ -357,8 +367,10 @@ function editISI_Callback(hObject, eventdata, handles)
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 
 
+%-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % TDT Settings
@@ -500,7 +512,11 @@ function tableChannelSelect_CellEdit_Callback(hObject, eventdata, handles)
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 
+
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Monitor
 %-------------------------------------------------------------------------
@@ -557,7 +573,10 @@ function editMonGain_Callback(hObject, eventdata, handles)
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 
+
+%-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Run Search loop
@@ -574,19 +593,24 @@ function buttonSearch_Callback(hObject, eventdata, handles)
 	opto_RunSearch
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 
+%-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Test Script (for curves)
 %-------------------------------------------------------------------------
 function buttonRunTestScript_Callback(hObject, eventdata, handles)
+	%------------------------------------------------
 	% make sure TDT is enabled
+	%------------------------------------------------
 	if ~handles.H.TDT.Enable
 		optomsg(handles, 'Please enable TDT hardware!');
 		return
 	end
-	
+	%------------------------------------------------
 	% perform some checks, load script information
+	%------------------------------------------------
 	if isempty(handles.H.TestScript)
 		optomsg(handles, 'Please load a Test Script')
 		return
@@ -599,12 +623,13 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 		% "test" struct
 		run(handles.H.TestScript);
 	end
-	
+	%------------------------------------------------
+	% date, time, output filename and path
+	%------------------------------------------------
 	% update date and time in animal struct
 	handles.H.animal.Date = TytoLogy_datetime('date_compact');
 	handles.H.animal.Time = TytoLogy_datetime('time');
-	guidata(hObject, handles);
-	
+	guidata(hObject, handles);	
 	% create filename from animal info
 	%	animal # _ date _ unit _ Penetration # _ Depth _ type .dat
 	defaultfile = sprintf('%s_%s_%s_%s_%s_%s.dat', ...
@@ -619,13 +644,16 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 		% if not, create it
 		mkdir(handles.H.DefaultOutputDir);
 	end
-	
-	
-	
-	defaultfile = fullfile(handles.H.DefaultOutputDir, defaultfile);
-
+	defaultdir = [handles.H.DefaultOutputDir filesep ...
+						sprintf('%s', handles.H.animal.Animal)];	
+	% check if animal directory exists
+	if ~exist(defaultdir, 'dir')
+		mkdir(defaultdir);
+	end
+	% default output file
+	defaultfile = fullfile(defaultdir, defaultfile);
+	% check with user
 	[fname, pname] = uiputfile('*.dat', 'Save Data', defaultfile);
-
 	if fname == 0
 		optomsg(handles, 'Run Test Script Cancelled');
 		return
@@ -634,7 +662,9 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 		optomsg(handles, ['Writing data to file: ' datafile]);
 	end
 	
+	%------------------------------------------------
 	% check if test type is 'STANDALONE'
+	%------------------------------------------------
 % 	if any(strcmpi(test.Type, handles.H.constants.TestTypes))
 	if strcmpi(test.Type, 'STANDALONE')
 		% run test.Function (function handle in test struct)
@@ -653,7 +683,8 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 		test.stimseq = stimseq;
 	
 		% Play stimuli in cache, record neural data
-		testdata = opto_playCache(handles, datafile, stimcache, test); %#ok<NASGU>
+		testdata = opto_playCache(handles, datafile, ...
+												stimcache, test); %#ok<NASGU>
 		save('testdata.mat', 'testdata', '-MAT');
 	end
 %-------------------------------------------------------------------------
@@ -676,8 +707,10 @@ function buttonLoadTestScript_Callback(hObject, eventdata, handles)
 	end
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 
 
+%-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % ANIMAL settings (stored in handles.H.animal struct)
@@ -775,6 +808,9 @@ function editComments_Callback(hObject, eventdata, handles)
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+% CALIBRATION callbacks
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 function buttonLoadCal_Callback(hObject, eventdata, handles)
 	% open a dialog box to get calibration data file name and path
 	[filenm, pathnm] = uigetfile({'*.mat'; '*.*'}, ...
@@ -820,13 +856,19 @@ function buttonLoadCal_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 
 %-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 % --- Executes on button press in buttonDebug.
 %-------------------------------------------------------------------------
 function buttonDebug_Callback(hObject, eventdata, handles)
 	keyboard
 %-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 
 
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % --- Executes during object creation, after setting all properties.
 %-------------------------------------------------------------------------
