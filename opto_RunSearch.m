@@ -177,6 +177,8 @@ else
 		% Set attenuation levels
 		RPsettag(outdev, 'AttenL', AttenL);
 		RPsettag(outdev, 'AttenR', AttenR);
+		% Set the Stimulus Delay
+		RPsettag(outdev, 'StimDelay', ms2bin(H.audio.Delay, outdev.Fs));
 		% play stim, record data
 		[mcresp, ~] = opto_io(S, inpts, indev, outdev, zBUS);
 		% get the monitor response
