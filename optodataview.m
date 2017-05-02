@@ -21,16 +21,24 @@ channelNumber = 10;
 NtracesToPlot = 5;
 
 %% set paths
-datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1012/20160727';
-optofile = '1012_20160727_4_3_1_OPTO.dat';
-levelfile = '1012_20160727_4_3_1_LEVEL.dat';	
+if strcmpi(computer, 'MACI64')
+	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1012/20160727';
+	optofile = '1012_20160727_4_3_1_OPTO.dat';
+	levelfile = '1012_20160727_4_3_1_LEVEL.dat';	
+else
+	defaultpath = 'E:\Data\SJS';
+	[datafile, datapath] = uigetfile('*.dat', 'Select .dat file', ...
+												defaultpath); 
+	if datafile == 0
+		return
+	end
+end
 
-%% optical stim
-
-% read in data
-datafile = optofile;
+%% read in data
 [D, Dinf] = readOptoData(fullfile(datapath, datafile));
 
+
+%%
 % define filter for data
 % sampling rate
 Fs = Dinf.indev.Fs;
@@ -38,12 +46,15 @@ Fs = Dinf.indev.Fs;
 fband = [HPFreq LPFreq] ./ (0.5 * Fs);
 [filtB, filtA] = butter(5, fband);
 
+
+%% organize tests
+
 % Get test info
 % convert ascii characters from binary file 
 Dinf.test.Type = char(Dinf.test.Type);
 fprintf('Test type: %s\n', Dinf.test.Type);
 
-	
+%%
 % for LEVEL test, find indices of stimuli with same level (dB SPL)
 % list of legvels, and # of levels tested
 levellist = Dinf.test.stimcache.LEVEL;
