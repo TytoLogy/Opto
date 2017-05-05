@@ -630,30 +630,7 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	handles.H.animal.Date = TytoLogy_datetime('date_compact');
 	handles.H.animal.Time = TytoLogy_datetime('time');
 	guidata(hObject, handles);	
-	% create filename from animal info
-	%	animal # _ date _ unit _ Penetration # _ Depth _ type .dat
-	defaultfile = sprintf('%s_%s_%s_%s_%s_%s.dat', ...
-									handles.H.animal.Animal, ...
-									handles.H.animal.Date, ...
-									handles.H.animal.Unit, ...
-									handles.H.animal.Pen, ...
-									handles.H.animal.Depth, ...
-									test.Type); %#ok<*NODEF>
-	% check if default output directory exists
-	if ~exist(handles.H.DefaultOutputDir, 'dir')
-		% if not, create it
-		mkdir(handles.H.DefaultOutputDir);
-	end
-	defaultdir = [handles.H.DefaultOutputDir filesep ...
-						sprintf('%s', handles.H.animal.Animal)];	
-	% check if animal directory exists
-	if ~exist(defaultdir, 'dir')
-		mkdir(defaultdir);
-	end
-	% default output file
-	defaultfile = fullfile(defaultdir, defaultfile);
-	% check with user
-	[fname, pname] = uiputfile('*.dat', 'Save Data', defaultfile);
+	[fname, pname] = opto_createDataFileName(handles, test);  %#ok<NODEF>
 	if fname == 0
 		optomsg(handles, 'Run Test Script Cancelled');
 		return
