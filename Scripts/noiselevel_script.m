@@ -22,7 +22,7 @@ test.Type = 'LEVEL';
 test.opto.Enable = 0;
 test.opto.Delay = 0;
 test.opto.Dur = 100;
-test.opto.Amp = 50;
+test.opto.Amp = 0;
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Auditory stimulus settings
@@ -39,7 +39,7 @@ test.audio.Ramp = 1;
 test.audio.Frozen = 0;
 test.audio.ISI = 500;
 
-test.Reps = 2;
+test.Reps = 10;
 test.Randomize = 1;
 
 test.saveStim = 0;
@@ -49,7 +49,7 @@ test.saveStim = 0;
 % TDT
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-test.AcqDuration = 250;
+test.AcqDuration = 350;
 test.SweepPeriod = test.AcqDuration + 2;
 
  
