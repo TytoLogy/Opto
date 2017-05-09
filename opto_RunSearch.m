@@ -35,8 +35,11 @@ elseif ~state && handles.H.TDT.Enable
 	% Terminate the Run
 	optomsg(handles, 'Search ending...');
 	update_ui_str(hObject, 'Search');
+	% if MonEnable == 0,
 	% turn off monitor using software trigger 2 sent to indev
-	RPtrig(handles.H.TDT.indev, 2);
+	if handles.H.TDT.MonEnable == 0
+		RPtrig(handles.H.TDT.indev, 2);
+	end
 	guidata(hObject, handles);
 	return
 

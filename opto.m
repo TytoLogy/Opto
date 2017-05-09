@@ -630,7 +630,7 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	handles.H.animal.Date = TytoLogy_datetime('date_compact');
 	handles.H.animal.Time = TytoLogy_datetime('time');
 	guidata(hObject, handles);	
-	[fname, pname] = opto_createDataFileName(handles, test);  %#ok<NODEF>
+	[pname, fname] = opto_createDataFileName(handles, test);  %#ok<NODEF>
 	if fname == 0
 		optomsg(handles, 'Run Test Script Cancelled');
 		return
