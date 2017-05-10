@@ -1,6 +1,6 @@
-function [curvedata, varargout] = noise_opto(handles, datafile)
+function [curvedata, varargout] = noise(handles, datafile)
 %--------------------------------------------------------------------------
-% [curvedata, rawdata] = noise_opto(handles, datafile)
+% [curvedata, rawdata] = noise(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -39,7 +39,6 @@ function [curvedata, varargout] = noise_opto(handles, datafile)
 %--------------------------------------------------------------------------
 
 disp 'running noise_opto!'
-curvetype = 'Noise+Opto';
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -81,27 +80,6 @@ caldata = handles.H.caldata;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% Experiment settings
-%-------------------------------------------------------------------------
-%------------------------------------
-% Presentation settings
-%------------------------------------
-test.Reps = 10;
-test.Randomize = 1;
-audio.ISI = 1000;
-%------------------------------------
-% Experiment settings
-%------------------------------------
-% save output stimuli? (0 = no, 1 = yes)
-test.saveStim = 0;
-%------------------------------------
-% acquisition/sweep settings
-%------------------------------------
-test.AcqDuration = 500;
-test.SweepPeriod = test.AcqDuration + 5;
-
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
 %% define stimulus (optical, audio) structs
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -122,10 +100,10 @@ test.SweepPeriod = test.AcqDuration + 5;
 % 	To test a range of values (for Delay, Dur, Amp), use a vector of values
 % 	instead of a single number (e.g., [20 40 60] or 20:20:60)
 %------------------------------------
-opto.Enable = 1;
+opto.Enable = 0;
 opto.Delay = 0;
-opto.Dur = 200;
-opto.Amp = 1000;
+opto.Dur = 100;
+opto.Amp = 0;
 %------------------------------------
 % Auditory stimulus settings
 %------------------------------------
@@ -135,9 +113,27 @@ audio.signal.Fmin = 4000;
 audio.signal.Fmax = 80000;
 audio.Delay = 100;
 audio.Duration = 50;
-audio.Level = 0:20:80;
-audio.Ramp = 2;
+audio.Level = 0:10:80;
+audio.Ramp = 1;
 audio.Frozen = 0;
+%------------------------------------
+% Presentation settings
+%------------------------------------
+test.Reps = 10;
+test.Randomize = 1;
+audio.ISI = 500;
+
+%------------------------------------
+% Experiment settings
+%------------------------------------
+% save output stimuli? (0 = no, 1 = yes)
+test.saveStim = 0;
+
+%------------------------------------
+% acquisition/sweep settings
+%------------------------------------
+test.AcqDuration = 500;
+test.SweepPeriod = test.AcqDuration + 2;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -166,7 +162,7 @@ for oindex = 1:numel(optovar)
 	end
 end
 % # of total trials;
-nTotalTrials = nCombinations * test.Reps;
+nTotalTrials = nCombinations * Reps;
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % randomize in blocks (if necessary) by creating a randomized list of 
@@ -176,15 +172,15 @@ nTotalTrials = nCombinations * test.Reps;
 % preallocate stimIndices
 stimIndices = zeros(nTotalTrials, 1);
 % and assign values
-if test.Randomize
+if Randomize
 	% assign random permutations to stimindices
-	for r = 1:test.Reps
+	for r = 1:Reps
 		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
 							randperm(nCombinations);
 	end
 else
 	% assign blocked indices to stimindices
-	for r = 1:test.Reps
+	for r = 1:Reps
 		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
 							1:nCombinations;
 	end
@@ -209,6 +205,38 @@ if audio.Frozen
 	audio.signal.rms = rms(audio.signal.S0);
 end
 
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% Setup Plots using the _configurePlots script
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% 	HPCurve_configurePlots
+
+%{
+% make sure we have lowercase stimtype and curvetype
+curvetype = upper(stimcache.curvetype);
+stimtype = lower(stimcache.stimtype);
+% init the curvedata as empty matrix
+curvedata = [];
+	
+%--------------------------------------------------------
+%--------------------------------------------------------
+% feedback to user about curve
+%--------------------------------------------------------
+%--------------------------------------------------------
+disp(['Running ' curvetype ' Curve using ' stimtype '...'])
+fprintf('\t Nreps: %d', stimcache.nreps);
+% 	fprintf('\t ITD range: %s', curve.ITDrangestr);
+% 	fprintf('\t ILD range: %s', curve.ILDrangestr);
+% 	fprintf('\t ABI range: %s', curve.ABIrangestr);
+% 	fprintf('\t FREQ range: %s', curve.FREQrangestr);
+% 	fprintf('\t BC range: %s', curve.BCrangestr);
+% 	fprintf('\t sAM Pct range: %s', curve.sAMPCTrangestr);
+% 	fprintf('\t sAM Freq range: %s', curve.sAMFREQrangestr);
+fprintf('\t saveStim: %d', stimcache.saveStim);
+fprintf('\t freezeStim: %d', stimcache.freezeStim);
+fprintf('\t display channel: %d\n', handles.H.TDT.channels.MonitorChannel);
+%}
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -225,7 +253,7 @@ end
 % ¡¡¡ Note that if stimulus duration is a variable, this will have to put
 % within the stimulus output loop!!!
 %-------------------------------------------------------------------------
-acqpts = ms2samples(test.AcqDuration, indev.Fs);
+acqpts = ms2samples(AcqDuration, indev.Fs);
 outpts = ms2samples(audio.Duration, outdev.Fs); %#ok<NASGU>
 % stimulus start and stop in samples
 stim_start = ms2samples(audio.Delay, outdev.Fs);
@@ -251,7 +279,7 @@ test.nCombinations = nCombinations;
 test.optovar_name = 'Amp';
 test.optovar = opto.Amp;
 test.audiovar_name = 'Level';
-test.audiovar = audio.Level;
+test.audiovar = opto.audio.Level;
 % and write header to data file
 writeOptoDataFileHeader(datafile, test, audio, opto, channels, ...
 								 caldata, indev, outdev);
@@ -280,11 +308,11 @@ RPsettag(outdev, 'StimDelay', ms2bin(audio.Delay, outFs));
 % Set the Stimulus Duration
 RPsettag(outdev, 'StimDur', ms2bin(audio.Duration, outFs));
 % Set the length of time to acquire data
-RPsettag(indev, 'AcqDur', ms2bin(test.AcqDuration, inFs));
+RPsettag(indev, 'AcqDur', ms2bin(AcqDuration, inFs));
 % Set the total sweep period time - input
-RPsettag(indev, 'SwPeriod', ms2bin(test.SweepPeriod, inFs));
+RPsettag(indev, 'SwPeriod', ms2bin(SweepPeriod, inFs));
 % Set the total sweep period time - output
-RPsettag(outdev, 'SwPeriod', ms2bin(test.SweepPeriod, outFs));
+RPsettag(outdev, 'SwPeriod', ms2bin(SweepPeriod, outFs));
 % Set the sweep count to 1
 RPsettag(indev, 'SwCount', 1);
 RPsettag(outdev, 'SwCount', 1);
@@ -319,6 +347,11 @@ RPsettag(outdev, 'AttenL', MAX_ATTEN);
 RPsettag(outdev, 'AttenR', MAX_ATTEN);
 RPsettag(outdev, 'Mute', 0);
 
+% % build filter for plotting data
+% fband = [handles.H.TDT.HPFreq handles.H.TDT.LPFreq] ./ ...
+% 					(0.5 * handles.H.TDT.indev.Fs);
+% [filtB, filtA] = butter(3, fband);
+
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Set up figure for plotting incoming data
@@ -338,7 +371,7 @@ figure(fH);
 ax = handles.H.ax;
 % set up plot
 % calculate # of points to acquire (in units of samples)
-xv = linspace(0, test.AcqDuration, acqpts);
+xv = linspace(0, AcqDuration, acqpts);
 xlim([0, acqpts]);
 yabsmax = 5;
 tmpData = zeros(acqpts, channels.nInputChannels);
@@ -524,6 +557,55 @@ time_end = now;
 %--------------------------------------------------------
 %--------------------------------------------------------
 closeOptoTrialData(datafile, time_end);
+
+%{
+%						Unnecessary?
+% 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % Compute mean spike count as a function of depvars and std error bars
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 	if ~cancelFlag
+% 		spike_times = cell(curve.nTrials, curve.nreps);
+% 		spike_counts = zeros(curve.nTrials, curve.nreps);
+% 
+% 		% find the start and end times for counting spikes
+% 		spike_start = ms2samples(analysis.spikeStartTime, indev.Fs);
+% 		spike_end = ms2samples(analysis.spikeEndTime, indev.Fs);
+% 
+% 		if tdt.nChannels > 1
+% 			% loop through the reps
+% 			for q=1:curve.nreps
+% 				% loop through the completed trials (values for the curve)
+% 				for r=1:size(resp, 1)			
+% 					% threshold the data within the spike analysis window
+% 					spikes = spikeschmitt2(resp{r, q}(spike_start:spike_end, SPIKECHAN), ...
+% 													analysis.spikeThreshold, ...
+% 													analysis.spikeWindow, indev.Fs);
+% 					% convert to milliseconds, accounting for offset due to the
+% 					% start of the analysis window
+% 					spike_times{r,q} = analysis.spikeStartTime + 1000*dt*spikes;
+% 					spike_counts(r,q) = length(spike_times{r,q});
+% 				end
+% 			end
+% 		else
+% 			% loop through the reps
+% 			for q=1:curve.nreps
+% 				% loop through the completed trials (values for the curve)
+% 				for r=1:size(resp, 1)			
+% 					% threshold the data within the spike analysis window
+% 					spikes = spikeschmitt2(resp{r, q}(spike_start:spike_end), ...
+% 													analysis.spikeThreshold, ...
+% 													analysis.spikeWindow, indev.Fs);
+% 					% convert to milliseconds, accounting for offset due to the
+% 					% start of the analysis window
+% 					spike_times{r,q} = analysis.spikeStartTime + 1000*dt*spikes;
+% 					spike_counts(r,q) = length(spike_times{r,q});
+% 				end
+% 			end
+% 		end
+% 	end
+%
+%}
 
 %--------------------------------------------------------
 %--------------------------------------------------------

@@ -1,20 +1,11 @@
 %-------------------------------------------------------------------------
-% Set Type of test
+% Standalone script
 %-------------------------------------------------------------------------
-% 	'LEVEL'			firing rate vs. stimulus level (dB)
-%	`FREQ'			frequency-tuning curve (tones)
-%	'FRA'				frequency-response area (tones)
-% 	'OPTO'			simple optical stimulation (nothing varies)
-% 	'OPTO-xxx'		optical stim, with 'xxx' as variable, where 'xxx' is
-% 		'DELAY'			opto stim delay 
-% 		'DUR'				opto stim duration
-% 		'AMP'				opto stim amplitude
-% 						or some combination of these
-%
-% *** for STANDALONE type, see default_standalone.m ***
-%-------------------------------------------------------------------------
-test.Type = 'LEVEL';
+% indicate that this is a standalone script
+test.Type = 'STANDALONE';
+test.Function = @noise_opto;
 
+%{
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % OPTICAL settings
@@ -33,14 +24,15 @@ test.audio.signal.Type = 'noise';
 test.audio.signal.Fmin = 4000;
 test.audio.signal.Fmax = 80000;
 test.audio.Delay = 100;
-test.audio.Duration = 50;
-test.audio.Level = 0:10:70;
+test.audio.Duration = 200;
+test.audio.Level = 0:10:60;
+test.audio.Level = 60:10:90;
 test.audio.Ramp = 1;
 test.audio.Frozen = 0;
-test.audio.ISI = 500;
+test.audio.ISI = 1000;
 
-test.Reps = 2;
-test.Randomize = 1;
+test.Reps = 10;
+test.Randomize = 0;
 
 test.saveStim = 0;
 
@@ -49,9 +41,7 @@ test.saveStim = 0;
 % TDT
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-test.AcqDuration = 250;
-test.SweepPeriod = test.AcqDuration + 2;
+test.AcqDuration = 1000;
+test.SweepPeriod = 1001;
 
- 
-
-
+%}

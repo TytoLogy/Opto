@@ -18,7 +18,11 @@ function [stim, tstr] = opto_getSearchStim(H, outdev)
 % Created: 4 October, 2016 (SJS)
 %------------------------------------------------------------------------
 % Revisions
+%	5 May 2017 (SJS): added search frequencies to vary tone during search
 %------------------------------------------------------------------------
+
+SearchToneFreqs = 1000 * [8 12 16 25 40 60 80];
+nSearchTones = length(SearchToneFreqs);
 
 % different options depending on Signal
 switch upper(H.audio.Signal)
@@ -55,6 +59,9 @@ switch upper(H.audio.Signal)
 		switch(stimid)
 			case 1
 				H.audio.Signal = 'TONE';
+				freqid = randi(nSearchTones, 1);
+				H.tone.Frequency = SearchToneFreqs(freqid);
+				
 			case 2
 				H.audio.Signal = 'NOISE';
 			case 3

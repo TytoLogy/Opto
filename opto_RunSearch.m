@@ -35,8 +35,11 @@ elseif ~state && handles.H.TDT.Enable
 	% Terminate the Run
 	optomsg(handles, 'Search ending...');
 	update_ui_str(hObject, 'Search');
+	% if MonEnable == 0,
 	% turn off monitor using software trigger 2 sent to indev
-	RPtrig(handles.H.TDT.indev, 2);
+	if handles.H.TDT.MonEnable == 0
+		RPtrig(handles.H.TDT.indev, 2);
+	end
 	guidata(hObject, handles);
 	return
 
@@ -153,7 +156,8 @@ else
 		else
 			% if signal type is .wav, use Level as attenuation factor
 			if strcmpi(H.audio.Signal, '.wav')
-				AttenL = H.audio.Level;
+				%AttenL = H.audio.Level;
+				AttenL = 0;
 			else
 				% otherwise, calculate atten to achieve desired output level
 				AttenL = figure_mono_atten(H.audio.Level, ...
@@ -176,6 +180,8 @@ else
 		% Set attenuation levels
 		RPsettag(outdev, 'AttenL', AttenL);
 		RPsettag(outdev, 'AttenR', AttenR);
+		% Set the Stimulus Delay
+		RPsettag(outdev, 'StimDelay', ms2bin(H.audio.Delay, outdev.Fs));
 		% play stim, record data
 		[mcresp, ~] = opto_io(S, inpts, indev, outdev, zBUS);
 		% get the monitor response
