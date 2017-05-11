@@ -13,16 +13,16 @@
 %
 % *** for STANDALONE type, see default_standalone.m ***
 %-------------------------------------------------------------------------
-test.Type = 'LEVEL';
+test.Type = 'LEVEL_OPTO';
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % OPTICAL settings
 %-------------------------------------------------------------------------
-test.opto.Enable = 0;
+test.opto.Enable = 1;
 test.opto.Delay = 0;
 test.opto.Dur = 100;
-test.opto.Amp = 50;
+test.opto.Amp = [0 1000];
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Auditory stimulus settings
@@ -37,9 +37,9 @@ test.audio.Duration = 50;
 test.audio.Level = 0:10:70;
 test.audio.Ramp = 1;
 test.audio.Frozen = 0;
-test.audio.ISI = 500;
+test.audio.ISI = 250;
 
-test.Reps = 2;
+test.Reps = 10;
 test.Randomize = 1;
 
 test.saveStim = 0;
@@ -49,7 +49,7 @@ test.saveStim = 0;
 % TDT
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-test.AcqDuration = 250;
+test.AcqDuration = 350;
 test.SweepPeriod = test.AcqDuration + 2;
 
  

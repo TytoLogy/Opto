@@ -40,6 +40,7 @@ function [curvedata, varargout] = wav_opto(handles, datafile)
 %--------------------------------------------------------------------------
 
 disp 'running wav_opto!'
+curvetype = 'Wav+Opto';
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -51,11 +52,9 @@ R = 2; %#ok<NASGU>
 MAX_ATTEN = 120; 
 % assign temporary outputs
 curvedata = []; 
-% if nargout > 1
-% 	varargout = {};
-% end
-
-curvetype = 'Wav + Opto';
+if nargout > 1
+	varargout = {};
+end
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -83,6 +82,28 @@ caldata = handles.H.caldata;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+% Experiment settings
+%-------------------------------------------------------------------------
+%------------------------------------
+% Presentation settings
+%------------------------------------
+test.Reps = 10;
+test.Randomize = 1;
+audio.ISI = 500;
+%------------------------------------
+% Experiment settings
+%------------------------------------
+% save output stimuli? (0 = no, 1 = yes)
+test.saveStim = 0;
+%------------------------------------
+% acquisition/sweep settings
+% will have to be adjusted to deal with wav file durations
+%------------------------------------
+test.AcqDuration = 500;
+test.SweepPeriod = test.AcqDuration + 5;
+
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 %% define stimulus (optical, audio) structs
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -107,17 +128,16 @@ caldata = handles.H.caldata;
 % opto.Delay = 100;
 % opto.Dur = 100;
 % opto.Amp = 250;
-
-opto.Enable = 0;
-opto.Delay = 100;
-opto.Dur = 100;
-opto.Amp = 0;
-
-
+opto.Enable = 1;
+opto.Delay = 0;
+opto.Dur = 200;
+opto.Amp = 2000;
 %------------------------------------
 % AUDITORY stimulus settings
 %------------------------------------
+%------------------------------------
 % noise signal
+%------------------------------------
 noise.signal.Type = 'noise';
 noise.signal.Fmin = 4000;
 noise.signal.Fmax = 80000;
@@ -126,14 +146,17 @@ noise.Duration = 200;
 noise.Level = 75;
 noise.Ramp = 1;
 noise.Frozen = 0;
-
+%------------------------------------
 % null signal
+%------------------------------------
 null.signal.Type = 'null';
 null.Delay = 100;
 null.Duration = 200;
 null.Level = 0;
-
-% Specify wav signal
+%------------------------------------
+% WAV
+%------------------------------------
+% Specify wav signal(s)
 WavesToPlay = {	'MFV_tonal_normalized.wav', ...
 						'P100_11_Noisy.wav', ...
 						'P100_1_Flat_USV.wav', ...
@@ -146,10 +169,11 @@ WavScaleFactors = [	2.5, ...
 							1, ...
 							2	...
 						];
-					
 audio.signal.Type = 'wav';
 audio.signal.WavPath = 'C:\TytoLogy\Experiments\Wavs';
-
+%------------------------------------
+% wav properties
+%------------------------------------
 % select only waves in list
 % get information about stimuli
 AllwavInfo = getWavInfo(fullfile(audio.signal.WavPath, 'wavinfo.mat'));
@@ -166,9 +190,9 @@ wavInfo = repmat( AllwavInfo(1), length(WavesToPlay), 1);
 for w = 1:length(WavesToPlay)
 	wavInfo(w) = AllwavInfo(strcmp(WavesToPlay(w), AllwavNames));
 end
-
-
+%------------------------------------
 % create list of filenames - need to do a bit of housekeeping
+%------------------------------------
 audio.signal.WavFile = cell(nWavs, 1);
 tmp = {};
 [tmp{1:nWavs, 1}] = deal(wavInfo.Filename);
@@ -181,35 +205,18 @@ for n = 1:nWavs
 	wavInfo(n).ScaleFactor = WavScaleFactors(n);
 end
 clear tmp;
+%------------------------------------
+% general audio properties
+%------------------------------------
 % Delay 
 audio.Delay = 100;
-
 % Duration is variable for WAV files - this information
 % will be found in the audio.signal.WavInfo
 % For now, this will be a dummy value
 audio.Duration = 200;
-audio.Level = 80;
+audio.Level = 75;
 audio.Ramp = 1;
 audio.Frozen = 0;
-%------------------------------------
-% Presentation settings
-%------------------------------------
-test.Reps = 20;
-test.Randomize = 1;
-audio.ISI = 500;
-
-%------------------------------------
-% Experiment settings
-%------------------------------------
-% save output stimuli? (0 = no, 1 = yes)
-test.saveStim = 0;
-
-%------------------------------------
-% acquisition/sweep settings
-% will have to be adjusted to deal with wav file durations
-%------------------------------------
-test.AcqDuration = 1000;
-test.SweepPeriod = 1005;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -248,7 +255,6 @@ for oindex = 1:numel(optovar)
 		end
 	end
 end
-
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % randomize in blocks (if necessary) by creating a randomized list of 
@@ -307,39 +313,6 @@ if noise.Frozen
 	noise.signal.S0 = sin2array(noise.signal.S0, noise.Ramp, outdev.Fs);
 	noise.signal.rms = rms(noise.signal.S0);
 end
-
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-% Setup Plots using the _configurePlots script
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-% 	HPCurve_configurePlots
-
-%{
-% make sure we have lowercase stimtype and curvetype
-curvetype = upper(stimcache.curvetype);
-stimtype = lower(stimcache.stimtype);
-% init the curvedata as empty matrix
-curvedata = [];
-	
-%--------------------------------------------------------
-%--------------------------------------------------------
-% feedback to user about curve
-%--------------------------------------------------------
-%--------------------------------------------------------
-disp(['Running ' curvetype ' Curve using ' stimtype '...'])
-fprintf('\t Nreps: %d', stimcache.nreps);
-% 	fprintf('\t ITD range: %s', curve.ITDrangestr);
-% 	fprintf('\t ILD range: %s', curve.ILDrangestr);
-% 	fprintf('\t ABI range: %s', curve.ABIrangestr);
-% 	fprintf('\t FREQ range: %s', curve.FREQrangestr);
-% 	fprintf('\t BC range: %s', curve.BCrangestr);
-% 	fprintf('\t sAM Pct range: %s', curve.sAMPCTrangestr);
-% 	fprintf('\t sAM Freq range: %s', curve.sAMFREQrangestr);
-fprintf('\t saveStim: %d', stimcache.saveStim);
-fprintf('\t freezeStim: %d', stimcache.freezeStim);
-fprintf('\t display channel: %d\n', handles.H.TDT.channels.MonitorChannel);
-%}
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -426,10 +399,6 @@ RPsettag(outdev, 'AttenL', MAX_ATTEN);
 RPsettag(outdev, 'AttenR', MAX_ATTEN);
 RPsettag(outdev, 'Mute', 0);
 
-% % build filter for plotting data
-% fband = [handles.H.TDT.HPFreq handles.H.TDT.LPFreq] ./ ...
-% 					(0.5 * handles.H.TDT.indev.Fs);
-% [filtB, filtA] = butter(3, fband);
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------

@@ -104,7 +104,7 @@ end
 switch c.curvetype		
 	
 	% LEVEL curves can use either noise or tones or opto
-	case {'LEVEL'}
+	case {'LEVEL', 'LEVEL_OPTO'}
 		switch c.stimtype
 			case 'noise'
 				% low freq for bandwidth of noise (Hz)
@@ -449,8 +449,8 @@ switch c.curvetype
 	% Unsupported
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	otherwise
-		warning('%s: Sorry, that type of curve is not fully implemented.', ...
-						mfilename);
+		warning('%s: Sorry, curve type <<%s>> is not fully implemented.', ...
+						mfilename, c.curvetype);
 		c = [];
 		return
 end

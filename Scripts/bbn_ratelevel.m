@@ -10,8 +10,6 @@
 % 		'DUR'				opto stim duration
 % 		'AMP'				opto stim amplitude
 % 						or some combination of these
-%
-% *** for STANDALONE type, see default_standalone.m ***
 %-------------------------------------------------------------------------
 test.Type = 'LEVEL';
 
@@ -33,13 +31,13 @@ test.audio.signal.Type = 'noise';
 test.audio.signal.Fmin = 4000;
 test.audio.signal.Fmax = 80000;
 test.audio.Delay = 100;
-test.audio.Duration = 50;
-test.audio.Level = 0:10:70;
-test.audio.Ramp = 1;
+test.audio.Duration = 100;
+test.audio.Level = 40:10:80;
+test.audio.Ramp = 5;
 test.audio.Frozen = 0;
-test.audio.ISI = 500;
+test.audio.ISI = 300;
 
-test.Reps = 2;
+test.Reps = 10;
 test.Randomize = 1;
 
 test.saveStim = 0;
@@ -49,8 +47,8 @@ test.saveStim = 0;
 % TDT
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-test.AcqDuration = 250;
-test.SweepPeriod = test.AcqDuration + 2;
+test.AcqDuration = 350;
+test.SweepPeriod = test.AcqDuration + 1;
 
  
 
