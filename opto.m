@@ -629,8 +629,34 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	% update date and time in animal struct
 	handles.H.animal.Date = TytoLogy_datetime('date_compact');
 	handles.H.animal.Time = TytoLogy_datetime('time');
+% <<<<<<< HEAD
+% 	guidata(hObject, handles);
+% 	
+% 	% create filename from animal info
+% 	%	animal # _ date _ unit _ Penetration # _ Depth _ type .dat
+% 	defaultfile = sprintf('%s_%s_%s_%s_%s_%s.dat', ...
+% 									handles.H.animal.Animal, ...
+% 									handles.H.animal.Date, ...
+% 									handles.H.animal.Unit, ...
+% 									handles.H.animal.Pen, ...
+% 									handles.H.animal.Depth, ...
+% 									test.Type); %#ok<*NODEF>
+% 	% check if default output directory exists
+% 	if ~exist(handles.H.DefaultOutputDir, 'dir')
+% 		% if not, create it
+% 		mkdir(handles.H.DefaultOutputDir);
+% 	end
+% 	
+% 	
+% 	
+% 	defaultfile = fullfile(handles.H.DefaultOutputDir, defaultfile);
+% 
+% 	[fname, pname] = uiputfile('*.dat', 'Save Data', defaultfile);
+% 
+% =======
 	guidata(hObject, handles);	
 	[pname, fname] = opto_createDataFileName(handles, test);  %#ok<NODEF>
+% >>>>>>> master
 	if fname == 0
 		optomsg(handles, 'Run Test Script Cancelled');
 		return

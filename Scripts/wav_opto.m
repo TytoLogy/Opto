@@ -89,7 +89,7 @@ caldata = handles.H.caldata;
 %------------------------------------
 test.Reps = 10;
 test.Randomize = 1;
-audio.ISI = 500;
+audio.ISI = 100;
 %------------------------------------
 % Experiment settings
 %------------------------------------
@@ -99,7 +99,7 @@ test.saveStim = 0;
 % acquisition/sweep settings
 % will have to be adjusted to deal with wav file durations
 %------------------------------------
-test.AcqDuration = 500;
+test.AcqDuration = 1000;
 test.SweepPeriod = test.AcqDuration + 5;
 
 %-------------------------------------------------------------------------
@@ -128,7 +128,7 @@ test.SweepPeriod = test.AcqDuration + 5;
 % opto.Delay = 100;
 % opto.Dur = 100;
 % opto.Amp = 250;
-opto.Enable = 1;
+opto.Enable = 0;
 opto.Delay = 0;
 opto.Dur = 200;
 opto.Amp = 2000;
@@ -142,16 +142,16 @@ noise.signal.Type = 'noise';
 noise.signal.Fmin = 4000;
 noise.signal.Fmax = 80000;
 noise.Delay = 100;
-noise.Duration = 200;
-noise.Level = 75;
-noise.Ramp = 1;
+noise.Duration = 100;
+noise.Level = 80;
+noise.Ramp = 5;
 noise.Frozen = 0;
 %------------------------------------
 % null signal
 %------------------------------------
 null.signal.Type = 'null';
 null.Delay = 100;
-null.Duration = 200;
+null.Duration = noise.Duration;
 null.Level = 0;
 %------------------------------------
 % WAV
@@ -214,8 +214,8 @@ audio.Delay = 100;
 % will be found in the audio.signal.WavInfo
 % For now, this will be a dummy value
 audio.Duration = 200;
-audio.Level = 75;
-audio.Ramp = 1;
+audio.Level = 80;
+audio.Ramp = 5;
 audio.Frozen = 0;
 
 %-------------------------------------------------------------------------
