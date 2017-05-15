@@ -203,7 +203,8 @@ else
 		% set title string
 		title(ax, tstr, 'Interpreter', 'none');
 		% force drawing
-		drawnow
+% 		drawnow
+		refreshdata
 		% wait for ISI
 		pause(0.001*H.audio.ISI)
 	end	% END while get(hObject, 'Value')
