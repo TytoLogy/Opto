@@ -87,8 +87,8 @@ caldata = handles.H.caldata;
 %------------------------------------
 % Presentation settings
 %------------------------------------
-test.Reps = 10;
-test.Randomize = 1;
+test.Reps = 20;
+test.Randomize = 0;
 audio.ISI = 100;
 %------------------------------------
 % Experiment settings
