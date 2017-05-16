@@ -21,7 +21,7 @@ function varargout = opto(varargin)
 % See also: GUIDE, GUIDATA, GUIHANDLES
 %-------------------------------------------------------------------------
 
-% Last Modified by GUIDE v2.5 19-Apr-2017 14:14:58
+% Last Modified by GUIDE v2.5 16-May-2017 15:15:39
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -458,6 +458,13 @@ function editAcqDuration_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function editCircuitGain_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
+	% maker sure value is in bounds
+	if val < 0
+		optomsg(handles, 'Circuit Gain must non-negative!')
+		update_ui_str(hObject, handles.H.TDT.CircuitGain);
+		return
+	end
+	val = 1000*val;
 	optomsg(handles, sprintf('setting CircuitGain to %d', val));
 	% if TDT HW is enabled, set the tag in the circuit
 	% note that since this is addressing the circuit directly, it will
@@ -473,6 +480,12 @@ function editCircuitGain_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function editHPFreq_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
+	% maker sure value is in bounds
+	if ~between(val, 0, handles.H.TDT.LPFreq)
+		optomsg(handles, 'HighPass Cutoff must be between 0 and LP Freq!');
+		update_ui_str(hObject, handles.H.TDT.HPFreq);
+		return
+	end
 	optomsg(handles, sprintf('setting HP filter freq to %d', val));
 	% if TDT HW is enabled, set the tag in the circuit
 	% note that since this is addressing the circuit directly, it will
@@ -488,6 +501,12 @@ function editHPFreq_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function editLPFreq_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
+	% maker sure value is in bounds
+	if val <= handles.H.TDT.LPFreq
+		optomsg(handles, 'Low Pass Cutoff must be greater than HP Freq!');
+		update_ui_str(hObject, handles.H.TDT.LPFreq);
+		return
+	end
 	optomsg(handles, sprintf('setting LP filter freq to %d', val));
 	% if TDT HW is enabled, set the tag in the circuit
 	% note that since this is addressing the circuit directly, it will
@@ -502,13 +521,51 @@ function editLPFreq_Callback(hObject, eventdata, handles)
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 function tableChannelSelect_CellEdit_Callback(hObject, eventdata, handles)
+	% get current Data from tableChannelSelect (will be a cell array)
 	cellD = get(hObject, 'Data');
+	% convert to array
 	matD = cell2mat(cellD);
+	% update TDT settings appropriately
 	handles.H.TDT.channels.RecordChannels = cellD;
 	handles.H.TDT.channels.nRecordChannels = sum(matD);
 	handles.H.TDT.channels.RecordChannelList = find(matD);
+	% set Data property of tableChannelSelect
 	set(hObject, 'Data', num2cell(matD))
 	optomsg(handles, 'Changing Channels to Record...');
+	guidata(hObject, handles);
+%-------------------------------------------------------------------------
+function buttonSelectAllChannels_Callback(hObject, eventdata, handles)
+	% select all Channels in tableChannelSelect
+	% get current Data from tableChannelSelect (will be a cell array)
+	tmpCellD = get(handles.tableChannelSelect, 'Data');
+	% create array of trues size of tmpCellD
+	allMatD = true(size(cell2mat(tmpCellD)));
+	% and create new cell from this
+	allCellD = num2cell(allMatD);
+	% update TDT settings appropriately
+	handles.H.TDT.channels.RecordChannels = allCellD;
+	handles.H.TDT.channels.nRecordChannels = sum(allMatD);
+	handles.H.TDT.channels.RecordChannelList = find(allMatD);
+	% set Data property of tableChannelSelect
+	set(handles.tableChannelSelect, 'Data', allCellD);
+	optomsg(handles, 'Selecting ALL Channels to Record...');
+	guidata(hObject, handles);
+%-------------------------------------------------------------------------
+function buttonSelectNoneChannels_Callback(hObject, eventdata, handles)
+	% select None Channels in tableChannelSelect
+	% get current Data from tableChannelSelect (will be a cell array)
+	tmpCellD = get(handles.tableChannelSelect, 'Data');
+	% create array of falses size of tmpCellD
+	noneMatD = false(size(cell2mat(tmpCellD)));
+	% and create new cell from this
+	noneCellD = num2cell(noneMatD);
+	% update TDT settings appropriately
+	handles.H.TDT.channels.RecordChannels = noneCellD;
+	handles.H.TDT.channels.nRecordChannels = sum(noneMatD);
+	handles.H.TDT.channels.RecordChannelList = find(noneMatD);
+	% set Data property of tableChannelSelect
+	set(handles.tableChannelSelect, 'Data', noneCellD);
+	optomsg(handles, 'Selecting NO Channels to Record...');
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -629,34 +686,8 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	% update date and time in animal struct
 	handles.H.animal.Date = TytoLogy_datetime('date_compact');
 	handles.H.animal.Time = TytoLogy_datetime('time');
-% <<<<<<< HEAD
-% 	guidata(hObject, handles);
-% 	
-% 	% create filename from animal info
-% 	%	animal # _ date _ unit _ Penetration # _ Depth _ type .dat
-% 	defaultfile = sprintf('%s_%s_%s_%s_%s_%s.dat', ...
-% 									handles.H.animal.Animal, ...
-% 									handles.H.animal.Date, ...
-% 									handles.H.animal.Unit, ...
-% 									handles.H.animal.Pen, ...
-% 									handles.H.animal.Depth, ...
-% 									test.Type); %#ok<*NODEF>
-% 	% check if default output directory exists
-% 	if ~exist(handles.H.DefaultOutputDir, 'dir')
-% 		% if not, create it
-% 		mkdir(handles.H.DefaultOutputDir);
-% 	end
-% 	
-% 	
-% 	
-% 	defaultfile = fullfile(handles.H.DefaultOutputDir, defaultfile);
-% 
-% 	[fname, pname] = uiputfile('*.dat', 'Save Data', defaultfile);
-% 
-% =======
 	guidata(hObject, handles);	
 	[pname, fname] = opto_createDataFileName(handles, test);  %#ok<NODEF>
-% >>>>>>> master
 	if fname == 0
 		optomsg(handles, 'Run Test Script Cancelled');
 		return
@@ -1016,11 +1047,13 @@ function editComments_CreateFcn(hObject, eventdata, handles)
 		set(hObject,'BackgroundColor','white');
 	end
 %-------------------------------------------------------------------------
-
-
-
+%-------------------------------------------------------------------------
 % --- Executes during object deletion, before destroying properties.
 function figure1_DeleteFcn(hObject, eventdata, handles)
 % hObject    handle to figure1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+
+
