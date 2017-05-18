@@ -57,11 +57,6 @@ else
 							handles.H.audio, ...
 							handles.H.TDT.channels, ...
 							handles.H.opto);
-% 							
-% 		% build filter
-% 		fband = [handles.H.TDT.HPFreq handles.H.TDT.LPFreq] ./ ...
-% 							(0.5 * handles.H.TDT.indev.Fs);
-% 		[filtB, filtA] = butter(3, fband);
 
 	% turn on audio monitor for spikes using software trigger 1
 	RPtrig(handles.H.TDT.indev, 1);
@@ -128,6 +123,8 @@ else
 	zBUS = handles.H.TDT.zBUS;
 	TDT = handles.H.TDT;
 	H = handles.H;
+	% make local copy of block
+	block = H.block;
 	% make sure mute is off
 	RPsettag(outdev, 'Mute', 0);
 	% set rep counter to 0
@@ -143,8 +140,10 @@ else
 		% evaluate the call within a different workspace, which is
 		% perhaps an even greater kludge...)
 		H = update_H_from_GUI(handles);
+		H.block = block;
 		% generate stimulus
-		[stim, tstr] = opto_getSearchStim(H, outdev);
+		[stim, tstr, block] = opto_getSearchStim(H, outdev);
+		fprintf('CurrentRep: %d\n', block.CurrentRep);
 		tstr = sprintf('%s, Rep %d', tstr, rep);
 		% convert to [2XN] stimulus array. 
 		% row 1 == output A on RZ6, row 2 = output B
@@ -166,13 +165,14 @@ else
 			% some checks on AttenL value
 			if AttenL <= 0
 				AttenL = 0;
-				optomsg(handles, 'Attenuation at minimum!');
+				optomsg(handles, 'Attenuation at minimum!', 'echo', 'off');
 			elseif AttenL >= 120
 				AttenL = 120;
-				optomsg(handles, 'Attenuation at maximum!');
+				optomsg(handles, 'Attenuation at maximum!', 'echo', 'off');
 			else
 				optomsg(handles, sprintf('Rep %d: %s, atten: %.1f dB', ...
-													rep, H.audio.Signal, AttenL));
+													rep, H.audio.Signal, AttenL), ...
+													'echo', 'off');
 			end
 		end
 		% Right attenuator is set to 120 since it is unused

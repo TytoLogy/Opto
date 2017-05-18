@@ -32,13 +32,13 @@ test.audio.signal.Fmin = 4000;
 test.audio.signal.Fmax = 80000;
 test.audio.Delay = 100;
 test.audio.Duration = 100;
-test.audio.Level = 40:10:80;
+test.audio.Level = 0;
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
 test.audio.ISI = 300;
 
-test.Reps = 10;
-test.Randomize = 1;
+test.Reps = 30;
+test.Randomize = 0;
 
 test.saveStim = 0;
 
@@ -47,8 +47,8 @@ test.saveStim = 0;
 % TDT
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-test.AcqDuration = 350;
-test.SweepPeriod = test.AcqDuration + 1;
+test.AcqDuration = 1000;
+test.SweepPeriod = test.AcqDuration + 5;
 
  
 

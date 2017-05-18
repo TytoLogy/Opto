@@ -103,7 +103,7 @@ function popupAudioSignal_Callback(hObject, eventdata, handles)
 	stimString = upper(stimTypes{read_ui_val(hObject)});
 	switch stimString
 		case 'NOISE'
-			optomsg(handles, 'Noise stimulus selected');
+			optomsg(handles, 'Noise stimulus selected', 'echo', 'off');
 			handles.H.audio.Signal = 'noise';
 			guidata(hObject, handles);
 			% enable, make visible Fmax stuff, update Fmax val
@@ -111,7 +111,7 @@ function popupAudioSignal_Callback(hObject, eventdata, handles)
 																	handles, stimString);
 			guidata(hObject, handles);
 		case 'TONE'
-			optomsg(handles, 'Tone stimulus selected');
+			optomsg(handles, 'Tone stimulus selected', 'echo', 'off');
 			handles.H.audio.Signal = 'tone';
 			guidata(hObject, handles);
 			% disable Fmax ctrls, change Fmin name to Freq, update val
@@ -119,7 +119,7 @@ function popupAudioSignal_Callback(hObject, eventdata, handles)
 																	handles, stimString);
 			guidata(hObject, handles);
 		case '.WAV'
-			optomsg(handles, '.WAV file stimulus selected');
+			optomsg(handles, '.WAV file stimulus selected', 'echo', 'off');
 			handles.H.audio.Signal = 'wav';
 			guidata(hObject, handles);
 			% disable Dur, Ramp;, Fmin, Fmax ctrls, update val
@@ -127,27 +127,41 @@ function popupAudioSignal_Callback(hObject, eventdata, handles)
 																	handles, stimString);
 			guidata(hObject, handles);
 		case 'SEARCH'
-			optomsg(handles, 'Search stimulus selected');
+			optomsg(handles, 'Search stimulus selected', 'echo', 'off');
 			handles.H.audio.Signal = 'Search';
 			% enable Fmax, Fmin, Dur, Ramp
 			handles = updateAudioControlsFromType(hObject, ...
 																	handles, stimString);
+			guidata(hObject, handles);
+		case 'BLOCK_SEARCH'
+			optomsg(handles, 'Block_Search stimulus selected', 'echo', 'off');
+			handles.H.audio.Signal = 'Block_Search';
+			% enable Fmax, Fmin, Dur, Ramp
+			handles = updateAudioControlsFromType(hObject, ...
+																	handles, stimString);
+			% take care of block parameters
+			handles.H.block.CurrentStim = 1;
+			handles.H.block.CurrentTone = 1;
+			handles.H.block.CurrentWav = 1;
+			handles.H.block.Rep = 1;
+			handles.H.block.Nreps = 10;
+			guidata(hObject, handles);
 		case 'OFF'
-			optomsg(handles, 'Audio stimulus OFF');
+			optomsg(handles, 'Audio stimulus OFF', 'echo', 'off');
 			handles.H.audio.Signal = 'off';
 			guidata(hObject, handles);
 			handles = updateAudioControlsFromType(hObject, ...
 																	handles, stimString);
 			guidata(hObject, handles);
 	end
-	optomsg(handles, ['Stimulus type set to ' stimString]);
+	optomsg(handles, ['Stimulus type set to ' stimString], 'echo', 'off');
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------	
 function editAudioDelay_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	if between(val, 0.6, handles.H.TDT.SweepPeriod)
 		handles.H.audio.Delay = val;
-		optomsg(handles, 'Audio delay set');
+		optomsg(handles, 'Audio delay set', 'echo', 'off');
 		guidata(hObject, handles);
 	else
 		optomsg(handles, 'invalid audio Delay');
@@ -200,7 +214,8 @@ function editAudioFmin_Callback(hObject, eventdata, handles)
 				handles.H.noise.Fmin = val;
 				guidata(hObject, handles);
 				optomsg(handles, sprintf('Noise Fmin: %.0f', ...
-													handles.H.noise.Fmin));
+													handles.H.noise.Fmin), ...
+													'echo', 'off');
 			else
 				optomsg(handles, 'invalid audio noise Fmin');
 				update_ui_str(hObject, handles.H.noise.Fmin);
@@ -210,7 +225,8 @@ function editAudioFmin_Callback(hObject, eventdata, handles)
 				handles.H.tone.Frequency = val;
 				guidata(hObject, handles);
 				optomsg(handles, sprintf('Tone Freq: %.0f', ...
-													handles.H.tone.Frequency));
+													handles.H.tone.Frequency), ...
+													'echo', 'off');
 			else
 				optomsg(handles, 'invalid audio tone Frequency');
 				update_ui_str(hObject, handles.H.tone.Frequency);
@@ -225,7 +241,8 @@ function editAudioFmax_Callback(hObject, eventdata, handles)
 		handles.H.noise.Fmax = val;
 		guidata(hObject, handles);
 		optomsg(handles, sprintf('Noise Fmax: %.0f', ...
-													handles.H.noise.Fmax));
+													handles.H.noise.Fmax), ...
+													'echo', 'off');
 	else
 		optomsg(handles, 'invalid audio noise Fmax');
 		update_ui_str(hObject, handles.H.noise.Fmax);
@@ -242,7 +259,9 @@ function buttonAudioWavFile_Callback(hObject, eventdata, handles)
 		try
 			info = audioinfo(fullfile(pathnm, filenm));
 			wdata = audioread(fullfile(pathnm, filenm))';
-			optomsg(handles, ['Loaded wav data from ' fullfile(pathnm, filenm)]);
+			optomsg(handles, ['Loaded wav data from ' ...
+												fullfile(pathnm, filenm)], ...
+												'echo', 'off');
 		catch errMsg
 			% on error, display error message, make sure wav struct
 			% in handles is not loaded
@@ -280,7 +299,8 @@ function editAudioWavScale_Callback(hObject, eventdata, handles)
 		handles.H.wav.scalef = val;
 		guidata(hObject, handles);
 		optomsg(handles, sprintf('Wav scale factor Fmax: %.0f', ...
-													handles.H.wav.scalef));
+													handles.H.wav.scalef), ...
+													'echo', 'off');
 	else
 		optomsg(handles, 'invalid wav scale factor');
 		update_ui_str(hObject, handles.H.wav.scalef);
@@ -414,12 +434,12 @@ function buttonTDTEnable_Callback(hObject, eventdata, handles)
 		handles.H.TDT.PA5L = outhandles.PA5L;
 		handles.H.TDT.PA5R = outhandles.PA5R;
 		guidata(hObject, handles);
-		% settings
-		% opto_TDTsettings() passes settings from the device, tdt, stimulus,
-		% channels and optical structs on to tags in the running TDT circuits
-		% Fs is a 1X2 array of sample rates for indev and outdev - this is because
-		% the actual sample rates often differ from those specified in the software
-		% settings due to clock frequency divisor issues
+		% settings opto_TDTsettings() passes settings from the device, tdt,
+		% stimulus, channels and optical structs on to tags in the running
+		% TDT circuits Fs is a 1X2 array of sample rates for indev and outdev
+		% - this is because the actual sample rates often differ from those
+		% specified in the software settings due to clock frequency divisor
+		% issues
 		Fs = opto_TDTsettings(	handles.H.TDT.indev, ...
 										handles.H.TDT.outdev, ...
 										handles.H.TDT, ...
@@ -465,7 +485,8 @@ function editCircuitGain_Callback(hObject, eventdata, handles)
 		return
 	end
 	val = 1000*val;
-	optomsg(handles, sprintf('setting CircuitGain to %d', val));
+	optomsg(handles, sprintf('setting CircuitGain to %d', val), ...
+																			'echo', 'off');
 	% if TDT HW is enabled, set the tag in the circuit
 	% note that since this is addressing the circuit directly, it will
 	% take affect immediately and without need for action in running
@@ -486,7 +507,8 @@ function editHPFreq_Callback(hObject, eventdata, handles)
 		update_ui_str(hObject, handles.H.TDT.HPFreq);
 		return
 	end
-	optomsg(handles, sprintf('setting HP filter freq to %d', val));
+	optomsg(handles, sprintf('setting HP filter freq to %d', val), ...
+																			'echo', 'off');
 	% if TDT HW is enabled, set the tag in the circuit
 	% note that since this is addressing the circuit directly, it will
 	% take affect immediately and without need for action in running
@@ -502,12 +524,13 @@ function editHPFreq_Callback(hObject, eventdata, handles)
 function editLPFreq_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	% maker sure value is in bounds
-	if val <= handles.H.TDT.LPFreq
+	if val <= handles.H.TDT.HPFreq
 		optomsg(handles, 'Low Pass Cutoff must be greater than HP Freq!');
 		update_ui_str(hObject, handles.H.TDT.LPFreq);
 		return
 	end
-	optomsg(handles, sprintf('setting LP filter freq to %d', val));
+	optomsg(handles, sprintf('setting LP filter freq to %d', val), ...
+																			'echo', 'off');
 	% if TDT HW is enabled, set the tag in the circuit
 	% note that since this is addressing the circuit directly, it will
 	% take affect immediately and without need for action in running
@@ -531,7 +554,7 @@ function tableChannelSelect_CellEdit_Callback(hObject, eventdata, handles)
 	handles.H.TDT.channels.RecordChannelList = find(matD);
 	% set Data property of tableChannelSelect
 	set(hObject, 'Data', num2cell(matD))
-	optomsg(handles, 'Changing Channels to Record...');
+	optomsg(handles, 'Changing Channels to Record...', 'echo', 'off');
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 function buttonSelectAllChannels_Callback(hObject, eventdata, handles)
@@ -548,7 +571,7 @@ function buttonSelectAllChannels_Callback(hObject, eventdata, handles)
 	handles.H.TDT.channels.RecordChannelList = find(allMatD);
 	% set Data property of tableChannelSelect
 	set(handles.tableChannelSelect, 'Data', allCellD);
-	optomsg(handles, 'Selecting ALL Channels to Record...');
+	optomsg(handles, 'Selecting ALL Channels to Record...', 'echo', 'off');
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 function buttonSelectNoneChannels_Callback(hObject, eventdata, handles)
@@ -565,7 +588,7 @@ function buttonSelectNoneChannels_Callback(hObject, eventdata, handles)
 	handles.H.TDT.channels.RecordChannelList = find(noneMatD);
 	% set Data property of tableChannelSelect
 	set(handles.tableChannelSelect, 'Data', noneCellD);
-	optomsg(handles, 'Selecting NO Channels to Record...');
+	optomsg(handles, 'Selecting NO Channels to Record...', 'echo', 'off');
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -580,9 +603,9 @@ function buttonSelectNoneChannels_Callback(hObject, eventdata, handles)
 function checkMonitorOnOff_Callback(hObject, eventdata, handles)
 	val = read_ui_val(hObject);
 	if val
-		optomsg(handles, 'turning monitor ON');
+		optomsg(handles, 'turning monitor ON', 'echo', 'off');
 	else
-		optomsg(handles, 'turning monitor OFF');
+		optomsg(handles, 'turning monitor OFF', 'echo', 'off');
 	end
 	% if TDT HW is enabled, send trigger to turn monitor on or off
 	if handles.H.TDT.Enable
@@ -609,7 +632,8 @@ function checkMonitorOnOff_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function popupMonitorChannel_Callback(hObject, eventdata, handles)
 	val = read_ui_val(hObject);
-	optomsg(handles, sprintf('setting monitor channel to %d', val));
+	optomsg(handles, sprintf('setting monitor channel to %d', val), ...
+																			'echo', 'off');
 	% if TDT HW is enabled, set the tag in the circuit
 	if handles.H.TDT.Enable
 		RPsettag(handles.H.TDT.indev, 'MonChan', val);
@@ -620,7 +644,15 @@ function popupMonitorChannel_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function editMonGain_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
-	optomsg(handles, sprintf('setting monitor gain to %d', val));
+	% maker sure value is in bounds
+	if val < 0
+		optomsg(handles, 'Monitor Gain must non-negative!')
+		update_ui_str(hObject, handles.H.TDT.MonitorGain);
+		return
+	end
+	val = 1000*val;
+	optomsg(handles, sprintf('setting monitor gain to %d', val), ...
+																'echo', 'off');
 	% if TDT HW is enabled, set the tag in the circuit
 	if handles.H.TDT.Enable
 		RPsettag(handles.H.TDT.indev, 'MonGain', val);
@@ -756,7 +788,7 @@ function editAnimal_Callback(hObject, eventdata, handles)
 		optomsg(handles, 'Animal Number must be 4 characters or fewer');
 		update_ui_str(hObject, handles.H.animal.Animal)
 	else
-		optomsg(handles, ['Animal #: ' str]);
+		optomsg(handles, ['Animal #: ' str], 'echo', 'off');
 		handles.H.animal.Animal = str;
 		guidata(hObject, handles);
 	end
@@ -768,7 +800,7 @@ function editUnit_Callback(hObject, eventdata, handles)
 		optomsg(handles, 'Unit Number must be 3 characters or fewer');
 		update_ui_str(hObject, handles.H.animal.Unit)
 	else
-		optomsg(handles, ['Unit #: ' str]);
+		optomsg(handles, ['Unit #: ' str], 'echo', 'off');
 		handles.H.animal.Unit = str;
 		guidata(hObject, handles);
 	end
@@ -780,7 +812,7 @@ function editRec_Callback(hObject, eventdata, handles)
 		optomsg(handles, 'Recording Session must be 2 characters or fewer');
 		update_ui_str(hObject, handles.H.animal.Rec)
 	else
-		optomsg(handles, ['Rec #: ' str]);
+		optomsg(handles, ['Rec #: ' str], 'echo', 'off');
 		handles.H.animal.Rec = str;
 		guidata(hObject, handles);
 	end
@@ -792,7 +824,7 @@ function editPen_Callback(hObject, eventdata, handles)
 		optomsg(handles, 'Penetration # must be 2 characters or fewer');
 		update_ui_str(hObject, handles.H.animal.Pen)
 	else
-		optomsg(handles, ['Pen #: ' str]);
+		optomsg(handles, ['Pen #: ' str], 'echo', 'off');
 		handles.H.animal.Pen = str;
 		guidata(hObject, handles);
 	end
@@ -804,7 +836,7 @@ function editAP_Callback(hObject, eventdata, handles)
 		optomsg(handles, 'AP location cannot be empty!');
 		update_ui_str(hObject, handles.H.animal.AP)
 	else
-		optomsg(handles, ['AP location: ' str ' mm']);
+		optomsg(handles, ['AP location: ' str ' mm'], 'echo', 'off');
 		handles.H.animal.AP = str;
 		guidata(hObject, handles);
 	end
@@ -816,7 +848,7 @@ function editML_Callback(hObject, eventdata, handles)
 		optomsg(handles, 'ML location cannot be empty!');
 		update_ui_str(hObject, handles.H.animal.ML)
 	else
-		optomsg(handles, ['ML location: ' str ' mm']);
+		optomsg(handles, ['ML location: ' str ' mm'], 'echo', 'off');
 		handles.H.animal.ML = str;
 		guidata(hObject, handles);
 	end
@@ -828,7 +860,7 @@ function editDepth_Callback(hObject, eventdata, handles)
 		optomsg(handles, 'Recording depth cannot be empty!');
 		update_ui_str(hObject, handles.H.animal.Depth)
 	else
-		optomsg(handles, ['Depth: ' str ' um']);
+		optomsg(handles, ['Depth: ' str ' um'], 'echo', 'off');
 		handles.H.animal.Depth = str;
 		guidata(hObject, handles);
 	end
@@ -856,7 +888,9 @@ function buttonLoadCal_Callback(hObject, eventdata, handles)
 		% try to load the calibration data
 		try
 			tmpcal = load_cal(fullfile(pathnm, filenm));
-			optomsg(handles, ['Loaded cal from ' fullfile(pathnm, filenm)]);
+			optomsg(handles, ['Loaded cal from ' ...
+											fullfile(pathnm, filenm)], ...
+											'echo', 'off');
 		catch errMsg
 			% on error, tmpcal is empty
 			optomsg(handles, errMsg);
@@ -868,7 +902,8 @@ function buttonLoadCal_Callback(hObject, eventdata, handles)
 		if isstruct(tmpcal)
 			handles.H.caldata = tmpcal;
 			% update UI control limits based on calibration data
-			handles.H.Lim.F = [handles.H.caldata.Freqs(1) handles.H.caldata.Freqs(end)];
+			handles.H.Lim.F = [handles.H.caldata.Freqs(1) ...
+											handles.H.caldata.Freqs(end)];
 			
 % 			% update slider parameters
 % 			slider_limits(handles.F, handles.Lim.F);

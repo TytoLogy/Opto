@@ -86,9 +86,9 @@ caldata = handles.H.caldata;
 %------------------------------------
 % Presentation settings
 %------------------------------------
-test.Reps = 10;
+test.Reps = 30;
 test.Randomize = 1;
-audio.ISI = 1000;
+audio.ISI = 500;
 %------------------------------------
 % Experiment settings
 %------------------------------------
@@ -97,7 +97,7 @@ test.saveStim = 0;
 %------------------------------------
 % acquisition/sweep settings
 %------------------------------------
-test.AcqDuration = 500;
+test.AcqDuration = 1000;
 test.SweepPeriod = test.AcqDuration + 5;
 
 %-------------------------------------------------------------------------
@@ -122,7 +122,7 @@ test.SweepPeriod = test.AcqDuration + 5;
 % 	To test a range of values (for Delay, Dur, Amp), use a vector of values
 % 	instead of a single number (e.g., [20 40 60] or 20:20:60)
 %------------------------------------
-opto.Enable = 1;
+opto.Enable = 0;
 opto.Delay = 0;
 opto.Dur = 200;
 opto.Amp = 1000;
@@ -134,9 +134,9 @@ audio.signal.Type = 'noise';
 audio.signal.Fmin = 4000;
 audio.signal.Fmax = 80000;
 audio.Delay = 100;
-audio.Duration = 50;
-audio.Level = 0:20:80;
-audio.Ramp = 2;
+audio.Duration = 100;
+audio.Level = [0 80];
+audio.Ramp = 5;
 audio.Frozen = 0;
 
 %-------------------------------------------------------------------------

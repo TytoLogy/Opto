@@ -87,9 +87,9 @@ caldata = handles.H.caldata;
 %------------------------------------
 % Presentation settings
 %------------------------------------
-test.Reps = 20;
+test.Reps = 40;
 test.Randomize = 0;
-audio.ISI = 100;
+audio.ISI = 1;
 %------------------------------------
 % Experiment settings
 %------------------------------------
@@ -99,7 +99,7 @@ test.saveStim = 0;
 % acquisition/sweep settings
 % will have to be adjusted to deal with wav file durations
 %------------------------------------
-test.AcqDuration = 1000;
+test.AcqDuration = 250;
 test.SweepPeriod = test.AcqDuration + 5;
 
 %-------------------------------------------------------------------------
@@ -178,14 +178,16 @@ audio.signal.WavPath = 'C:\TytoLogy\Experiments\Wavs';
 % get information about stimuli
 AllwavInfo = getWavInfo(fullfile(audio.signal.WavPath, 'wavinfo.mat'));
 % create list of ALL filenames - need to do a bit of housekeeping
+% deal function will pull out all values of the Filename field from
+% the AllwavInfo struct array
 AllwavNames = {};
 [AllwavNames{1:length(AllwavInfo), 1}] = deal(AllwavInfo.Filename);
-% need to strip paths from filenames
+% need to strip paths from filenames...
 for w = 1:length(AllwavNames)
 	[~, basename] = fileparts(AllwavNames{w});
 	AllwavNames{w} = [basename '.wav'];
 end
-% select only waves in list
+% and, using filenames, select only wav files in list WavesToPlay
 wavInfo = repmat( AllwavInfo(1), length(WavesToPlay), 1);
 for w = 1:length(WavesToPlay)
 	wavInfo(w) = AllwavInfo(strcmp(WavesToPlay(w), AllwavNames));
