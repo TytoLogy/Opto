@@ -48,9 +48,11 @@ if ispc
 	datapath = 'E:\Data\SJS\1012\20160727';
 	datafile = '1012_20160727_5_3_1_OPTO.dat';
 else 
-	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1012/20160727';
+% 	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1012/20160727';
 % 	datafile = '1012_20160727_5_3_1_OPTO.dat';
-	datafile = '1012_20160727_4_3_1_LEVEL.dat';	
+% 	datafile = '1012_20160727_4_3_1_LEVEL.dat';	
+	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1110/20170515';
+	datafile = '1110_20170515_01_01_4038_WAV_OPTO.dat';
 end
 
 % read in data
@@ -64,10 +66,24 @@ fband = [HPFreq LPFreq] ./ (0.5 * Fs);
 [filtB, filtA] = butter(5, fband);
 
 %% Get test info
-% convert ascii characters from binary file 
-Dinf.test.Type = char(Dinf.test.Type);
-fprintf('Test type: %s\n', Dinf.test.Type);
 
+% try to get information from test Type
+if isfield(Dinf.test, 'Type')
+	% convert ascii characters from binary file 
+	Dinf.test.Type = char(Dinf.test.Type);
+	fprintf('Test type: %s\n', Dinf.test.Type);
+else
+	% otherwise, need to find a different way
+	if isfield(Dinf.test, 'optovar_name')
+			Dinf.test.optovar_name = char(Dinf.test.optovar_name);
+	end
+	if isfield(Dinf.test, 'audiovar_name')
+			Dinf.test.audiovar_name = char(Dinf.test.audiovar_name);
+	end
+	
+end
+
+%%
 % Some test-specific things...
 
 % for FREQ test, find indices of stimuli with same frequency

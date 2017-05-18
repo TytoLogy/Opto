@@ -37,14 +37,18 @@ function [data, varargout] = readOptoData(varargin)
 %	*Documentation!
 %--------------------------------------------------------------------------
 
+%--------------------------------------------------------------------------
 % define some things
+%--------------------------------------------------------------------------
 data = [];
 datafile = [];
 datainfo = [];
 wavinfo_matfile = [];
 DEMUX = 0;
 
+%--------------------------------------------------------------------------
 % check inputs
+%--------------------------------------------------------------------------
 if nargin
 	if exist(varargin{1}, 'file') == 2
 		datafile = varargin{1};
@@ -57,7 +61,9 @@ if nargin
 	end
 end
 
+%--------------------------------------------------------------------------
 % have user select data file if one was not provided
+%--------------------------------------------------------------------------
 if isempty(datafile)
 	[datafile, datapath] = uigetfile('*.dat','Select data file');
 	if datafile == 0
@@ -70,15 +76,15 @@ if isempty(datafile)
 	datafile = fullfile(datapath, datafile);
 end
 
-% build wavinfo_matfile name
-[datapath, basename] = fileparts(datafile);
-wavinfo_matfile = fullfile(datapath, [basename '_wavinfo.mat']);
-
+%--------------------------------------------------------------------------
+% read in data
+%--------------------------------------------------------------------------
+fprintf('Reading data from %s\n', datafile);
 % open file
 fp = fopen(datafile, 'r');
 
+% read the header
 try
-	% read the header
 	datainfo = readOptoDataFileHeader(fp);
 catch errMsg
 	errMsg.message
@@ -99,8 +105,8 @@ end
 nettrials = numreps*numtrials;	
 disp([mfilename sprintf(': reading %d reps, %d trials', numreps, numtrials)]);
 
+% read the data start string
 try
-	% read the data start string
 	datastartstring = readString(fp); %#ok<*NASGU>
 catch errMsg
 	errMsg.message
@@ -108,8 +114,8 @@ catch errMsg
 	return;
 end
 
+% read the data
 try
-	% read the data
 	[data, nread, dpos, status] = readOptoTrialData(fp, nettrials);
 catch errMsg
 	errMsg.message
@@ -117,8 +123,8 @@ catch errMsg
 	return;
 end
 
+% read the data end string
 try
-	% read the data end string
 	dataendstring = readString(fp);
 catch errMsg
 	errMsg.message
@@ -126,8 +132,8 @@ catch errMsg
 	return;
 end
 
+% read the data end time
 try
-	% read the data end time
 	datainfo.time_end = readVector(fp);
 catch errMsg
 	errMsg.message
@@ -135,14 +141,18 @@ catch errMsg
 	return;
 end
 
+% close file
 fclose(fp);
 
+% assign values to datainfo struct
 datainfo.status = status;
 datainfo.nread = nread;
 datainfo.dpos = dpos;
 
+%--------------------------------------------------------------------------
 % now, demultiplex the data if there is more than 1 channel in the data
 % traces
+%--------------------------------------------------------------------------
 if (datainfo.channels.nInputChannels > 1) 
 	if DEMUX
 		nTrials = length(data);
@@ -153,7 +163,16 @@ if (datainfo.channels.nInputChannels > 1)
 	end
 end
 
+%--------------------------------------------------------------------------
+% get stimulus information
+%--------------------------------------------------------------------------
+% build wavinfo_matfile name
+[datapath, basename] = fileparts(datafile);
+wavinfo_matfile = fullfile(datapath, [basename '_wavinfo.mat']);
+
+% check if wavinfo exists
 if exist(wavinfo_matfile, 'file')
+	fprintf('Loading stimList from %s\n', wavinfo_matfile);
 	load(wavinfo_matfile, 'stimList');
 	datainfo.stimList = stimList;
 else
