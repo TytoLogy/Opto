@@ -26,7 +26,8 @@ function [stim, tstr, block] = opto_getSearchStim(H, outdev)
 %	17 May 17 (SJS): working on block search - implemented!
 %------------------------------------------------------------------------
 
-SearchToneFreqs = 1000 * [8 12 16 25 40 60 80];
+% SearchToneFreqs = 1000 * [8 12 16 25 40 60 80];
+SearchToneFreqs = 1000 * [12 16 25];
 nSearchTones = length(SearchToneFreqs);
 nSearchWavs = 1;	% for now...
 
@@ -135,6 +136,5 @@ switch upper(H.audio.Signal)
 		tstr = 'Off';
 
 end
-block
 % ramp onset/offset
 stim = sin2array(stim, H.audio.Ramp, outdev.Fs);

@@ -17,6 +17,9 @@
 %	 - added header/comments
 %--------------------------------------------------------------------------
 
+% kludge until this is put into UI
+monitorHPFc = 500;
+
 % Determine run state from value of button - need to do this in order to
 % be able to stop/start
 state = read_ui_val(hObject);
@@ -69,6 +72,9 @@ else
 				ms2bin(handles.H.TDT.AcqDuration, handles.H.TDT.indev.Fs));
 	RPsettag(handles.H.TDT.indev, 'SwPeriod', ...
 			ms2bin(handles.H.TDT.AcqDuration+1, handles.H.TDT.indev.Fs));
+
+	% set monitor high pass filter cutoff monitorHPFc on indev.
+	RPsettag(handles.H.TDT.indev, 'MonHPFc', monitorHPFc);
 
 	%------------------------------------------------------------
 	% create figure for plotting neural data
@@ -143,7 +149,6 @@ else
 		H.block = block;
 		% generate stimulus
 		[stim, tstr, block] = opto_getSearchStim(H, outdev);
-		fprintf('CurrentRep: %d\n', block.CurrentRep);
 		tstr = sprintf('%s, Rep %d', tstr, rep);
 		% convert to [2XN] stimulus array. 
 		% row 1 == output A on RZ6, row 2 = output B
