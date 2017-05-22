@@ -84,6 +84,7 @@ else
 			Dinf.test.Type = Dinf.test.audiovar_name;
 		end
 	end
+	fprintf('Test type: %s\n', Dinf.test.Type);
 end
 
 %%
@@ -199,18 +200,22 @@ if strcmpi(Dinf.test.Type, 'LEVEL')
 end
 
 if strcmpi(Dinf.test.Type, 'WavFile')
-	% time vector for plotting
+	% time vector for plotting - assume all traces are equal length
 	t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
-	ntrials = Dinf.test.stimcache.nstims;
-	tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
-	for n = 1:ntrials
-			tmpM(:, n) = filtfilt(filtB, filtA, D{n}.datatrace(:, channelIndex));
+	tracesByStim = cell(nwavs, 1);
+	for w = 1:nwavs
+		% create temporary array to hold data
+		tracesByStim{w} = zeros(length(D{1}.datatrace(:, 1)), Dinf.test.Reps);
+		for n = 1:Dinf.test.Reps
+			dIndx = stimindex{w}(n);
+			tracesByStim{w}(:, n) = filtfilt(filtB, filtA, ...
+													D{dIndx}.datatrace(:, channelIndex));
+		end
+		stackplot(t, tracesByStim{w}, 'colormode', 'black');
+		title({	datafile, sprintf('Stimulus: %s', wavlist{w})}, ...
+					'Interpreter', 'none');
+		xlabel('ms')
+		ylabel('Trial')
 	end
-	stackplot(t, tmpM, 'colormode', 'black');
-	title({	datafile, 'Opto Stim', ...
-				sprintf('Channel %d', channelNumber)}, ...
-				'Interpreter', 'none');
-	xlabel('ms')
-	ylabel('Trial')
 end
 
