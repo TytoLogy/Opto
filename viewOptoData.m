@@ -75,12 +75,15 @@ if isfield(Dinf.test, 'Type')
 else
 	% otherwise, need to find a different way
 	if isfield(Dinf.test, 'optovar_name')
-			Dinf.test.optovar_name = char(Dinf.test.optovar_name);
+		Dinf.test.optovar_name = char(Dinf.test.optovar_name);
 	end
 	if isfield(Dinf.test, 'audiovar_name')
-			Dinf.test.audiovar_name = char(Dinf.test.audiovar_name);
+		Dinf.test.audiovar_name = char(Dinf.test.audiovar_name);
+		if strcmpi(Dinf.test.audiovar_name, 'WAVFILE')
+			% test is WAVfile
+			Dinf.test.Type = Dinf.test.audiovar_name;
+		end
 	end
-	
 end
 
 %%
@@ -113,10 +116,29 @@ switch upper(Dinf.test.Type)
 			stimindex{l} = find(Dinf.test.stimcache.vrange(l) == levellist);
 		end
 
-
 % for OPTO test...
 	case 'OPTO'
 	
+	% for WavFile, need to find indices with same filename.
+	case 'WAVFILE'
+		% get list of stimuli (wav file names)
+		nwavs = length(Dinf.stimList);
+		wavlist = cell(nwavs, 1);
+		stimindex = cell(nwavs, 1);
+		for w = 1:nwavs
+			stype = Dinf.stimList(w).audio.signal.Type;
+			if strcmpi(stype, 'null')
+				wavlist{w} = 'null';
+			elseif strcmpi(stype, 'noise')
+				wavlist{w} = 'BBN';
+			elseif strcmpi(stype, 'wav')
+				[~, wavlist{w}] = fileparts(Dinf.stimList(w).audio.signal.WavFile);
+			else
+				error('%s: unknown type %s', mfilename, stype);
+			end
+			stimindex{w} = find(Dinf.test.stimIndices == w);
+		end
+
 	otherwise
 		error('%s: unsupported test type %s', mfilename, Dinf.test.Type);
 end
@@ -132,13 +154,14 @@ else
 end
 
 
-%% Plot data for one channel
-channelNumber = 10;
-
+%% find channel data
+channelNumber = 8;
 channelIndex = find(channelList == channelNumber);
 if isempty(channelIndex)
 	error('Channel not recorded')
 end
+
+%% Plot data for one channel, process will vary depending on stimulus type
 
 if strcmpi(Dinf.test.Type, 'FREQ')
 	% time vector for plotting
@@ -156,7 +179,6 @@ if strcmpi(Dinf.test.Type, 'FREQ')
 									Dinf.test.stimcache.vrange(f)));
 	end
 end
-
 
 if strcmpi(Dinf.test.Type, 'LEVEL')
 	% time vector for plotting
@@ -176,7 +198,7 @@ if strcmpi(Dinf.test.Type, 'LEVEL')
 	end
 end
 
-if strcmpi(Dinf.test.Type, 'OPTO')
+if strcmpi(Dinf.test.Type, 'WavFile')
 	% time vector for plotting
 	t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
 	ntrials = Dinf.test.stimcache.nstims;
@@ -192,53 +214,3 @@ if strcmpi(Dinf.test.Type, 'OPTO')
 	ylabel('Trial')
 end
 
-
-
-%% Plot data for all channels
-for c = 1:nchan
-	channelNumber = channelList(c);
-
-	if strcmpi(Dinf.test.Type, 'FREQ')
-		% time vector for plotting
-		t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
-		for f = 1:nfreqs
-			dlist = stimindex{f};
-			ntrials = length(dlist);
-			tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
-			for n = 1:ntrials
-				tmpM(:, n) = filtfilt(filtB, filtA, ...
-												D{dlist(n)}.datatrace(:, c));
-			end
-			stackplot(t, tmpM);
-			title(sprintf('Channel %d, Freq %d', channelNumber, ...
-										Dinf.test.stimcache.vrange(f)));
-		end
-	end
-
-	if strcmpi(Dinf.test.Type, 'OPTO')
-		% time vector for plotting
-		t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
-		ntrials = Dinf.test.stimcache.nstims;
-		tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
-		for n = 1:ntrials
-				tmpM(:, n) = filtfilt(filtB, filtA, D{n}.datatrace(:, c));
-		end
-		stackplot(t, tmpM);
-		title({	datafile, 'Opto Stim', ...
-					sprintf('Channel %d', channelNumber)}, ...
-					'Interpreter', 'none');
-		xlabel('ms')
-		ylabel('Trial')
-	end
-end
-
-%%
-% filter, plot data
-% tmpD = zeros(size(D{1}.datatrace));
-% t = (1/Fs)*((1:length(tmpD(:, 1))) - 1);
-% 
-% for c = 1:nchan
-% 	tmpD(:, c) = filtfilt(filtB, filtA, D{4}.datatrace(:, c));
-% end
-% plot(1000*t, tmpD)
-% 
