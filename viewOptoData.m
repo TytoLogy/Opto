@@ -45,16 +45,27 @@ LPFreq = 6000;
 if ispc
 % 	datapath = 'E:\Data\SJS\1058';
 % 	datafile = '1058_20160623_0_02_1500_FREQ.dat';
-	datapath = 'E:\Data\SJS\1012\20160727';
-	datafile = '1012_20160727_5_3_1_OPTO.dat';
+% 	datapath = 'E:\Data\SJS\1012\20160727';
+% 	datafile = '1012_20160727_5_3_1_OPTO.dat';
+	datapath = 'E:\Data\SJS';
+	datafile = '';
 else 
 % 	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1012/20160727';
 % 	datafile = '1012_20160727_5_3_1_OPTO.dat';
 % 	datafile = '1012_20160727_4_3_1_LEVEL.dat';	
-	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1110/20170515';
-	datafile = '1110_20170515_01_01_4038_WAV_OPTO.dat';
+% 	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1110/20170515';
+% 	datafile = '1110_20170515_01_01_4038_WAV_OPTO.dat';
+	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto';
+	datafile = '';
 end
-
+if isempty(datafile)
+	% get data file from user
+	[datafile, datapath] = uigetfile('*.dat', 'Select opto data file', ...
+													fullfile(datapath, datafile));
+	if datafile == 0
+		return
+	end
+end
 % read in data
 [D, Dinf] = readOptoData(fullfile(datapath, datafile));
 

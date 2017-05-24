@@ -18,7 +18,7 @@
 %--------------------------------------------------------------------------
 
 % kludge until this is put into UI
-monitorHPFc = 500;
+monitorHPFc = 350;
 
 % Determine run state from value of button - need to do this in order to
 % be able to stop/start
