@@ -13,7 +13,8 @@
 %
 % *** for STANDALONE type, see default_standalone.m ***
 %-------------------------------------------------------------------------
-test.Type = 'LEVEL_OPTO';
+test.Type = 'LEVEL';
+test.Name = 'BBNLEVEL_OPTO';
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -33,7 +34,7 @@ test.SweepPeriod = test.AcqDuration + 2;
 test.opto.Enable = 1;
 test.opto.Delay = 0;
 test.opto.Dur = 500;
-test.opto.Amp = [0 2000];
+test.opto.Amp = 1000;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -44,7 +45,7 @@ test.audio.signal.Fmin = 4000;
 test.audio.signal.Fmax = 80000;
 test.audio.Delay = 200;
 test.audio.Duration = 100;
-test.audio.Level = 0:80;
+test.audio.Level = 0:40:80;
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
 test.audio.ISI = 1000;

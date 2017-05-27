@@ -12,6 +12,7 @@
 % 						or some combination of these
 %-------------------------------------------------------------------------
 test.Type = 'LEVEL';
+test.Name = 'BBN_LEVEL';
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -30,9 +31,9 @@ test.opto.Amp = 50;
 test.audio.signal.Type = 'noise';
 test.audio.signal.Fmin = 4000;
 test.audio.signal.Fmax = 80000;
-test.audio.Delay = 100;
+test.audio.Delay = 200;
 test.audio.Duration = 100;
-test.audio.Level = 0;
+test.audio.Level = [0 40 80];
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
 test.audio.ISI = 300;
