@@ -118,6 +118,7 @@ else
 	set(ax, 'Color', 0.75*[1 1 1]);
 	set(fH, 'Color', 0.75*[1 1 1]);
 	set(fH, 'ToolBar', 'none');
+	grid(ax, 'on');
 	
 	%------------------------------------------------------------
 	% main loop
