@@ -40,7 +40,7 @@ test.audio.ISI = 500;
 
 test.Reps = 10;
 test.Randomize = 1;
-
+test.Block = 0;
 test.saveStim = 0;
 
 %-------------------------------------------------------------------------

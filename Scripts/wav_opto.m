@@ -87,8 +87,9 @@ caldata = handles.H.caldata;
 %------------------------------------
 % Presentation settings
 %------------------------------------
-test.Reps = 10;
-test.Randomize = 1;
+test.Reps = 2;
+test.Randomize = 0;
+test.Block = 1;
 audio.ISI = 500;
 %------------------------------------
 % Experiment settings
@@ -273,8 +274,25 @@ if test.Randomize
 		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
 							randperm(nCombinations);
 	end
+elseif isfield(test, 'Block')
+	if test.Block == 1
+		blockindex = 1;
+		for cIndx = 1:nCombinations
+			for r = 1:test.Reps
+				stimIndices(blockindex) = cIndx;
+				blockindex = blockindex + 1;
+			end
+		end
+	else
+		% assign sequential indices to stimindices
+		disp('NON random stimulus order');
+		for r = 1:test.Reps
+			stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
+								1:nCombinations;
+		end		
+	end
 else
-	% assign blocked indices to stimindices
+	% assign sequential indices to stimindices
 	disp('NON random stimulus order');
 	for r = 1:test.Reps
 		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
