@@ -27,6 +27,7 @@ function [c, stimseq] = opto_buildStimCache(test, tdt, caldata)
 % Revision History
 %	24 May, 2016 (SJS): file created from HPSearch program's
 %								HPCurve_buildStimCache function and adapted
+%	31 May, 2017 (SJS): added block sequence stimulation capability
 %--------------------------------------------------------------------------
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -160,9 +161,12 @@ elseif isfield(test, 'Block')
 		c.trialRandomSequence = blockSequence(c.nreps, c.ntrials);
 	end
 else
-	c.trialRandomSequence = blockSequence(c.nreps, c.ntrials);
+	% play each trial in sequence for nreps times
+	c.trialRandomSequence = zeros(c.nreps, c.ntrials);
+	for m = 1:c.nreps
+		c.trialRandomSequence (m, :) = 1:c.ntrials;
+	end
 end
-
 % assign to output variable
 if nargout > 1
 	stimseq = c.trialRandomSequence;
