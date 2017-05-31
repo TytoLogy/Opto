@@ -153,7 +153,16 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Randomize trial presentations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-c.trialRandomSequence = randomSequence(c.nreps, c.ntrials);
+if test.Randomize == 1
+	c.trialRandomSequence = randomSequence(c.nreps, c.ntrials);
+elseif isfield(test, 'Block')
+	if test.Block == 1
+		c.trialRandomSequence = blockSequence(c.nreps, c.ntrials);
+	end
+else
+	c.trialRandomSequence = blockSequence(c.nreps, c.ntrials);
+end
+
 % assign to output variable
 if nargout > 1
 	stimseq = c.trialRandomSequence;

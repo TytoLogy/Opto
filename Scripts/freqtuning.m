@@ -12,13 +12,13 @@
 % 						or some combination of these
 %-------------------------------------------------------------------------
 test.Type = 'FREQ';
-test.Name = 'FREQ_TUNING_OPTO';
+test.Name = 'FREQ_TUNING';
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % OPTICAL settings
 %-------------------------------------------------------------------------
-test.opto.Enable = 1;
+test.opto.Enable = 0;
 test.opto.Delay = 0;
 test.opto.Dur = 300;
 test.opto.Amp = 2000; % mV
@@ -38,7 +38,7 @@ test.audio.Ramp = 5;
 test.audio.Frozen = 0;
 test.audio.ISI = 500;
 
-test.Reps = 15;
+test.Reps = 10;
 test.Randomize = 1;
 
 test.saveStim = 0;
@@ -48,7 +48,7 @@ test.saveStim = 0;
 % TDT
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-test.AcqDuration = 500;
+test.AcqDuration = 1000;
 test.SweepPeriod = test.AcqDuration + 1;
 
  
