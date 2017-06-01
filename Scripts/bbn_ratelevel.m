@@ -33,14 +33,14 @@ test.audio.signal.Fmin = 4000;
 test.audio.signal.Fmax = 80000;
 test.audio.Delay = 200;
 test.audio.Duration = 100;
-test.audio.Level = [0 20 40 60 80];
+test.audio.Level = [0 20 40 60 80 85];
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
 test.audio.ISI = 500;
 
 test.Reps = 10;
-test.Randomize = 1;
-test.Block = 0;
+test.Randomize = 0;
+test.Block = 1;
 test.saveStim = 0;
 
 %-------------------------------------------------------------------------

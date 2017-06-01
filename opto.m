@@ -250,10 +250,11 @@ function editAudioFmax_Callback(hObject, eventdata, handles)
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 function buttonAudioWavFile_Callback(hObject, eventdata, handles)
+	WAVDIR = 'C:\TytoLogy\Experiments\WAVs';
 	% open a dialog box to get calibration data file name and path
 	[filenm, pathnm] = uigetfile({'*.wav'; '*.*'}, ...
 											'Load wav file...', ...
-											[pwd filesep]);
+											[WAVDIR filesep]);
 	if filenm
 		% try to load the wav file data
 		try

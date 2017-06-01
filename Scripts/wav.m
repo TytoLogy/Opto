@@ -1,4 +1,4 @@
-function [curvedata, varargout] = wav_opto(handles, datafile)
+function [curvedata, varargout] = wav(handles, datafile)
 %--------------------------------------------------------------------------
 % [curvedata, rawdata] = wav_opto(handles, datafile)
 %--------------------------------------------------------------------------
@@ -39,8 +39,8 @@ function [curvedata, varargout] = wav_opto(handles, datafile)
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
-disp 'running wav_opto!'
-curvetype = 'Wav+Opto';
+disp 'running wav!'
+curvetype = 'Wav';
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -217,8 +217,8 @@ clear tmp;
 %------------------------------------
 % general audio properties
 %------------------------------------
-% Delay 
-audio.Delay = 100;
+% Delay - use same as one for noise
+audio.Delay = noise.Delay;
 % Duration is variable for WAV files - this information
 % will be found in the audio.signal.WavInfo
 % For now, this will be a dummy value
