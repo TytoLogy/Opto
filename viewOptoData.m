@@ -196,7 +196,7 @@ if strcmpi(Dinf.test.Type, 'LEVEL')
 	% time vector for plotting
 	t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
 % 	for l = 1:nlevels
-	for l = nlevels
+	for l = 1:nlevels
 		dlist = stimindex{l};
 		ntrials = length(dlist);
 		tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
