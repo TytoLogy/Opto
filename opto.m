@@ -913,12 +913,13 @@ function buttonLoadCal_Callback(hObject, eventdata, handles)
 % 			handles.caldatapath = pathnm;
 % 			handles.caldatafile = filenm;
 			
-			update_ui_str(handles.textCalibration, filenm);
+			update_ui_str(handles.textCalibration, fullfile(pathnm, filenm));
 			% update settings
 			guidata(hObject, handles);
 		else
-			errordlg(['Error loading calibration file ' filenm], ...
-						'LoadCal error'); 
+			errordlg(['Error loading calibration file ' ...
+							fullfile(pathnm, filenm)], ...
+							'LoadCal error'); 
 		end
 	end
 %--------------------------------------------------------------------------

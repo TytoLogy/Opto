@@ -1,6 +1,6 @@
-function [curvedata, varargout] = wav(handles, datafile)
+function [curvedata, varargout] = allwav(handles, datafile)
 %--------------------------------------------------------------------------
-% [curvedata, rawdata] = wav_opto(handles, datafile)
+% [curvedata, rawdata] = allwav(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -87,7 +87,7 @@ caldata = handles.H.caldata;
 %------------------------------------
 % Presentation settings
 %------------------------------------
-test.Reps = 20;
+test.Reps = 1;
 test.Randomize = 0;
 test.Block = 1;
 audio.ISI = 500;
@@ -158,18 +158,34 @@ null.Level = 0;
 % WAV
 %------------------------------------
 % Specify wav signal(s)
-WavesToPlay = {	'MFV_tonal_normalized.wav', ...
+WavesToPlay = {	'MFV_NL_filtered_normalized.wav', ...
+						'MFV_harmonic_normalized.wav', ...
+						'MFV_tonal_normalized.wav', ...
 						'P100_11_Noisy.wav', ...
 						'P100_1_Flat_USV.wav', ...
+						'P100_2_Freq_Stp_USV.wav', ...
+						'P100_4_Chevron_USV.wav', ...
+						'P100_6_Up_FM_USV.wav', ...
 						'P100_9_LFH.wav' ...
 					};
 nWavs = length(WavesToPlay);
 % and scaling factors (to achieve desired amplitude)
-% from calibration 01 Jun 2017
-WavScaleFactors = [	4.436, ... 
+% orig from calibration
+% WavScaleFactors = [	2.5, ... 
+% 							1, ...
+% 							1, ...
+%  							2	...
+% 						];
+% WavScaleFactors = ones(nWavs, 1);
+WavScaleFactors = [	1.953, ...
+							2.173, ...
+							4.436, ...
 							1.872, ...
 							1.703, ...
-							2.765	...
+							1.292, ...
+							2.120, ...
+							2.553, ...
+							2.765 ...
 						];
 audio.signal.Type = 'wav';
 audio.signal.WavPath = 'C:\TytoLogy\Experiments\Wavs';
@@ -230,9 +246,8 @@ audio.Frozen = 0;
 % varied variables for opto and audio
 optovar = opto.Amp;
 audiowavvar = audio.signal.WavFile;
-% total # of varied variables (increase # of audio vars by 2
-% to account for additional noise and null stimuli)
-nCombinations = numel(optovar) * (numel(audiowavvar) + 2);
+% total # of varied variables 
+nCombinations = numel(optovar) * (numel(audiowavvar));
 % # of total trials;
 nTotalTrials = nCombinations * test.Reps;
 % create list to hold parameters for varied variables
@@ -245,18 +260,10 @@ stimList = repmat(	...
 % outer loop cycles through optical variables
 sindex = 0;
 for oindex = 1:numel(optovar)
-	for aindex = 1:(numel(audiowavvar) + 2)
+	for aindex = 1:(numel(audiowavvar))
 		sindex = sindex + 1;
 		stimList(sindex).opto.Amp = optovar(oindex);
-		% assign audio stim 1 to null
-		if aindex == 1
-			stimList(sindex).audio = null;
-		% assign audio stim 2 to noise
-		elseif aindex == 2
-			stimList(sindex).audio = noise;
-		else
-			stimList(sindex).audio.signal.WavFile = audiowavvar{aindex-2};
-		end
+		stimList(sindex).audio.signal.WavFile = audiowavvar{aindex};
 	end
 end
 %-------------------------------------------------------------------------
