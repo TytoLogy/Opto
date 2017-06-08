@@ -28,6 +28,8 @@ function [c, stimseq] = opto_buildStimCache(test, tdt, caldata)
 %	24 May, 2016 (SJS): file created from HPSearch program's
 %								HPCurve_buildStimCache function and adapted
 %	31 May, 2017 (SJS): added block sequence stimulation capability
+%	8 Jun, 201 (SJS): fixed issue with incorrect rep, trial in block 
+%		sequence mode
 %--------------------------------------------------------------------------
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -72,20 +74,49 @@ else
 end
 % # of trials == # of stim values (ITDs, ILDs, etc.)
 c.ntrials = nLevels + nOptoAmp + nFreqs;
-
-% allocate some arrays for storage
-c.nstims = c.nreps * c.ntrials;
+% assign rep and trial numbers (trial corresponds to 
+% stimulus type or parameter)
 c.repnum = zeros(c.nstims, 1);
 c.trialnum = zeros(c.nstims, 1);
-sindex = 0;
-for rep = 1:c.nreps
-	for trial = 1:c.ntrials
-		sindex = sindex + 1;
-		c.repnum(sindex) = rep;
-		c.trialnum(sindex) = trial;
+% first check is there is a "Block" field in the test struct
+if isfield(test, 'Block')
+	% if so, see if it is set to 1
+	if test.Block == 1
+		% assign rep and trial in blocked fashion - i.e., run through
+		% nreps of each trial before moving to next trial type
+		sindex = 0;
+		for trial = 1:c.ntrials
+			for rep = 1:c.nreps
+				sindex = sindex + 1;
+				c.repnum(sindex) = rep;
+				c.trialnum(sindex) = trial;
+			end
+		end		
+	else
+		% default mode = run through sequence of trials nreps times
+		sindex = 0;
+		for rep = 1:c.nreps
+			for trial = 1:c.ntrials
+				sindex = sindex + 1;
+				c.repnum(sindex) = rep;
+				c.trialnum(sindex) = trial;
+			end
+		end
+	end
+else
+	% default mode = run through sequence of trials nreps times
+	sindex = 0;
+	for rep = 1:c.nreps
+		for trial = 1:c.ntrials
+			sindex = sindex + 1;
+			c.repnum(sindex) = rep;
+			c.trialnum(sindex) = trial;
+		end
 	end
 end
 
+% allocate some arrays for storage
+c.nstims = c.nreps * c.ntrials;
 c.Sn = cell(c.nstims, 1);
 c.splval = cell(c.nstims, 1);
 c.rmsval = cell(c.nstims, 1);
@@ -119,6 +150,7 @@ switch c.curvetype
 				c.radvary = signal.RadVary;
 				
 			case 'wav'
+				% NOT YET IMPLEMENTED
 				
 			otherwise
 				warning([mfilename ': unsupported stimtype ' c.stimtype ' for curvetype ' c.curvetype])
