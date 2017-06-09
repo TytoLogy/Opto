@@ -74,6 +74,7 @@ else
 end
 % # of trials == # of stim values (ITDs, ILDs, etc.)
 c.ntrials = nLevels + nOptoAmp + nFreqs;
+c.nstims = c.nreps * c.ntrials;
 % assign rep and trial numbers (trial corresponds to 
 % stimulus type or parameter)
 c.repnum = zeros(c.nstims, 1);
@@ -116,7 +117,6 @@ else
 end
 
 % allocate some arrays for storage
-c.nstims = c.nreps * c.ntrials;
 c.Sn = cell(c.nstims, 1);
 c.splval = cell(c.nstims, 1);
 c.rmsval = cell(c.nstims, 1);
