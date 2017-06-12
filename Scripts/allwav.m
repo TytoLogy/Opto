@@ -87,9 +87,9 @@ caldata = handles.H.caldata;
 %------------------------------------
 % Presentation settings
 %------------------------------------
-test.Reps = 30;
-test.Randomize = 0;
-test.Block = 1;
+test.Reps = 3;
+test.Randomize = 1;
+test.Block = 0;
 audio.ISI = 250;
 %------------------------------------
 % Experiment settings
@@ -153,7 +153,19 @@ noise.Frozen = 0;
 null.signal.Type = 'null';
 null.Delay = 100;
 null.Duration = noise.Duration;
-null.Level = 0;
+null.Level = 0; %#ok<STRNU>
+%------------------------------------
+% general audio properties
+%------------------------------------
+% Delay - use same as one for noise
+audio.Delay = noise.Delay;
+% Duration is variable for WAV files - this information
+% will be found in the audio.signal.WavInfo
+% For now, this will be a dummy value
+audio.Duration = 200;
+audio.Level = 80;
+audio.Ramp = 5;
+audio.Frozen = 0;
 %------------------------------------
 % WAV
 %------------------------------------
@@ -210,9 +222,9 @@ wavInfo = repmat( AllwavInfo(1), length(WavesToPlay), 1);
 for w = 1:length(WavesToPlay)
 	wavInfo(w) = AllwavInfo(strcmp(WavesToPlay(w), AllwavNames));
 end
-%------------------------------------
+%--------------------------------------------------------------------
 % create list of filenames - need to do a bit of housekeeping
-%------------------------------------
+%--------------------------------------------------------------------
 audio.signal.WavFile = cell(nWavs, 1);
 tmp = {};
 [tmp{1:nWavs, 1}] = deal(wavInfo.Filename);
@@ -222,31 +234,20 @@ for n = 1:nWavs
 	audio.signal.WavFile{n} = [basename '.wav'];
 	% make sure Filename in wavInfo matches
 	wavInfo(n).Filename = audio.signal.WavFile{n};
+	% assign scaling factor
 	wavInfo(n).ScaleFactor = WavScaleFactors(n);
 end
 clear tmp;
-%------------------------------------
-% general audio properties
-%------------------------------------
-% Delay - use same as one for noise
-audio.Delay = noise.Delay;
-% Duration is variable for WAV files - this information
-% will be found in the audio.signal.WavInfo
-% For now, this will be a dummy value
-audio.Duration = 200;
-audio.Level = 80;
-audio.Ramp = 5;
-audio.Frozen = 0;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% build list of unique stimuli
+% build list of stimuli
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % varied variables for opto and audio
 optovar = opto.Amp;
 audiowavvar = audio.signal.WavFile;
-% total # of varied variables 
+% total # of varied variables = # opto vars * # audio vars
 nCombinations = numel(optovar) * (numel(audiowavvar));
 % # of total trials;
 nTotalTrials = nCombinations * test.Reps;
@@ -272,41 +273,52 @@ end
 % indices of the different stimuli within stimList
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% preallocate stimIndices
+% preallocate stimIndices which will hold the indices to the stimuli
+% in stimList - these can then be randomized, blocked or sequential.
 stimIndices = zeros(nTotalTrials, 1);
-% and assign values
+% repList will indicate which repetition of the stimulus is being played
+repList = zeros(nTotalTrials, 1);
 if test.Randomize
 	% assign random permutations to stimindices
 	disp('Randomizing stimulus order');
 	for r = 1:test.Reps
 		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
 							randperm(nCombinations);
+		repList((((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
+							r * ones(nCombinations, 1);
 	end
 elseif isfield(test, 'Block')
 	if test.Block == 1
+		disp('Blocked stimulus order')
 		blockindex = 1;
 		for cIndx = 1:nCombinations
 			for r = 1:test.Reps
 				stimIndices(blockindex) = cIndx;
+				repList(blockindex) = r;
 				blockindex = blockindex + 1;
 			end
 		end
 	else
 		% assign sequential indices to stimindices
-		disp('NON random stimulus order');
+		disp('Sequential stimulus order');
 		for r = 1:test.Reps
 			stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
 								1:nCombinations;
+			repList((((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
+								r * ones(nCombinations, 1);
 		end		
 	end
 else
 	% assign sequential indices to stimindices
-	disp('NON random stimulus order');
+	disp('Sequential stimulus order');
 	for r = 1:test.Reps
 		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
 							1:nCombinations;
+				repList((((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
+							r * ones(nCombinations, 1);
 	end
-end
+end	% END if test.Randomize
+
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -441,7 +453,6 @@ for n = 1:nWavs
 	if ~isrow(wavS0{n})
 		wavS0{n} = wavS0{n}';
 	end
-	
 	% check to make sure sample rate of signal matches
 	% hardware output sample rate
 	if outFs ~= tmpFs(n)
@@ -456,10 +467,8 @@ for n = 1:nWavs
 		wavInfo(n).OnsetBin = ms2bin(1000*onsettime, outFs);
 		wavInfo(n).OffsetBin = ms2bin(1000*offsettime, outFs);
 	end
-	
 	% apply *short* ramp to ensure wav start and end is 0
 	wavS0{n} = sin2array(wavS0{n}, 1, outFs);
-	
 end
 
 %-------------------------------------------------------------------------
@@ -486,7 +495,7 @@ writeOptoDataFileHeader(datafile, test, audio, opto, channels, ...
 [fpath, fname] = fileparts(datafile);
 matfile = fullfile(fpath, [fname '_wavinfo.mat']);
 save(matfile, 'audio', 'noise', 'null', ...
-					'stimList', 'stimIndices', 'wavInfo', ...
+					'stimList', 'repList', 'stimIndices', 'wavInfo', ...
 					'wavS0', '-MAT');
 
 
@@ -561,8 +570,7 @@ grid(ax, 'on');
 cancelFlag = read_ui_val(cancelButton);
 % flag to pause experiment
 pauseFlag = 0; %#ok<NASGU>
-% index through stimuli
-sindex = 0;
+
 % save stimuli?
 if test.saveStim
 	stimWriteFlag = 1; %#ok<NASGU>
@@ -575,12 +583,15 @@ end
 % loop through stims
 %-------------------------------------------------------
 %-------------------------------------------------------
+% index to stimuli
+sindex = 0;
+% loop until done or cancel button is pressed
 while ~cancelFlag && (sindex < nTotalTrials)
 	%--------------------------------------------------
 	% increment counter (was initialized to 0)
 	%--------------------------------------------------
 	sindex = sindex + 1;
-	rep = ceil(sindex/nCombinations);
+	rep = repList(sindex);
 	
 	%--------------------------------------------------
 	% get current stimulus settings from stimList,using stimIndices to 
