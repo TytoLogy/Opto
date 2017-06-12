@@ -1,6 +1,6 @@
-function [curvedata, varargout] = wav_opto(handles, datafile)
+function [curvedata, varargout] = wav_optoOFF(handles, datafile)
 %--------------------------------------------------------------------------
-% [curvedata, rawdata] = wav_opto(handles, datafile)
+% [curvedata, rawdata] = wav_optoOFF(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -35,12 +35,12 @@ function [curvedata, varargout] = wav_opto(handles, datafile)
 % Created:	31 March, 2017 (SJS) from noise_opto
 %
 % Revision History:
-%	31 March, 2017 (SJS) created from noise_opto
+%	12 Jun, 2017 (SJS): pulled off common elements into separate subscripts
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
-disp 'running wav_opto!'
-curvetype = 'Wav+Opto';
+disp 'running wav_optoOFF!'
+curvetype = 'Wav';
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -292,44 +292,6 @@ else
 					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
 											0, 0);
 end	% END if test.Randomize
-
-%{ 
-% preallocate stimIndices
-stimIndices = zeros(nTotalTrials, 1);
-% and assign values
-if test.Randomize
-	% assign random permutations to stimindices
-	disp('Randomizing stimulus order');
-	for r = 1:test.Reps
-		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
-							randperm(nCombinations);
-	end
-elseif isfield(test, 'Block')
-	if test.Block == 1
-		blockindex = 1;
-		for cIndx = 1:nCombinations
-			for r = 1:test.Reps
-				stimIndices(blockindex) = cIndx;
-				blockindex = blockindex + 1;
-			end
-		end
-	else
-		% assign sequential indices to stimindices
-		disp('NON random stimulus order');
-		for r = 1:test.Reps
-			stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
-								1:nCombinations;
-		end		
-	end
-else
-	% assign sequential indices to stimindices
-	disp('NON random stimulus order');
-	for r = 1:test.Reps
-		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
-							1:nCombinations;
-	end
-end
-%}
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------

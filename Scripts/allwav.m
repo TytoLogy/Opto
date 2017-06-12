@@ -35,7 +35,7 @@ function [curvedata, varargout] = allwav(handles, datafile)
 % Created:	31 March, 2017 (SJS) from noise_opto
 %
 % Revision History:
-%	31 March, 2017 (SJS) created from noise_opto
+%	12 Jun, 2017 (SJS): pulled off common elements into separate subscripts
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
