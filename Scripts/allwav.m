@@ -273,6 +273,36 @@ end
 % indices of the different stimuli within stimList
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+if test.Randomize
+	% assign random permutations to stimindices
+	disp('Randomizing stimulus order');
+	[stimIndices, repList] = ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
+											1, 0);
+elseif isfield(test, 'Block')
+	if test.Block == 1
+		disp('Blocked stimulus order')
+		[stimIndices, repList] = ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
+											0, 1);
+
+	else
+		% assign sequential indices to stimindices
+		disp('Sequential stimulus order');
+		[stimIndices, repList] = ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
+											0, 0);
+	end
+else
+	% assign sequential indices to stimindices
+	disp('Sequential stimulus order');
+		[stimIndices, repList] = ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
+											0, 0);
+end	% END if test.Randomize
+
+
+%{
 % preallocate stimIndices which will hold the indices to the stimuli
 % in stimList - these can then be randomized, blocked or sequential.
 stimIndices = zeros(nTotalTrials, 1);
@@ -314,11 +344,11 @@ else
 	for r = 1:test.Reps
 		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
 							1:nCombinations;
-				repList((((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
+		repList((((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
 							r * ones(nCombinations, 1);
 	end
 end	% END if test.Randomize
-
+%}
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
