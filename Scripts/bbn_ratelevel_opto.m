@@ -12,13 +12,13 @@
 % 						or some combination of these
 %-------------------------------------------------------------------------
 test.Type = 'LEVEL';
-test.Name = 'BBN_LEVEL';
+test.Name = 'BBN_LEVEL_OPTO';
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % OPTICAL settings
 %-------------------------------------------------------------------------
-test.opto.Enable = 0;
+test.opto.Enable = 1;
 test.opto.Delay = 0;
 test.opto.Dur = 300;
 test.opto.Amp = 2000;
@@ -32,15 +32,15 @@ test.audio.signal.Type = 'noise';
 test.audio.signal.Fmin = 4000;
 test.audio.signal.Fmax = 80000;
 test.audio.Delay = 200;
-test.audio.Duration = 100;
-test.audio.Level = [0 60 80];
+test.audio.Duration = 50;
+test.audio.Level = [0 20 40 60 80];
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
-test.audio.ISI = 250;
+test.audio.ISI = 300;
 
-test.Reps = 30;
-test.Randomize = 0;
-test.Block = 1;
+test.Reps = 20;
+test.Randomize = 1;
+
 test.saveStim = 0;
 
 %-------------------------------------------------------------------------
@@ -48,7 +48,7 @@ test.saveStim = 0;
 % TDT
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-test.AcqDuration = 1000;
+test.AcqDuration = 500;
 test.SweepPeriod = test.AcqDuration + 5;
 
  

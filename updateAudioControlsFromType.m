@@ -10,7 +10,7 @@ function handles = updateAudioControlsFromType(hObject, ...
 % Input Arguments:
 %	hObject
 %	handles
-% 	stimString		'NOISE', 'TONE', 'WAV', 'SEARCH', 'OFF'
+% 	stimString		'NOISE', 'TONE', 'WAV', 'SEARCH', 'BLOCK_SEARCH', 'OFF'
 % 
 % Output Arguments:
 % 	handles
@@ -30,6 +30,7 @@ function handles = updateAudioControlsFromType(hObject, ...
 % 		- added header comments/docs
 % 		- mods for wav file
 %	04 Oct 2016 (SJS): added fields for wav scale factor
+%	17 May 2017 (SJS): implementing block search
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
@@ -100,7 +101,7 @@ switch stimString
 		enable_ui(handles.textAudioWavScale);
 		enable_ui(handles.editAudioWavScale);
 
-	case 'SEARCH'
+	case {'SEARCH', 'BLOCK_SEARCH'}
 		% enable Fmax, Fmin, Dur, Ramp
 		enable_ui(handles.textAudioDelay);
 		enable_ui(handles.editAudioDelay);
