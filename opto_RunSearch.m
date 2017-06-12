@@ -188,10 +188,20 @@ else
 		RPsettag(outdev, 'AttenR', AttenR);
 		% Set the Stimulus Delay
 		RPsettag(outdev, 'StimDelay', ms2bin(H.audio.Delay, outdev.Fs));
+		% Set the spike threshold
+		RPsettag(indev, 'TLo', H.TDT.TLo);
 		% play stim, record data
 		[mcresp, ~] = opto_io(S, inpts, indev, outdev, zBUS);
 		% get the monitor response
 		[monresp, ~] = opto_readbuf(indev, 'monIndex', 'monData');
+		% get the spike response
+		[spikes, nspikes, spikerms] = opto_getspikes(indev);
+		update_ui_str(handles.textRMS, sprintf('%.4f', spikerms));
+		fs = indev.Fs;
+		incchannels = TDT.channels.nInputChannels;
+		sniplen = TDT.SnipLen;
+		save('spikedat.mat', 'spikes', 'nspikes', 'spikerms', 'sniplen', ...
+							'fs', 'monresp', 'mcresp', 'incchannels', '-MAT');
 		% plot returned values
 		% first, demux input data matrices
 		[resp, ~] = mcFastDeMux(mcresp, TDT.channels.nInputChannels);
@@ -211,6 +221,17 @@ else
 		% force drawing
 % 		drawnow
 		refreshdata
+		
+% 		spikebins = spikes(1 + (0:H.TDT.SnipLen:(length(spikes)-1)));
+% 		figure(99)
+% 		subplot(211)
+% 		plot(pdata(:, 8));
+% 		for s = 1:length(spikebins)
+% 			text(spikebins(s), pdata(spikebins(s), 8), '*', 'Color', 'g');
+% 		end
+% 		subplot(212)
+% 		plot(spikes);
+	
 		% wait for ISI
 		pause(0.001*H.audio.ISI)
 	end	% END while get(hObject, 'Value')

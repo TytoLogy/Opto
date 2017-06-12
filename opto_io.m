@@ -73,11 +73,19 @@ RPfastgettag(indev, 'SwpN');
 zBUStrigB_PULSE(zBUS, 0, 4);
 
 %------------------------------------------------------------------------
-% Read data from the buffer
+% Read raw data from the buffer
 %------------------------------------------------------------------------
 % get the current location in the buffer
 mcIndex = RPgettag(indev, 'mcIndex');
-%reads from the buffer
+% read data from the buffer
 resp = RPreadV(indev, 'mcData', mcIndex)';
-% resp = resp';
+
+% %------------------------------------------------------------------------
+% % Read spike data from the buffer
+% %------------------------------------------------------------------------
+% % get the current location in the buffer
+% nspikes = RPgettag(indev, 'SpikeNumber');
+% % read data from the buffer
+% spikes = RPreadV(indev, 'SpikeData', nspikes);
+
 

@@ -21,6 +21,7 @@ function H = opto_InitH
 %	28 Mar 2017 (SJS):
 %		- added constants struct to hold various bits of information
 %	17 May 2017 (SJS): added block to hold data for blocked search stimuli
+%	12 Jun 2017: adding stuff for spike detection
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -168,6 +169,7 @@ config.TDTsetFunc = @opto_TDTsettings;
 config.setattenFunc = @RZ6setatten;
 %------------------------------------------------------------------------
 % master TDT interface struct
+% * sniplen and rmstau set in circuit
 %------------------------------------------------------------------------
 TDT = struct(	'Enable', 0, ...
 					'indev', indev, ...
@@ -186,7 +188,12 @@ TDT = struct(	'Enable', 0, ...
 					'HPFreq', 100, ...				% high pass frequency
 					'LPEnable', 1, ...				% enable low pass filter
 					'LPFreq', 10000, ...				% low pass frequency
-					'MonEnable', 0	);
+					'MonEnable', 0, ...
+					'SnipLen', 60, ...				% length of spike snippet samples
+					'RMSTau', 1000, ...				% ms for computation of bg RMS
+					'TLo', 5, ...						% low spike threshold in std. dev
+					'THi', 1000 ...					% hi spike threshold in s.d.
+				);
 %------------------------------------------------------------------------
 % animal information struct
 %------------------------------------------------------------------------

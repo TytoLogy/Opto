@@ -20,6 +20,7 @@ function H = update_H_from_GUI(handles)
 %--------------------------------------------------------------------------
 % Revision History
 %	4 Oct 2016 (SJS): added comments/header, wav scalef read
+%	12 Jun 2017 (sJS): added TLo
 %--------------------------------------------------------------------------
 
 H = handles.H;
@@ -59,4 +60,7 @@ H.audio.ISI = read_ui_str(handles.editISI, 'n');
 
 % wav scale
 H.wav.scalef = read_ui_str(handles.editAudioWavScale, 'n');
+
+% Threshold LO
+H.TDT.TLo = read_ui_str(handles.editTLo, 'n');
 

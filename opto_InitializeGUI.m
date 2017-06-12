@@ -89,3 +89,12 @@ for c = 1:16
 	clist{c} = num2str(c);
 end
 set(handles.popupMonitorChannel, 'String', clist);
+
+
+%----------------------------------------------------------------
+% TDT things
+%----------------------------------------------------------------
+update_ui_str(handles.editTLo, sprintf('%d', handles.H.TDT.TLo));
+update_ui_str(handles.editRMSTau, sprintf('%d', handles.H.TDT.RMSTau));
+update_ui_str(handles.editSnipLen, sprintf('%d', handles.H.TDT.SnipLen));
+
