@@ -89,7 +89,8 @@ caldata = handles.H.caldata;
 %------------------------------------
 test.Reps = 20;
 test.Randomize = 0;
-audio.ISI = 100;
+test.Block = 1;
+audio.ISI = 500;
 %------------------------------------
 % Experiment settings
 %------------------------------------
@@ -164,10 +165,11 @@ WavesToPlay = {	'MFV_tonal_normalized.wav', ...
 					};
 nWavs = length(WavesToPlay);
 % and scaling factors (to achieve desired amplitude)
-WavScaleFactors = [	2.5, ... 
-							1, ...
-							1, ...
-							2	...
+% from calibration 01 Jun 2017
+WavScaleFactors = [	4.436, ... 
+							1.872, ...
+							1.703, ...
+							2.765	...
 						];
 audio.signal.Type = 'wav';
 audio.signal.WavPath = 'C:\TytoLogy\Experiments\Wavs';
@@ -178,14 +180,16 @@ audio.signal.WavPath = 'C:\TytoLogy\Experiments\Wavs';
 % get information about stimuli
 AllwavInfo = getWavInfo(fullfile(audio.signal.WavPath, 'wavinfo.mat'));
 % create list of ALL filenames - need to do a bit of housekeeping
+% deal function will pull out all values of the Filename field from
+% the AllwavInfo struct array
 AllwavNames = {};
 [AllwavNames{1:length(AllwavInfo), 1}] = deal(AllwavInfo.Filename);
-% need to strip paths from filenames
+% need to strip paths from filenames...
 for w = 1:length(AllwavNames)
 	[~, basename] = fileparts(AllwavNames{w});
 	AllwavNames{w} = [basename '.wav'];
 end
-% select only waves in list
+% and, using filenames, select only wav files in list WavesToPlay
 wavInfo = repmat( AllwavInfo(1), length(WavesToPlay), 1);
 for w = 1:length(WavesToPlay)
 	wavInfo(w) = AllwavInfo(strcmp(WavesToPlay(w), AllwavNames));
@@ -271,8 +275,25 @@ if test.Randomize
 		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
 							randperm(nCombinations);
 	end
+elseif isfield(test, 'Block')
+	if test.Block == 1
+		blockindex = 1;
+		for cIndx = 1:nCombinations
+			for r = 1:test.Reps
+				stimIndices(blockindex) = cIndx;
+				blockindex = blockindex + 1;
+			end
+		end
+	else
+		% assign sequential indices to stimindices
+		disp('NON random stimulus order');
+		for r = 1:test.Reps
+			stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
+								1:nCombinations;
+		end		
+	end
 else
-	% assign blocked indices to stimindices
+	% assign sequential indices to stimindices
 	disp('NON random stimulus order');
 	for r = 1:test.Reps
 		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
@@ -399,7 +420,6 @@ RPsettag(outdev, 'AttenL', MAX_ATTEN);
 RPsettag(outdev, 'AttenR', MAX_ATTEN);
 RPsettag(outdev, 'Mute', 0);
 
-
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Load and condition wav stimuli
@@ -506,6 +526,7 @@ ylabel('Channel')
 set(ax, 'Color', 0.75*[1 1 1]);
 set(fH, 'Color', 0.75*[1 1 1]);
 set(fH, 'ToolBar', 'none');
+grid(ax, 'on');
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------

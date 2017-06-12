@@ -10,47 +10,41 @@
 % 		'DUR'				opto stim duration
 % 		'AMP'				opto stim amplitude
 % 						or some combination of these
+%
+% *** for STANDALONE type, see default_standalone.m ***
 %-------------------------------------------------------------------------
-test.Type = 'LEVEL';
-test.Name = 'BBN_LEVEL';
+test.Type = 'LEVEL_OPTO';
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% OPTICAL settings
+% TEST: general settings for experiment
 %-------------------------------------------------------------------------
-test.opto.Enable = 0;
+test.Reps = 20;
+test.Randomize = 1;
+test.saveStim = 0;
+% TDT
+test.AcqDuration = 1000;
+test.SweepPeriod = test.AcqDuration + 2;
+
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% OPTO: optical stimulus settings
+%-------------------------------------------------------------------------
+test.opto.Enable = 1;
 test.opto.Delay = 0;
-test.opto.Dur = 300;
-test.opto.Amp = 2000;
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-% Auditory stimulus settings
-%-------------------------------------------------------------------------
+test.opto.Dur = 500;
+test.opto.Amp = [0 2000];
 
-% signal
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+% AUDIO: Auditory stimulus settings 
+%-------------------------------------------------------------------------
 test.audio.signal.Type = 'noise';
 test.audio.signal.Fmin = 4000;
 test.audio.signal.Fmax = 80000;
 test.audio.Delay = 200;
 test.audio.Duration = 100;
-test.audio.Level = [0 60 80];
+test.audio.Level = 0:80;
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
-test.audio.ISI = 250;
-
-test.Reps = 30;
-test.Randomize = 0;
-test.Block = 1;
-test.saveStim = 0;
-
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-% TDT
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-test.AcqDuration = 1000;
-test.SweepPeriod = test.AcqDuration + 5;
-
- 
-
-
+test.audio.ISI = 1000;

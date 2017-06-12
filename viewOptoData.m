@@ -45,14 +45,27 @@ LPFreq = 6000;
 if ispc
 % 	datapath = 'E:\Data\SJS\1058';
 % 	datafile = '1058_20160623_0_02_1500_FREQ.dat';
-	datapath = 'E:\Data\SJS\1012\20160727';
-	datafile = '1012_20160727_5_3_1_OPTO.dat';
-else 
-	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1012/20160727';
+% 	datapath = 'E:\Data\SJS\1012\20160727';
 % 	datafile = '1012_20160727_5_3_1_OPTO.dat';
-	datafile = '1012_20160727_4_3_1_LEVEL.dat';	
+	datapath = 'E:\Data\SJS';
+	datafile = '';
+else 
+% 	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1012/20160727';
+% 	datafile = '1012_20160727_5_3_1_OPTO.dat';
+% 	datafile = '1012_20160727_4_3_1_LEVEL.dat';	
+% 	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1110/20170515';
+% 	datafile = '1110_20170515_01_01_4038_WAV_OPTO.dat';
+	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto';
+	datafile = '';
 end
-
+if isempty(datafile)
+	% get data file from user
+	[datafile, datapath] = uigetfile('*.dat', 'Select opto data file', ...
+													fullfile(datapath, datafile));
+	if datafile == 0
+		return
+	end
+end
 % read in data
 [D, Dinf] = readOptoData(fullfile(datapath, datafile));
 
@@ -64,10 +77,28 @@ fband = [HPFreq LPFreq] ./ (0.5 * Fs);
 [filtB, filtA] = butter(5, fband);
 
 %% Get test info
-% convert ascii characters from binary file 
-Dinf.test.Type = char(Dinf.test.Type);
-fprintf('Test type: %s\n', Dinf.test.Type);
 
+% try to get information from test Type
+if isfield(Dinf.test, 'Type')
+	% convert ascii characters from binary file 
+	Dinf.test.Type = char(Dinf.test.Type);
+	fprintf('Test type: %s\n', Dinf.test.Type);
+else
+	% otherwise, need to find a different way
+	if isfield(Dinf.test, 'optovar_name')
+		Dinf.test.optovar_name = char(Dinf.test.optovar_name);
+	end
+	if isfield(Dinf.test, 'audiovar_name')
+		Dinf.test.audiovar_name = char(Dinf.test.audiovar_name);
+		if strcmpi(Dinf.test.audiovar_name, 'WAVFILE')
+			% test is WAVfile
+			Dinf.test.Type = Dinf.test.audiovar_name;
+		end
+	end
+	fprintf('Test type: %s\n', Dinf.test.Type);
+end
+
+%%
 % Some test-specific things...
 
 % for FREQ test, find indices of stimuli with same frequency
@@ -97,10 +128,29 @@ switch upper(Dinf.test.Type)
 			stimindex{l} = find(Dinf.test.stimcache.vrange(l) == levellist);
 		end
 
-
 % for OPTO test...
 	case 'OPTO'
 	
+	% for WavFile, need to find indices with same filename.
+	case 'WAVFILE'
+		% get list of stimuli (wav file names)
+		nwavs = length(Dinf.stimList);
+		wavlist = cell(nwavs, 1);
+		stimindex = cell(nwavs, 1);
+		for w = 1:nwavs
+			stype = Dinf.stimList(w).audio.signal.Type;
+			if strcmpi(stype, 'null')
+				wavlist{w} = 'null';
+			elseif strcmpi(stype, 'noise')
+				wavlist{w} = 'BBN';
+			elseif strcmpi(stype, 'wav')
+				[~, wavlist{w}] = fileparts(Dinf.stimList(w).audio.signal.WavFile);
+			else
+				error('%s: unknown type %s', mfilename, stype);
+			end
+			stimindex{w} = find(Dinf.test.stimIndices == w);
+		end
+
 	otherwise
 		error('%s: unsupported test type %s', mfilename, Dinf.test.Type);
 end
@@ -116,13 +166,14 @@ else
 end
 
 
-%% Plot data for one channel
-channelNumber = 10;
-
+%% find channel data
+channelNumber = 8;
 channelIndex = find(channelList == channelNumber);
 if isempty(channelIndex)
 	error('Channel not recorded')
 end
+
+%% Plot data for one channel, process will vary depending on stimulus type
 
 if strcmpi(Dinf.test.Type, 'FREQ')
 	% time vector for plotting
@@ -141,12 +192,11 @@ if strcmpi(Dinf.test.Type, 'FREQ')
 	end
 end
 
-
 if strcmpi(Dinf.test.Type, 'LEVEL')
 	% time vector for plotting
 	t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
 % 	for l = 1:nlevels
-	for l = nlevels
+	for l = 1:nlevels
 		dlist = stimindex{l};
 		ntrials = length(dlist);
 		tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
@@ -160,69 +210,23 @@ if strcmpi(Dinf.test.Type, 'LEVEL')
 	end
 end
 
-if strcmpi(Dinf.test.Type, 'OPTO')
-	% time vector for plotting
+if strcmpi(Dinf.test.Type, 'WavFile')
+	% time vector for plotting - assume all traces are equal length
 	t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
-	ntrials = Dinf.test.stimcache.nstims;
-	tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
-	for n = 1:ntrials
-			tmpM(:, n) = filtfilt(filtB, filtA, D{n}.datatrace(:, channelIndex));
-	end
-	stackplot(t, tmpM, 'colormode', 'black');
-	title({	datafile, 'Opto Stim', ...
-				sprintf('Channel %d', channelNumber)}, ...
-				'Interpreter', 'none');
-	xlabel('ms')
-	ylabel('Trial')
-end
-
-
-
-%% Plot data for all channels
-for c = 1:nchan
-	channelNumber = channelList(c);
-
-	if strcmpi(Dinf.test.Type, 'FREQ')
-		% time vector for plotting
-		t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
-		for f = 1:nfreqs
-			dlist = stimindex{f};
-			ntrials = length(dlist);
-			tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
-			for n = 1:ntrials
-				tmpM(:, n) = filtfilt(filtB, filtA, ...
-												D{dlist(n)}.datatrace(:, c));
-			end
-			stackplot(t, tmpM);
-			title(sprintf('Channel %d, Freq %d', channelNumber, ...
-										Dinf.test.stimcache.vrange(f)));
+	tracesByStim = cell(nwavs, 1);
+	for w = 1:nwavs
+		% create temporary array to hold data
+		tracesByStim{w} = zeros(length(D{1}.datatrace(:, 1)), Dinf.test.Reps);
+		for n = 1:Dinf.test.Reps
+			dIndx = stimindex{w}(n);
+			tracesByStim{w}(:, n) = filtfilt(filtB, filtA, ...
+													D{dIndx}.datatrace(:, channelIndex));
 		end
-	end
-
-	if strcmpi(Dinf.test.Type, 'OPTO')
-		% time vector for plotting
-		t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
-		ntrials = Dinf.test.stimcache.nstims;
-		tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
-		for n = 1:ntrials
-				tmpM(:, n) = filtfilt(filtB, filtA, D{n}.datatrace(:, c));
-		end
-		stackplot(t, tmpM);
-		title({	datafile, 'Opto Stim', ...
-					sprintf('Channel %d', channelNumber)}, ...
+		stackplot(t, tracesByStim{w}, 'colormode', 'black');
+		title({	datafile, sprintf('Stimulus: %s', wavlist{w})}, ...
 					'Interpreter', 'none');
 		xlabel('ms')
 		ylabel('Trial')
 	end
 end
 
-%%
-% filter, plot data
-% tmpD = zeros(size(D{1}.datatrace));
-% t = (1/Fs)*((1:length(tmpD(:, 1))) - 1);
-% 
-% for c = 1:nchan
-% 	tmpD(:, c) = filtfilt(filtB, filtA, D{4}.datatrace(:, c));
-% end
-% plot(1000*t, tmpD)
-% 

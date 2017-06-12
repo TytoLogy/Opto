@@ -39,9 +39,15 @@ guidata(hObject, handles);
 %----------------------------------------------------------------
 % Calibration data
 %----------------------------------------------------------------
-calfile = 'Optorig_TDTxxxx_4k-90k_5V_cal.mat';
-% load the calibration data
-tmpcal = load_cal(calfile);
+calpath = 'C:\TytoLogy\Experiments\CalData';
+calfile = 'Optorig_20170601_TDT3981_4k90k_5V_cal.mat';
+if ~exist(fullfile(calpath, calfile), 'file')
+	warning('Calibration file %s not found!', fullfile(calpath, calfile));
+	tmpcal = [];
+else
+	% load the calibration data
+	tmpcal = load_cal(fullfile(calpath, calfile));
+end
 % if tmpcal is a structure, load of calibration file was
 % hopefully successful, so save it in the handles info
 if isstruct(tmpcal)
@@ -49,13 +55,14 @@ if isstruct(tmpcal)
 	% updatelimits based on calibration data
 	handles.H.Lim.F = [	handles.H.caldata.Freqs(1) ...
 								handles.H.caldata.Freqs(end)	];
-	update_ui_str(handles.textCalibration, calfile);
+	update_ui_str(handles.textCalibration, fullfile(calpath, calfile));
 	% update settings
 	guidata(hObject, handles);
 else
 	% otherwise, throw error dialog
-	errordlg(['Error loading calibration file ' calfile], ...
-				'LoadCal error'); 
+	errordlg(['Error loading calibration file ' ...
+					fullfile(calpath, calfile)], ...
+					'LoadCal error'); 
 end
 
 %----------------------------------------------------------------
@@ -66,7 +73,7 @@ set(handles.figure1, 'Units', 'characters');
 set(handles.figure1, 'Position', [10  46 148.4 34.538]);
 % audio stimulus selector (!!!ADD SEARCH!!!)
 set(handles.popupAudioSignal, 'String', ...
-								{'Noise'; 'Tone'; '.wav'; 'Search'; 'OFF'});
+								{'Noise'; 'Tone'; '.wav'; 'Search'; 'BlockSearch'; 'OFF'});
 update_ui_val(handles.popupAudioSignal, 1);	
 % channels 
 set(handles.tableChannelSelect, 'Data', ...
