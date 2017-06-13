@@ -128,6 +128,7 @@ for p = 1:nPSTH
 end
 axis(pstAxes, 'auto y');
 
+%{
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Set up figure for plotting rasters
@@ -175,5 +176,4 @@ for p = 1:nPSTH
 						rstAxes(p)	);
 	xlim(rstAxes(p), [0 handles.H.TDT.AcqDuration]);
 end
-
-
+%}
