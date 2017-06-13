@@ -1071,10 +1071,10 @@ function editComments_CreateFcn(hObject, eventdata, handles)
 	create_function(hObject);
 function editTLo_CreateFcn(hObject, eventdata, handles)
 	create_function(hObject);
-function editRMSTau_CreateFcn(hObject, eventdata, handles)
-	create_function(hObject);
-function editSnipLen_CreateFcn(hObject, eventdata, handles)
-	create_function(hObject);
+% function editRMSTau_CreateFcn(hObject, eventdata, handles)
+% 	create_function(hObject);
+% function editSnipLen_CreateFcn(hObject, eventdata, handles)
+% 	create_function(hObject);
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 function create_function(hObject)

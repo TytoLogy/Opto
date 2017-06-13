@@ -95,6 +95,6 @@ set(handles.popupMonitorChannel, 'String', clist);
 % TDT things
 %----------------------------------------------------------------
 update_ui_str(handles.editTLo, sprintf('%d', handles.H.TDT.TLo));
-update_ui_str(handles.editRMSTau, sprintf('%d', handles.H.TDT.RMSTau));
-update_ui_str(handles.editSnipLen, sprintf('%d', handles.H.TDT.SnipLen));
+% update_ui_str(handles.editRMSTau, sprintf('%d', handles.H.TDT.RMSTau));
+% update_ui_str(handles.editSnipLen, sprintf('%d', handles.H.TDT.SnipLen));
 
