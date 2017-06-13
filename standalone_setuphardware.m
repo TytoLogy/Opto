@@ -53,3 +53,12 @@ RPtrig(indev, 1);
 RPsettag(outdev, 'AttenL', MAX_ATTEN);
 RPsettag(outdev, 'AttenR', MAX_ATTEN);
 RPsettag(outdev, 'Mute', 0);
+%------------------------------------------------------------------------
+% Spike Detection
+%------------------------------------------------------------------------
+% low spike threshold in std. dev
+RPsettag(indev, 'TLo', handles.H.TDT.TLo);
+% hi spike threshold in s.d.
+RPsettag(indev, 'THi', handles.H.TDT.THi);
+
+

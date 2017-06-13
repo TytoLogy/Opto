@@ -87,9 +87,9 @@ caldata = handles.H.caldata;
 %------------------------------------
 % Presentation settings
 %------------------------------------
-test.Reps = 20;
-test.Randomize = 0;
-test.Block = 1;
+test.Reps = 5;
+test.Randomize = 1;
+test.Block = 0;
 audio.ISI = 500;
 %------------------------------------
 % Experiment settings
@@ -129,10 +129,10 @@ test.SweepPeriod = test.AcqDuration + 5;
 % opto.Delay = 100;
 % opto.Dur = 100;
 % opto.Amp = 250;
-opto.Enable = 0;
+opto.Enable = 1;
 opto.Delay = 0;
 opto.Dur = 200;
-opto.Amp = 2000;
+opto.Amp = 1000;
 %------------------------------------
 % AUDITORY stimulus settings
 %------------------------------------
@@ -558,6 +558,8 @@ while ~cancelFlag && (sindex < nTotalTrials)
 	% play the sound and return the response
 	try
 		[rawdata, ~] = iofunc(Sn, acqpts, indev, outdev, zBUS);
+		% get the spike response
+		[spikes, nspikes] = opto_getspikes(indev);
 	catch
 		keyboard
 	end
@@ -612,6 +614,17 @@ while ~cancelFlag && (sindex < nTotalTrials)
 		set(pH(c), 'YData', tmpY + c*yabsmax);
 	end
 	drawnow
+	
+	
+	figure(pstH)
+	% psth index = stimulus index!
+	pIndx = stimIndices(sindex);
+	spikebins = getSpikebinsFromSpikes(spikes, handles.H.TDT.SnipLen);
+	SpikeTimes{pIndx}{currentRep(pIndx)} = spikebins ./ indev.Fs;
+	
+	
+	
+	
 
 	% check state of cancel button
 	cancelFlag = read_ui_val(cancelButton);

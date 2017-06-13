@@ -197,11 +197,6 @@ else
 		% get the spike response
 		[spikes, nspikes, spikerms] = opto_getspikes(indev);
 		update_ui_str(handles.textRMS, sprintf('%.4f', spikerms));
-		fs = indev.Fs;
-		incchannels = TDT.channels.nInputChannels;
-		sniplen = TDT.SnipLen;
-		save('spikedat.mat', 'spikes', 'nspikes', 'spikerms', 'sniplen', ...
-							'fs', 'monresp', 'mcresp', 'incchannels', '-MAT');
 		% plot returned values
 		% first, demux input data matrices
 		[resp, ~] = mcFastDeMux(mcresp, TDT.channels.nInputChannels);
@@ -219,9 +214,14 @@ else
 		% set title string
 		title(ax, tstr, 'Interpreter', 'none');
 		% force drawing
-% 		drawnow
+ 		drawnow
 		refreshdata
-		
+
+% 		fs = indev.Fs;
+% 		incchannels = TDT.channels.nInputChannels;
+% 		sniplen = TDT.SnipLen;
+% 		save('spikedat.mat', 'spikes', 'nspikes', 'spikerms', 'sniplen', ...
+% 							'fs', 'monresp', 'mcresp', 'incchannels', '-MAT');
 % 		spikebins = spikes(1 + (0:H.TDT.SnipLen:(length(spikes)-1)));
 % 		figure(99)
 % 		subplot(211)
