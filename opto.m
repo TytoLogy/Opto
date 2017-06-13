@@ -803,15 +803,22 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 		optomsg(handles, ['Writing data to file: ' datafile]);
 	end
 	
+	[~, basename, ~] = fileparts(fname);
+	
 	%------------------------------------------------
 	% check if test type is 'STANDALONE'
 	%------------------------------------------------
 % 	if any(strcmpi(test.Type, handles.H.constants.TestTypes))
 	if strcmpi(test.Type, 'STANDALONE')
 		% run test.Function (function handle in test struct)
-		testdata = test.Function(handles, datafile); %#ok<NASGU>
-		save('testdata.mat', 'testdata', '-MAT');
-	
+		testout = test.Function(handles, datafile);
+		testdata = testout{1}; %#ok<NASGU>
+		respdata = testout{2}; %#ok<NASGU>
+		handles = testout{3};
+		save(fullfile(pname, [basename '_testdata.mat']), ...
+									'testdata', 'respdata', '-MAT');
+		guidata(hObject, handles);
+		
 	else
 		% not standalone, so build cache
 		[stimcache, stimseq] = opto_buildStimCache(test, handles.H.TDT, ...
@@ -826,7 +833,8 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 		% Play stimuli in cache, record neural data
 		testdata = opto_playCache(handles, datafile, ...
 												stimcache, test); %#ok<NASGU>
-		save('testdata.mat', 'testdata', '-MAT');
+		save(fullfile(pname, [basename '_testdata.mat']), ...
+									'testdata', '-MAT');
 	end
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------

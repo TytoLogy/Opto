@@ -1,6 +1,6 @@
-function [curvedata, varargout] = wav_optoON(handles, datafile)
+function outdata = wav_optoON(handles, datafile)
 %--------------------------------------------------------------------------
-% [curvedata, rawdata] = wav_optoON(handles, datafile)
+% outdata = wav_optoON(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -12,13 +12,14 @@ function [curvedata, varargout] = wav_optoON(handles, datafile)
 %
 %--------------------------------------------------------------------------
 % Input Arguments:
-%	H		exp handles from calling gui (H)
+%	handles		exp handles from calling gui (H)
 %	datafile		name (full path + '.dat' filename) for data
 % 
 % Output Arguments:
-% 	curvedata	data structure	
-% 	rawdata		raw response data cell array
+% 	outdata{1}	curvedata structure	
+% 	outdata{2}	rawdata		raw response data cell array
 % 					{nTrials, nreps}
+%	outdata{3}	handles
 %
 %--------------------------------------------------------------------------
 % See Also: noise_opto, opto, opto_playCache
@@ -35,7 +36,8 @@ function [curvedata, varargout] = wav_optoON(handles, datafile)
 % Created:	31 March, 2017 (SJS) from noise_opto
 %
 % Revision History:
-%	12 Jun, 2017 (SJS): pulled off common elements into separate subscripts
+%	12 Jun 2017 (SJS): pulled off common elements into separate subscripts
+%	13 Jun 2017 (SJS): working on separate psths for each stimulus 
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
@@ -51,10 +53,8 @@ L = 1;
 R = 2; %#ok<NASGU>
 MAX_ATTEN = 120;  %#ok<NASGU>
 % assign temporary outputs
-curvedata = []; 
-if nargout > 1
-	varargout = {};
-end
+outdata = {};
+
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -413,7 +413,7 @@ standalone_setupplots;
 % Initialize cancel/pause button
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-[PanelHandle, cancelButton, pauseButton] = cancelpausepanel;
+[PanelHandle, cancelButton, pauseButton] = cancelpausepanel; %#ok<ASGLU>
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -445,15 +445,24 @@ while ~cancelFlag && (sindex < nTotalTrials)
 	% increment counter (was initialized to 0)
 	%--------------------------------------------------
 	sindex = sindex + 1;
+	%--------------------------------------------------
+	% psth and stimulus index
+	%--------------------------------------------------
+	pIndx = stimIndices(sindex);
+	%--------------------------------------------------
+	% rep #s
+	%--------------------------------------------------
+	% get current rep;
 	rep = repList(sindex);
-	
+	% increment current index
+	currentRep(pIndx) = currentRep(pIndx) + 1;
 	%--------------------------------------------------
 	% get current stimulus settings from stimList,using stimIndices to 
 	% index into stimList
 	%--------------------------------------------------
 	fprintf('sindex: %d (%d)\n', sindex, nTotalTrials);
-	fprintf('stimIndices(%d): %d\n', sindex, stimIndices(sindex));
-	Stim = stimList(stimIndices(sindex));
+	fprintf('stimIndices(%d): %d\n', sindex, pIndx);
+	Stim = stimList(pIndx);
 	stimtype = Stim.audio.signal.Type;
 	
 	fprintf('sindex: %d\t rep: %d(%d)\tType: %s\n', sindex, rep, ...
@@ -559,7 +568,7 @@ while ~cancelFlag && (sindex < nTotalTrials)
 	try
 		[rawdata, ~] = iofunc(Sn, acqpts, indev, outdev, zBUS);
 		% get the spike response
-		[spikes, nspikes] = opto_getspikes(indev);
+		[spikes, nspikes] = opto_getspikes(indev); %#ok<ASGLU>
 	catch
 		keyboard
 	end
@@ -571,10 +580,10 @@ while ~cancelFlag && (sindex < nTotalTrials)
 		% demultiplex the returned vector and store the response
 		% mcDeMux returns an array that is [nChannels, nPoints]
 		tmpD = mcFastDeMux(rawdata, channels.nInputChannels);
-		resp{stimIndices(sindex)} = tmpD;
+		resp{pIndx} = tmpD;
 		recdata = tmpD(:, channels.RecordChannelList);
 	else
-		resp{stimIndices(sindex)} =  rawdata;
+		resp{pIndx} =  rawdata;
 		recdata = rawdata;
 	end
 
@@ -599,11 +608,15 @@ while ~cancelFlag && (sindex < nTotalTrials)
 	tstr = {sprintf('%s: %d  Rep: %d(%d)  Atten:%.0f', ...
 								curvetype, sindex, rep, test.Reps, atten(L)), ...
 				sprintf('Type: %s %s', stimtype, wtype)};
- 	title(ax, tstr, 'Interpreter', 'none');
+ 	title(handles.H.ax, tstr, 'Interpreter', 'none');
 							
 	% build data matrix to plot from filtered data
+	% get monitor data from buffer
 	[monresp, ~] = opto_readbuf(indev, 'monIndex', 'monData');
+	% demux input data matrices	
 	[pdata, ~] = mcFastDeMux(monresp, channels.nInputChannels);
+	
+	% assign data to plot
 	for c = 1:channels.nInputChannels
 		if channels.RecordChannels{c}
 			tmpY = pdata(:, c)';
@@ -613,22 +626,43 @@ while ~cancelFlag && (sindex < nTotalTrials)
 		% update plot
 		set(pH(c), 'YData', tmpY + c*yabsmax);
 	end
-	drawnow
-	
-	
-	figure(pstH)
-	% psth index = stimulus index!
-	pIndx = stimIndices(sindex);
+	% update plots
+	refreshdata
+
+	% show detected spikes
+	% delete old hash marks
+% 	delete(tH);
+	% compute spike bins
 	spikebins = getSpikebinsFromSpikes(spikes, handles.H.TDT.SnipLen);
-	SpikeTimes{pIndx}{currentRep(pIndx)} = spikebins ./ indev.Fs;
-	
-	
-	
-	
+	% assign spiketimes to currentRep within storage cell array
+	SpikeTimes{pIndx}{currentRep(pIndx)} = (1000/indev.Fs) * spikebins; %#ok<AGROW>
+	% draw new hash marks on sweep plot
+	set(tH,	'XData', ...
+					SpikeTimes{pIndx}{currentRep(pIndx)}, ...
+				'YData', ...
+					zeros(size(SpikeTimes{pIndx}{currentRep(pIndx)})) + ...
+ 							handles.H.TDT.channels.MonitorChannel*yabsmax);
+% 	tH = text(	SpikeTimes{pIndx}{currentRep(pIndx)}, ...
+% 					zeros(size(SpikeTimes{pIndx}{currentRep(pIndx)})) + ...
+% 							handles.H.TDT.channels.MonitorChannel*yabsmax, ...
+% 					'|', ...
+% 					'Color',  hashColor, ...
+% 					'Parent', ax);			
+	% update PSTH
+	PSTH.hvals{pIndx} = psth(	SpikeTimes{pIndx}, ...
+										binSize, ...
+										[0 handles.H.TDT.AcqDuration]);
+	bar(handles.H.pstX(pIndx), PSTH.bins, PSTH.hvals{pIndx}, 1);
+	% update raster
+	rasterplot(		SpikeTimes{pIndx}, ...
+						[0 handles.H.TDT.AcqDuration], ...
+						'|', ...
+						12, ...
+						'k', ...
+						handles.H.rstX(pIndx)	);
 
 	% check state of cancel button
 	cancelFlag = read_ui_val(cancelButton);
-
 	% check state of pause button
 	pauseFlag = read_ui_val(pauseButton);
 	while pauseFlag
@@ -637,7 +671,6 @@ while ~cancelFlag && (sindex < nTotalTrials)
 		drawnow;
 	end
 	update_ui_str(pauseButton, 'Pause');
-
 	% pause for the inter-stimulus interval
 	pause(0.001*audio.ISI);
 end %%% End of REPS LOOP
@@ -672,35 +705,9 @@ closeOptoTrialData(datafile, time_end);
 
 %--------------------------------------------------------
 %--------------------------------------------------------
-% setup output data structure
+% finish up
 %--------------------------------------------------------
 %--------------------------------------------------------
-if ~cancelFlag
-% 	curvedata.depvars = depvars;
-% 	curvedata.depvars_sort = depvars_sort;
-% 	if stimcache.saveStim
-% 		[pathstr, fbase] = fileparts(datafile);
-% 		curvedata.stimfile = fullfile(pathstr, [fbase '_stim.mat']);
-% 	end
-end
-if nargout == 2
-	varargout{1} = resp;
-end
+standalone_cleanup
 
-%--------------------------------------------------------
-%--------------------------------------------------------
-% clean up
-%--------------------------------------------------------
-%--------------------------------------------------------
-% close curve panel
-close(PanelHandle)
-% turn off monitor using software trigger 2 sent to indev
-RPtrig(indev, 2);
-
-%--------------------------------------------------------
-%--------------------------------------------------------
-% save cancel flag status in curvedata
-%--------------------------------------------------------
-%--------------------------------------------------------
-curvedata.cancelFlag = cancelFlag;
 	

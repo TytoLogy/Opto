@@ -19,6 +19,7 @@
 
 % kludge until this is put into UI
 monitorHPFc = 350;
+hashColor = 'c';
 
 % Determine run state from value of button - need to do this in order to
 % be able to stop/start
@@ -112,12 +113,14 @@ else
 	set(ax, 'YTickLabel', yticks_txt);
 	set(ax, 'TickDir', 'out');
 	set(ax, 'Box', 'off');
-	set(fH, 'Position', [861 204 557 800]);
+	set(fH, 'Position', [792 225 557 800]);
 	xlabel('Time (ms)')
 	ylabel('Channel')
 	set(ax, 'Color', 0.75*[1 1 1]);
 	set(fH, 'Color', 0.75*[1 1 1]);
 	set(fH, 'ToolBar', 'none');
+	% spike hashes
+	tH = text(	[], [], '|', 'Color', hashColor, 'Parent', ax);
 	grid(ax, 'on');
 	
 	%------------------------------------------------------------
@@ -196,6 +199,11 @@ else
 		[monresp, ~] = opto_readbuf(indev, 'monIndex', 'monData');
 		% get the spike response
 		[spikes, nspikes, spikerms] = opto_getspikes(indev);
+		% get the spike times
+% 		spiketimes = (1000/indev.Fs) * ...
+% 								spikes(1 + (0:H.TDT.SnipLen:(length(spikes)-1)));
+		spiketimes = (1000/indev.Fs) * ...
+							getSpikebinsFromSpikes(spikes, handles.H.TDT.SnipLen);
 		update_ui_str(handles.textRMS, sprintf('%.4f', spikerms));
 		% plot returned values
 		% first, demux input data matrices
@@ -211,6 +219,16 @@ else
 			end
 			set(pH(c), 'YData', tmpY + c*yabsmax);
 		end
+		% show detected spikes
+		% delete old hash marks
+		delete(tH);
+		% draw new ones
+		tH = text(	spiketimes, ...
+						zeros(size(spiketimes)) + ...
+											TDT.channels.MonitorChannel*yabsmax, ...
+						'|', ...
+						'Color',  hashColor, ...
+						'Parent', ax);			
 		% set title string
 		title(ax, tstr, 'Interpreter', 'none');
 		% force drawing

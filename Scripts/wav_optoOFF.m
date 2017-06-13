@@ -1,6 +1,6 @@
-function [curvedata, varargout] = wav_optoOFF(handles, datafile)
+function outdata = wav_optoOFF(handles, datafile)
 %--------------------------------------------------------------------------
-% [curvedata, rawdata] = wav_optoOFF(handles, datafile)
+% outdata = wav_optoOFF(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -16,10 +16,10 @@ function [curvedata, varargout] = wav_optoOFF(handles, datafile)
 %	datafile		name (full path + '.dat' filename) for data
 % 
 % Output Arguments:
-% 	curvedata	data structure	
-% 	rawdata		raw response data cell array
+% 	outdata{1}	curvedata structure	
+% 	outdata{2}	rawdata		raw response data cell array
 % 					{nTrials, nreps}
-%
+%	outdata{3}	handles
 %--------------------------------------------------------------------------
 % See Also: noise_opto, opto, opto_playCache
 %--------------------------------------------------------------------------
@@ -51,10 +51,7 @@ L = 1;
 R = 2; %#ok<NASGU>
 MAX_ATTEN = 120;  %#ok<NASGU>
 % assign temporary outputs
-curvedata = []; 
-if nargout > 1
-	varargout = {};
-end
+outdata = {};
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -659,35 +656,8 @@ closeOptoTrialData(datafile, time_end);
 
 %--------------------------------------------------------
 %--------------------------------------------------------
-% setup output data structure
+% finish up
 %--------------------------------------------------------
 %--------------------------------------------------------
-if ~cancelFlag
-% 	curvedata.depvars = depvars;
-% 	curvedata.depvars_sort = depvars_sort;
-% 	if stimcache.saveStim
-% 		[pathstr, fbase] = fileparts(datafile);
-% 		curvedata.stimfile = fullfile(pathstr, [fbase '_stim.mat']);
-% 	end
-end
-if nargout == 2
-	varargout{1} = resp;
-end
+standalone_cleanup
 
-%--------------------------------------------------------
-%--------------------------------------------------------
-% clean up
-%--------------------------------------------------------
-%--------------------------------------------------------
-% close curve panel
-close(PanelHandle)
-% turn off monitor using software trigger 2 sent to indev
-RPtrig(indev, 2);
-
-%--------------------------------------------------------
-%--------------------------------------------------------
-% save cancel flag status in curvedata
-%--------------------------------------------------------
-%--------------------------------------------------------
-curvedata.cancelFlag = cancelFlag;
-	
