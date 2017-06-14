@@ -70,7 +70,7 @@ pstHandle = figure;
 % create/switch focus to figure
 figure(pstHandle);
 % set position
-set(pstHandle, 'Position', [1358 418 560 578]);
+set(pstHandle, 'Position', [1357 225 560 773]);
 % set figure name
 set(pstHandle, 'Name', [fname ' PSTH']);
 % set figure filename
@@ -147,9 +147,13 @@ for p = 1:nPSTH
 	% turn off outer box
 	set(pstAxes(p), 'Box', 'off');
 end
+%--------------------------------
 % set automatic scaling for y axis only on all plots
+%--------------------------------
 axis(pstAxes, 'auto y');
+%--------------------------------
 % draw line for stimulus onset
+%--------------------------------
 pstAudLine = zeros(nPSTH, 2);
 winfoIndx = 0;
 for p = 1:nPSTH
@@ -170,40 +174,30 @@ for p = 1:nPSTH
 		error('WTF?')
 	end
 	if ~isempty(onset)
-		pstAudLine(p, 1) = text(onset, 0, ':', 'Color', 'b');
-		pstAudLine(p, 2) = text(offset, 0, '|', 'Color', 'b');
-
-% 		hold(pstAxes(p), 'on')
-% 		pstAudLine(p) = plot(pstAxes(p), [onset offset], [0 0], ...
-% 											'LineStyle', '-', ...
-% 											'Color', 'b', ...
-% 											'LineWidth', 1.2);
-% 		hold(pstAxes(p), 'off')
+		pstAudLine(p, 1) = text(onset, 0, ':', ...
+											'Color', 'b', ...
+											'FontSize', 11);
+		pstAudLine(p, 2) = text(offset, 0, '|', ...
+											'Color', 'b', ...
+											'FontSize', 11);
 	end
 end
-
+%--------------------------------
 % draw line for opto stim
+%--------------------------------
 if opto.Enable
 	pstOptoLine = zeros(nPSTH, 2);
 	onset = opto.Delay;
 	offset = onset + opto.Dur;
 	for p = 1:nPSTH
 		axes(pstAxes(p)); %#ok<LAXES>
-		pstOptoLine(p, 1) =  text(onset, 0, ':', 'Color', 'g');
-		pstOptoLine(p, 2) =  text(offset, 0, '|', 'Color', 'g');
-% 		pstOptoLine(p) = line([onset offset], -0.1*[1 1], ...
-% 											'LineStyle', '-', ...
-% 											'Color', 'g', ...
-% 											'LineWidth', 1.2);
-% 		hold(pstAxes(p), 'on')
-% 		pstOptoLine(p) = plot(pstAxes(p), [onset offset], [1 1], ...
-% 											'LineStyle', '-', ...
-% 											'Color', 'g', ...
-% 											'LineWidth', 1.2);
-% 		hold(pstAxes(p), 'off')
+		pstOptoLine(p, 1) =  text(onset, 0, ':', ...
+												'Color', 'g', ...
+												'FontSize', 11, ...
+												'FontWeight', 'bold');
+		pstOptoLine(p, 2) =  text(offset, 0, '|',  ...
+												'Color', 'g', ...
+												'FontSize', 11, ...
+												'FontWeight', 'demi');
 	end
 end
-keyboard
-
-
-

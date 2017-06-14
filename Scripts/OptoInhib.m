@@ -441,12 +441,11 @@ while ~cancelFlag && (sindex < nTotalTrials)
 	% get current stimulus settings from stimList,using stimIndices to 
 	% index into stimList
 	%--------------------------------------------------
-	fprintf('sindex: %d (%d)\n', sindex, nTotalTrials);
-	fprintf('stimIndices(%d): %d\n', sindex, pIndx);
 	Stim = stimList(pIndx);
-	stimtype = Stim.audio.signal.Type;
-	
-	fprintf('sindex: %d\t rep: %d(%d)\tType: %s\n', sindex, rep, ...
+	stimtype = Stim.audio.signal.Type;	
+% 	fprintf('sindex: %d (%d)\n', sindex, nTotalTrials);
+% 	fprintf('stimIndices(%d): %d\n', sindex, pIndx);
+	fprintf('sindex: %d(%d)\t rep: %d(%d)\tType: %s\n', sindex, nTotalTrials, rep, ...
 						test.Reps, stimtype);
 	fprintf('\taudio:\tDelay:%d\tLevel:%d', ...
 			Stim.audio.Delay, Stim.audio.Level)
