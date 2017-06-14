@@ -136,6 +136,8 @@ for p = 1:nPSTH
 	xlim(pstAxes(p), [0 handles.H.TDT.AcqDuration]);
 	set(pstAxes(p), 'XTick', 0:200:handles.H.TDT.AcqDuration);
 	set(pstAxes(p), 'TickDir', 'out');
+	set(pstAxes(p), 'XMinorTick', 'on');
+	set(pstAxes(p), 'TickLen', 3*get(pstAxes(p), 'TickLen'));
 	set(pstAxes(p), 'Box', 'off');
 end
 axis(pstAxes, 'auto y');

@@ -613,7 +613,7 @@ while ~cancelFlag && (sindex < nTotalTrials)
 	spikebins = getSpikebinsFromSpikes(spikes, handles.H.TDT.SnipLen);
 	% assign spiketimes to currentRep within storage cell array
 	SpikeTimes{pIndx}{currentRep(pIndx)} = (1000/indev.Fs) * spikebins; %#ok<AGROW>
-	SpikeTimes{pIndx}{currentRep(pIndx)} = [SpikeTimes{pIndx}{currentRep(pIndx)} 100*pIndx];
+	SpikeTimes{pIndx}{currentRep(pIndx)} = [SpikeTimes{pIndx}{currentRep(pIndx)} 100*pIndx]; %#ok<AGROW>
 	% draw new hash marks on sweep plot
 	set(tH,	'XData', ...
 					SpikeTimes{pIndx}{currentRep(pIndx)}, ...
