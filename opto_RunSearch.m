@@ -120,7 +120,9 @@ else
 	set(fH, 'Color', 0.75*[1 1 1]);
 	set(fH, 'ToolBar', 'none');
 	% spike hashes
-	tH = text(	[], [], '|', 'Color', hashColor, 'Parent', ax);
+	hold(ax, 'on')
+	tH = scatter(ax, [], [], '.', hashColor);
+	hold(ax, 'off')
 	grid(ax, 'on');
 	
 	%------------------------------------------------------------
@@ -200,10 +202,9 @@ else
 		% get the spike response
 		[spikes, nspikes, spikerms] = opto_getspikes(indev);
 		% get the spike times
-% 		spiketimes = (1000/indev.Fs) * ...
-% 								spikes(1 + (0:H.TDT.SnipLen:(length(spikes)-1)));
 		spiketimes = (1000/indev.Fs) * ...
-							getSpikebinsFromSpikes(spikes, handles.H.TDT.SnipLen);
+							getSpikebinsFromSpikes(spikes, ...
+															handles.H.TDT.SnipLen);
 		update_ui_str(handles.textRMS, sprintf('%.4f', spikerms));
 		% plot returned values
 		% first, demux input data matrices
@@ -220,15 +221,10 @@ else
 			set(pH(c), 'YData', tmpY + c*yabsmax);
 		end
 		% show detected spikes
-		% delete old hash marks
-		delete(tH);
 		% draw new ones
-		tH = text(	spiketimes, ...
-						zeros(size(spiketimes)) + ...
-											TDT.channels.MonitorChannel*yabsmax, ...
-						'|', ...
-						'Color',  hashColor, ...
-						'Parent', ax);			
+		set(tH,	'XData', spiketimes, ...
+					'YData', zeros(size(spiketimes)) + ...
+											TDT.channels.MonitorChannel*yabsmax);
 		% set title string
 		title(ax, tstr, 'Interpreter', 'none');
 		% force drawing

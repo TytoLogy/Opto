@@ -1,6 +1,6 @@
-function outdata = wav_optoON(handles, datafile)
+function outdata = OptoInhib(handles, datafile)
 %--------------------------------------------------------------------------
-% outdata = wav_optoON(handles, datafile)
+% outdata = OptoInhib(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -41,8 +41,7 @@ function outdata = wav_optoON(handles, datafile)
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
-disp 'running wav_optoON!'
-curvetype = 'Wav+OptoON';
+disp(['running ' mfilename])
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -86,6 +85,7 @@ caldata = handles.H.caldata;
 %------------------------------------
 % Presentation settings
 %------------------------------------
+test.Name = handles.H.test.Name;
 test.Reps = 10;
 test.Randomize = 1;
 test.Block = 0;
@@ -107,31 +107,13 @@ test.SweepPeriod = test.AcqDuration + 5;
 %% define stimulus (optical, audio) structs
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-%------------------------------------
-% OPTICAL settings
-%	Enable	0 -> optical stim OFF, 1 -> optical stim ON
-%	Delay		onset of optical stim from start of sweep (ms)
-% 	Dur		duration (ms) of optical stimulus
-% 	Amp		amplitude (mV) of optical stim
-% 					*** IMPORTANT NOTE ***
-% 					This method of amplitude control will only work with the 
-% 					Thor Labs fiber-coupled LED driver.
-% 					For the Shanghai Dream Laser, output level can only be 
-% 					controlled using the rotary potentiometer on the Laser power
-% 					supply. If using the Shanghai Dream Laser for stimulation,
-% 					set Amp to 5000 millivolts (5 V)
-% 
-% 	To test a range of values (for Delay, Dur, Amp), use a vector of values
-% 	instead of a single number (e.g., [20 40 60] or 20:20:60)
-%------------------------------------
-% opto.Enable = 1;
-% opto.Delay = 100;
-% opto.Dur = 100;
-% opto.Amp = 250;
-opto.Enable = 1;
-opto.Delay = 0;
-opto.Dur = 200;
-opto.Amp = 1000;
+opto = handles.H.test.opto;
+if opto.Enable
+	curvetype = 'OptoON';
+else
+	curvetype = 'OptoOFF';
+end
+
 %------------------------------------
 % AUDITORY stimulus settings
 %------------------------------------
@@ -642,7 +624,9 @@ while ~cancelFlag && (sindex < nTotalTrials)
 	PSTH.hvals{pIndx} = psth(	SpikeTimes{pIndx}, ...
 										binSize, ...
 										[0 handles.H.TDT.AcqDuration]);
-	bar(pstAxes(pIndx), PSTH.bins, PSTH.hvals{pIndx}, 1);
+% 	bar(pstAxes(pIndx), PSTH.bins, PSTH.hvals{pIndx}, 1);
+	set(get(pstAxes(pIndx), 'Children'), 'YData', PSTH.hvals{pIndx});
+	refreshdata;
 % 	% update raster
 % 	rasterplot(		SpikeTimes{pIndx}, ...
 % 						[0 handles.H.TDT.AcqDuration], ...

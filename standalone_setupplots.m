@@ -3,9 +3,13 @@
 % Initializes plots for sweep display, PSTHs, Raster plots
 %
 
+% color for detected spikes
 hashColor = 'c';
 % binsize (ms)
 binSize = 10;
+
+% figure name base
+[fpath, fname] = fileparts(datafile);
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -15,8 +19,10 @@ binSize = 10;
 % generate figure, axes
 fH = figure;
 aX = axes;
-% create/switch focus to figure, generate axis
+% switch focus to figure
 figure(fH);
+% set figure name
+set(fH, 'Name', [fname ' Traces']);
 % set up plot
 % calculate # of points to acquire (in units of samples)
 xv = linspace(0, test.AcqDuration, acqpts);
@@ -46,7 +52,6 @@ set(fH, 'ToolBar', 'none');
 %-------------------------------------------------------------------------
 % spike hashes
 %-------------------------------------------------------------------------
-% tH = text(	[], [], '|', 'Color', hashColor, 'Parent', ax);
 hold(aX, 'on')
 tH = scatter(aX, [], [], '.', hashColor);
 hold(aX, 'off')
@@ -66,6 +71,10 @@ pstHandle = figure;
 figure(pstHandle);
 % set position
 set(pstHandle, 'Position', [1358 418 560 578]);
+% set figure name
+set(pstHandle, 'Name', [fname ' PSTH']);
+% set figure filename
+set(pstHandle, 'Filename', [fname '_PSTH.fig']);
 %--------------------------------
 % set up plots
 %--------------------------------
@@ -125,6 +134,9 @@ end
 for p = 1:nPSTH
 	bar(pstAxes(p), PSTH.bins, PSTH.hvals{p}, 1);
 	xlim(pstAxes(p), [0 handles.H.TDT.AcqDuration]);
+	set(pstAxes(p), 'XTick', 0:200:handles.H.TDT.AcqDuration);
+	set(pstAxes(p), 'TickDir', 'out');
+	set(pstAxes(p), 'Box', 'off');
 end
 axis(pstAxes, 'auto y');
 

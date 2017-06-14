@@ -616,56 +616,6 @@ function editTLo_Callback(hObject, eventdata, handles)
 	handles.H.TDT.TLo = val;
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
-% function editRMSTau_Callback(hObject, eventdata, handles)
-% 	val = read_ui_str(hObject, 'n');
-% 	% maker sure value is in bounds
-% 	if ~between(val, 1, 1500)
-% 		optomsg(handles, ...
-% 					sprintf('Spike Threshold must be between 1 and 1500 ms!'));
-% 		update_ui_str(hObject, handles.H.TDT.RMSTau);
-% 		return
-% 	end
-% 	optomsg(handles, sprintf('Spike Threshold window to %d', val), ...
-% 																	'echo', 'off');
-% 	% if TDT HW is enabled, set the tag in the circuit
-% 	% note that since this is addressing the circuit directly, it will
-% 	% take affect immediately and without need for action in running
-% 	% scripts or searching
-% 	if handles.H.TDT.Enable
-% 		% set the RMS window
-% 		val = floor(val);
-% 		update_ui_str(hObject, val);
-% 		RPsettag(handles.H.TDT.indev, 'RMSTau', val);
-% 	end
-% 	% store value
-% 	handles.H.TDT.RMSTau = val;
-% 	guidata(hObject, handles);
-% %-------------------------------------------------------------------------
-% function editSnipLen_Callback(hObject, eventdata, handles)
-% 	val = read_ui_str(hObject, 'n');
-% 	% maker sure value is in bounds
-% 	if ~between(val, 5, 1500)
-% 		optomsg(handles, ...
-% 					sprintf('Snippet Size must be between 5 and 1500 bins!'));
-% 		update_ui_str(hObject, handles.H.TDT.SnipLen);
-% 		return
-% 	end
-% 	optomsg(handles, sprintf('Snippet size set to %d bins', val), ...
-% 																	'echo', 'off');
-% 	% if TDT HW is enabled, set the tag in the circuit
-% 	% note that since this is addressing the circuit directly, it will
-% 	% take affect immediately and without need for action in running
-% 	% scripts or searching
-% 	if handles.H.TDT.Enable
-% 		% set snippet size, first rounding down
-% 		val = floor(val);
-% 		update_ui_str(hObject, val);
-% 		RPsettag(handles.H.TDT.indev, 'SnipLen', val);
-% 	end
-% 	% store value
-% 	handles.H.TDT.SnipLen = val;
-% 	guidata(hObject, handles);
-%-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 
@@ -786,6 +736,8 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 		% load test information from script (this will define the 
 		% "test" struct
 		run(handles.H.TestScript);
+		handles.H.test = test; %#ok<NODEF>
+		guidata(hObject, handles);
 	end
 	%------------------------------------------------
 	% date, time, output filename and path
