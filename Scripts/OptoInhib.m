@@ -578,10 +578,10 @@ while ~cancelFlag && (sindex < nTotalTrials)
 	% tarnation is going on in text at bottom of window
 	wtype = '';
 	if strcmpi(stimtype, 'wav')
-		wtype = sprintf('%s', Stim.audio.signal.WavFile);
+		wtype = sprintf('%s', Stim.audio.signal.WavFile(1:(end-4)));
 	end
 	if Stim.opto.Enable
-		wtype = [wtype sprintf('+ Opto %d mV', Stim.opto.Amp)]; %#ok<AGROW>
+		wtype = [wtype sprintf(' + Opto %d mV', Stim.opto.Amp)]; %#ok<AGROW>
 	end
 	optomsg(handles, sprintf('%s, %s repetition = %d  atten = %.0f', ...
 								curvetype, [stimtype ' ' wtype], rep, atten(L)) );
@@ -624,16 +624,8 @@ while ~cancelFlag && (sindex < nTotalTrials)
 	PSTH.hvals{pIndx} = psth(	SpikeTimes{pIndx}, ...
 										binSize, ...
 										[0 handles.H.TDT.AcqDuration]);
-% 	bar(pstAxes(pIndx), PSTH.bins, PSTH.hvals{pIndx}, 1);
-	set(get(pstAxes(pIndx), 'Children'), 'YData', PSTH.hvals{pIndx});
+	set(pstBar(pIndx), 'YData', PSTH.hvals{pIndx});
 	refreshdata;
-% 	% update raster
-% 	rasterplot(		SpikeTimes{pIndx}, ...
-% 						[0 handles.H.TDT.AcqDuration], ...
-% 						'|', ...
-% 						12, ...
-% 						'k', ...
-% 						rstAxes(pIndx)	);
 	% check state of cancel button
 	cancelFlag = read_ui_val(cancelButton);
 	% check state of pause button

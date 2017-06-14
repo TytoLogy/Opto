@@ -2,6 +2,7 @@
 %
 % Initializes plots for sweep display, PSTHs, Raster plots
 %
+disp 'setting up plots'
 
 % color for detected spikes
 hashColor = 'c';
@@ -57,7 +58,6 @@ tH = scatter(aX, [], [], '.', hashColor);
 hold(aX, 'off')
 grid(aX, 'on');
 
-
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Set up figure for plotting psths
@@ -84,6 +84,7 @@ pstAxes = zeros(nPSTH, 1);
 % subplots
 for p = 1:nPSTH
 	pstAxes(p) = subplot(3, 2, p);
+	% write titles for plots
 	if any(strcmpi(stimList(p).audio.signal.Type, {'null', 'noise'}))
 		title(	pstAxes(p), ...
 					stimList(p).audio.signal.Type, ...
@@ -95,6 +96,7 @@ for p = 1:nPSTH
 					'Interpreter', 'none', ...
 					'FontSize', 10);
 	else
+		% WTF!!!???
 		error('WTF?')
 	end
 end
@@ -108,14 +110,14 @@ SpikeTimes = cell(nPSTH, 1);
 for p = 1:nPSTH
 	SpikeTimes{p} = cell(test.Reps, 1);
 end
-% create PSTH data struct to hold bins (same for all plots!) and
-% histogram values (hvals)
-PSTH = struct('bins', [], 'hvals', []);
-PSTH.hvals = cell(nPSTH, 1);
 % current rep will store the count of reps for each stimulus. 
 % it can be indexed using stimIndex (since it of length(stimList)
 % to handle the randomization of stimuli
 currentRep = ones(nPSTH, 1);
+% create PSTH data struct to hold bins (same for all plots!) and
+% histogram values (hvals)
+PSTH = struct('bins', [], 'hvals', []);
+PSTH.hvals = cell(nPSTH, 1);
 % now create "dummy" data for the psthdata
 for p = 1:nPSTH
 	if p == 1
@@ -129,65 +131,74 @@ for p = 1:nPSTH
 	end
 end
 %--------------------------------
-% and plot the psth
+% and plot dummy psth to initialize
 %--------------------------------
+pstBar = zeros(nPSTH, 1);
 for p = 1:nPSTH
-	bar(pstAxes(p), PSTH.bins, PSTH.hvals{p}, 1);
-	xlim(pstAxes(p), [0 handles.H.TDT.AcqDuration]);
+	pstBar(p) = bar(pstAxes(p), PSTH.bins, PSTH.hvals{p}, 1);
+	% set xlimits
+	xlim(pstAxes(p), [-0.5*binSize ...
+										(handles.H.TDT.AcqDuration+0.5*binSize)]);
+	% set xtick properties
 	set(pstAxes(p), 'XTick', 0:200:handles.H.TDT.AcqDuration);
 	set(pstAxes(p), 'TickDir', 'out');
 	set(pstAxes(p), 'XMinorTick', 'on');
 	set(pstAxes(p), 'TickLen', 3*get(pstAxes(p), 'TickLen'));
+	% turn off outer box
 	set(pstAxes(p), 'Box', 'off');
 end
+% set automatic scaling for y axis only on all plots
 axis(pstAxes, 'auto y');
-
-%{
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-% Set up figure for plotting rasters
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-%--------------------------------
-% generate figure, axes if needed
-%--------------------------------
-rstHandle = figure;
-% create/switch focus to figure
-figure(rstHandle);
-% set position
-set(rstHandle, 'Position', [36 96 560 420]);
-%--------------------------------
-% set up plots
-%--------------------------------
-% allocate axes
-rstAxes = zeros(nPSTH, 1);
-% subplots
+% draw line for stimulus onset
+pstAudLine = zeros(nPSTH, 1);
+winfoIndx = 0;
 for p = 1:nPSTH
-	rstAxes(p) = subplot(3, 2, p);
-	if any(strcmpi(stimList(p).audio.signal.Type, {'null', 'noise'}))
-		title(	rstAxes(p), ...
-					stimList(p).audio.signal.Type, ...
-					'FontSize', 10);
+	axes(pstAxes(p)); %#ok<LAXES>
+	onset = [];
+	offset = [];
+	% stimulus lines depend on stimulus type
+	if strcmpi(stimList(p).audio.signal.Type, 'noise')
+		onset = stimList(p).audio.Delay;
+		offset = onset + stimList(p).audio.Duration;
 	elseif strcmpi(stimList(p).audio.signal.Type, 'wav')
-		[~, wname] = fileparts(stimList(p).audio.signal.WavFile);
-		title(	rstAxes(p), ...
-					wname, ...
-					'Interpreter', 'none', ...
-					'FontSize', 10);
+		winfoIndx = winfoIndx + 1;
+		onset = stimList(p).audio.Delay;
+		offset = onset + 1000*wavInfo(winfoIndx).Duration;
+	elseif strcmpi(stimList(p).audio.signal.Type, 'null')
 	else
+		% WTF!!!???
 		error('WTF?')
 	end
+	if ~isempty(onset)
+		hold(pstAxes(p), 'on')
+		pstAudLine(p) = plot(pstAxes(p), [onset offset], [0 0], ...
+											'LineStyle', '-', ...
+											'Color', 'b', ...
+											'LineWidth', 1.2);
+		hold(pstAxes(p), 'off')
+	end
 end
-%--------------------------------
-% and plot the rasters
-%--------------------------------
-for p = 1:nPSTH
-	rasterplot(		SpikeTimes{p}, ...
-						[0 handles.H.TDT.AcqDuration], ...
-						'|', ...
-						12, ...
-						'k', ...
-						rstAxes(p)	);
-	xlim(rstAxes(p), [0 handles.H.TDT.AcqDuration]);
+
+% draw line for opto stim
+if opto.Enable
+	pstOptoLine = zeros(nPSTH, 1);
+	onset = opto.Delay;
+	offset = onset + opto.Dur;
+	for p = 1:nPSTH
+		axes(pstAxes(p)); %#ok<LAXES>
+		pstOptoLine(p) = line([onset offset], -0.1*[1 1], ...
+											'LineStyle', '-', ...
+											'Color', 'g', ...
+											'LineWidth', 1.2);
+% 		hold(pstAxes(p), 'on')
+% 		pstOptoLine(p) = plot(pstAxes(p), [onset offset], [1 1], ...
+% 											'LineStyle', '-', ...
+% 											'Color', 'g', ...
+% 											'LineWidth', 1.2);
+% 		hold(pstAxes(p), 'off')
+	end
 end
-%}
+keyboard
+
+
+
