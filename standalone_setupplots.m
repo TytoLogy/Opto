@@ -150,7 +150,7 @@ end
 % set automatic scaling for y axis only on all plots
 axis(pstAxes, 'auto y');
 % draw line for stimulus onset
-pstAudLine = zeros(nPSTH, 1);
+pstAudLine = zeros(nPSTH, 2);
 winfoIndx = 0;
 for p = 1:nPSTH
 	axes(pstAxes(p)); %#ok<LAXES>
@@ -170,26 +170,31 @@ for p = 1:nPSTH
 		error('WTF?')
 	end
 	if ~isempty(onset)
-		hold(pstAxes(p), 'on')
-		pstAudLine(p) = plot(pstAxes(p), [onset offset], [0 0], ...
-											'LineStyle', '-', ...
-											'Color', 'b', ...
-											'LineWidth', 1.2);
-		hold(pstAxes(p), 'off')
+		pstAudLine(p, 1) = text(onset, 0, ':', 'Color', 'b');
+		pstAudLine(p, 2) = text(offset, 0, '|', 'Color', 'b');
+
+% 		hold(pstAxes(p), 'on')
+% 		pstAudLine(p) = plot(pstAxes(p), [onset offset], [0 0], ...
+% 											'LineStyle', '-', ...
+% 											'Color', 'b', ...
+% 											'LineWidth', 1.2);
+% 		hold(pstAxes(p), 'off')
 	end
 end
 
 % draw line for opto stim
 if opto.Enable
-	pstOptoLine = zeros(nPSTH, 1);
+	pstOptoLine = zeros(nPSTH, 2);
 	onset = opto.Delay;
 	offset = onset + opto.Dur;
 	for p = 1:nPSTH
 		axes(pstAxes(p)); %#ok<LAXES>
-		pstOptoLine(p) = line([onset offset], -0.1*[1 1], ...
-											'LineStyle', '-', ...
-											'Color', 'g', ...
-											'LineWidth', 1.2);
+		pstOptoLine(p, 1) =  text(onset, 0, ':', 'Color', 'g');
+		pstOptoLine(p, 2) =  text(offset, 0, '|', 'Color', 'g');
+% 		pstOptoLine(p) = line([onset offset], -0.1*[1 1], ...
+% 											'LineStyle', '-', ...
+% 											'Color', 'g', ...
+% 											'LineWidth', 1.2);
 % 		hold(pstAxes(p), 'on')
 % 		pstOptoLine(p) = plot(pstAxes(p), [onset offset], [1 1], ...
 % 											'LineStyle', '-', ...
