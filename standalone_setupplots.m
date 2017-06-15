@@ -130,6 +130,10 @@ for p = 1:nPSTH
 		PSTH.hvals{p} = psth({}, binSize, [0 handles.H.TDT.AcqDuration]);
 	end
 end
+% offset psth bins by binSize/2 to get things to line up properly when
+% plotted using bar() function - the default is to center bars at 
+% binsize/2
+PSTH.bins = PSTH.bins + (binSize/2);
 %--------------------------------
 % and plot dummy psth to initialize
 %--------------------------------
