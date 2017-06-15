@@ -86,7 +86,7 @@ caldata = handles.H.caldata;
 % Presentation settings
 %------------------------------------
 test.Name = handles.H.test.Name;
-test.Reps = 30;
+test.Reps = 5;
 test.Randomize = 1;
 test.Block = 0;
 audio.ISI = 300;
@@ -479,12 +479,13 @@ while ~cancelFlag && (sindex < nTotalTrials)
 				rmsval = noise.signal.rms;
 			end
 			% update the Stimulus Delay
-			RPsettag(outdev, 'StimDelay', Stim.audio.Delay);
+			RPsettag(outdev, 'StimDelay',  ms2bin(Stim.audio.Delay, outFs));
 		case 'NULL'
 			% no audio stimulus
 			Sn = syn_null(Stim.audio.Duration, outdev.Fs, 0);
-			% update the Stimulus Delay
-			RPsettag(outdev, 'StimDelay', Stim.audio.Delay);
+			% update the Stimulus Delay (useless for this, but for
+			% consistency's sake....)
+			RPsettag(outdev, 'StimDelay',  ms2bin(Stim.audio.Delay, outFs));
 			% dummy rms val
 			rmsval = 0;
 		case 'WAV'
@@ -498,13 +499,6 @@ while ~cancelFlag && (sindex < nTotalTrials)
 			rmsval = wavInfo(wavindex).PeakRMS;
 			% will need to apply a correction factor to OptoDelay
 			% due to variability in in the wav stimulus onset
-% 			optoDelayCorr = ms2bin( bin2ms( wavInfo(wavindex).OnsetBin, ...
-% 								                 outdev.Fs ), ...
-% 										   indev.Fs);
-%  			optoDelayCorr = 0;
-
-			% will need to apply a correction factor to OptoDelay
-			% due to variability in in the wav stimulus onset
 			% compute correction based on outdev.Fs
 			optoDelayCorr = wavInfo(wavindex).OnsetBin;
 			correctedDelay = ms2bin(Stim.audio.Delay, outFs) - optoDelayCorr;
@@ -515,12 +509,11 @@ while ~cancelFlag && (sindex < nTotalTrials)
 			end
 			% update the Stimulus Delay
 			RPsettag(outdev, 'StimDelay', correctedDelay);
-			
 		otherwise
 			fprintf('unknown type %s\n', stimtype);
 			keyboard
 	end
-	
+
 	% need to add dummy channel to Sn since iofunction needs stereo signal
 	Sn = [Sn; zeros(size(Sn))]; %#ok<AGROW>
 	% get the attenuator settings for the desired SPL
@@ -533,7 +526,8 @@ while ~cancelFlag && (sindex < nTotalTrials)
 		% turn on opto trigger
 		RPsettag(indev, 'OptoEnable', 1);
 		% set opto params
-% 		% apply opto delay correction if WAV stim
+% 		% apply opto delay correction if WAV stim (cancelling due to
+% 		complication of what to do if opto delay == 0...)
 % 		RPsettag(indev, 'OptoDelay', ...
 % 							optoDelayCorr + ms2bin(Stim.opto.Delay, indev.Fs));
 		% set opto Delay
