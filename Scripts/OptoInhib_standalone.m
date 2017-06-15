@@ -5,8 +5,6 @@
 test.Type = 'STANDALONE';
 test.Function = @OptoInhib;
 
-
-
 %------------------------------------
 % OPTICAL settings
 %	Enable	0 -> optical stim OFF, 1 -> optical stim ON
@@ -24,7 +22,7 @@ test.Function = @OptoInhib;
 % 	To test a range of values (for Delay, Dur, Amp), use a vector of values
 % 	instead of a single number (e.g., [20 40 60] or 20:20:60)
 %------------------------------------
-test.opto.Enable = 1;
+test.opto.Enable = 0;
 test.opto.Delay = 0;
 test.opto.Dur = 200;
 test.opto.Amp = 1000;
