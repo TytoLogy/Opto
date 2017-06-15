@@ -86,10 +86,10 @@ caldata = handles.H.caldata;
 % Presentation settings
 %------------------------------------
 test.Name = handles.H.test.Name;
-test.Reps = 10;
+test.Reps = 30;
 test.Randomize = 1;
 test.Block = 0;
-audio.ISI = 500;
+audio.ISI = 300;
 %------------------------------------
 % Experiment settings
 %------------------------------------
@@ -121,7 +121,7 @@ end
 % general audio properties
 %------------------------------------
 % Delay 
-audio.Delay = 100;
+audio.Delay = 200;
 % Duration is variable for WAV files - this information
 % will be found in the audio.signal.WavInfo
 % For now, this will be a dummy value
@@ -478,9 +478,13 @@ while ~cancelFlag && (sindex < nTotalTrials)
 				Sn = noise.signal.S0;
 				rmsval = noise.signal.rms;
 			end
+			% update the Stimulus Delay
+			RPsettag(outdev, 'StimDelay', Stim.audio.Delay);
 		case 'NULL'
 			% no audio stimulus
 			Sn = syn_null(Stim.audio.Duration, outdev.Fs, 0);
+			% update the Stimulus Delay
+			RPsettag(outdev, 'StimDelay', Stim.audio.Delay);
 			% dummy rms val
 			rmsval = 0;
 		case 'WAV'
