@@ -103,6 +103,8 @@ test.saveStim = 0;
 %------------------------------------
 test.AcqDuration = 1000;
 test.SweepPeriod = test.AcqDuration + 5;
+test.PreStimulusTime = handles.H.test.PreStimulusTime;
+test.PostStimulusTime = handles.H.test.PostStimulusTime;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -414,6 +416,75 @@ if test.saveStim
 else
 	stimWriteFlag = 0; %#ok<NASGU>
 end
+
+%-------------------------------------------------------
+%-------------------------------------------------------
+% collect background
+%-------------------------------------------------------
+%-------------------------------------------------------
+% set acq duration
+% no audio stimulus
+Sn = syn_null(100, outdev.Fs, 0);
+% need to add dummy channel to Sn since iofunction needs stereo signal
+Sn = [Sn; zeros(size(Sn))];
+% set the attenuators
+setattenfunc(outdev, [120 120]);
+% ensure opto trigger is OFF
+RPsettag(indev, 'OptoEnable', 0);
+% Set the length of time to acquire data
+RPsettag(indev, 'AcqDur', ms2bin(test.PreStimulusTime, inFs));
+% Set the total sweep period time - input
+RPsettag(indev, 'SwPeriod', ms2bin(test.PreStimulusTime + 5, inFs));
+% Set the total sweep period time - output
+RPsettag(outdev, 'SwPeriod', ms2bin(test.PreStimulusTime + 5, outFs));
+% play the sound and return the response
+try
+	[rawdata, ~] = iofunc(Sn, ms2bin(test.PreStimulusTime, inFs), ...
+															indev, outdev, zBUS);
+	% get the spike response
+	[spikes, nspikes] = opto_getspikes(indev); %#ok<ASGLU>
+catch
+	keyboard
+end
+% demux the response if necessary and store response data in cell array
+% 	Note: by indexing the response using row values from the 
+% 	trialRandomSequence array, the resp{} data will be in SORTED form!
+if channels.nInputChannels > 1
+	% demultiplex the returned vector and store the response
+	% mcDeMux returns an array that is [nChannels, nPoints]
+	tmpD = mcFastDeMux(rawdata, channels.nInputChannels);
+	recdata = tmpD(:, channels.RecordChannelList);
+else
+	recdata = rawdata;
+end
+% Save Data
+% open the file for appending
+fp = fopen(datafile, 'a');
+% check to make sure this worked
+if fp == -1
+	% error occurred, return error code -1
+	error('%s: data file error', mfilename);
+end
+% write a string that says 'PRE_BACKGROUND_BEGIN'
+writeString(fp, 'PRE_BACKGROUND_BEGIN');
+% write the data
+writeOptoTrialData(datafile, ...
+							recdata, ...
+							[0 0], ...
+							-1, -1);
+% write a string that says 'PRE_BACKGROUND_END'
+writeString(fp, 'PRE_BACKGROUND_END');
+keyboard
+clear recdata rawdata;
+%-----------------------------------
+% reset acq and sweep duration
+%-----------------------------------
+% Set the length of time to acquire data
+RPsettag(indev, 'AcqDur', ms2bin(test.AcqDuration, inFs));
+% Set the total sweep period time - input
+RPsettag(indev, 'SwPeriod', ms2bin(test.SweepPeriod, inFs));
+% Set the total sweep period time - output
+RPsettag(outdev, 'SwPeriod', ms2bin(test.SweepPeriod, outFs));
 
 %-------------------------------------------------------
 %-------------------------------------------------------

@@ -5,6 +5,10 @@
 test.Type = 'STANDALONE';
 test.Function = @OptoInhib;
 
+% pre-stimulus background time (ms)
+test.PreStimulusTime = 5000;
+% post-stimulus background time (ms)
+test.PostStimulusTime = 5000;
 %------------------------------------
 % OPTICAL settings
 %	Enable	0 -> optical stim OFF, 1 -> optical stim ON
@@ -26,7 +30,7 @@ test.opto.Enable = 0;
 test.opto.Delay = 0;
 test.opto.Dur = 200;
 test.opto.Amp = 1000;
-
+% set test Name based on opto Enable setting
 if test.opto.Enable == 1
 	test.Name = 'OptoInhibON';
 else
