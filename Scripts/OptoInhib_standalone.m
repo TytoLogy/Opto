@@ -5,10 +5,6 @@
 test.Type = 'STANDALONE';
 test.Function = @OptoInhib;
 
-% pre-stimulus background time (ms)
-test.PreStimulusTime = 5000;
-% post-stimulus background time (ms)
-test.PostStimulusTime = 5000;
 %------------------------------------
 % OPTICAL settings
 %	Enable	0 -> optical stim OFF, 1 -> optical stim ON
