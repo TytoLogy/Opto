@@ -22,8 +22,12 @@ test.Function = @OptoInhib;
 % 	To test a range of values (for Delay, Dur, Amp), use a vector of values
 % 	instead of a single number (e.g., [20 40 60] or 20:20:60)
 %------------------------------------
+% test.opto.Enable = 1;
+% test.opto.Delay = 100;
+% test.opto.Dur = 200;
+% test.opto.Amp = 2000;
 test.opto.Enable = 0;
-test.opto.Delay = 150;
+test.opto.Delay = 100;
 test.opto.Dur = 200;
 test.opto.Amp = 2000;
 % set test Name based on opto Enable setting
@@ -31,4 +35,11 @@ if test.opto.Enable == 1
 	test.Name = 'OptoInhibON';
 else
 	test.Name = 'OptoInhibOFF';
+end
+
+test.OlfStim = 1;
+if test.OlfStim
+	test.OlfSTimType = 'CatFur';
+else
+	test.OlfStimType = '';
 end

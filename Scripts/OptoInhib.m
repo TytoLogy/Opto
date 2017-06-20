@@ -91,7 +91,7 @@ test.Name = handles.H.test.Name;
 test.Reps = 30;
 test.Randomize = 1;
 test.Block = 0;
-audio.ISI = 500;
+audio.ISI = 250;
 %------------------------------------
 % Experiment settings
 %------------------------------------
