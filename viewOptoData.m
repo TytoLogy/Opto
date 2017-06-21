@@ -47,7 +47,8 @@ if ispc
 % 	datafile = '1058_20160623_0_02_1500_FREQ.dat';
 % 	datapath = 'E:\Data\SJS\1012\20160727';
 % 	datafile = '1012_20160727_5_3_1_OPTO.dat';
-	datapath = 'E:\Data\SJS';
+% 	datapath = 'E:\Data\SJS';
+	datapath = '';
 	datafile = '';
 else 
 % 	datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1012/20160727';
@@ -66,8 +67,26 @@ if isempty(datafile)
 		return
 	end
 end
-% read in data
+
+% read in raw data
 [D, Dinf] = readOptoData(fullfile(datapath, datafile));
+
+% read in test data (if it exists)
+[~, fbase, fext] = fileparts(datafile);
+testfile = [fbase '_testdata.mat'];
+if exist(fullfile(datapath, testfile), 'file')
+	load(fullfile(datapath, testfile), 'testdata');
+else
+	testdata = [];
+end
+%%
+% read in wav info (if it exists)
+wavinfofile = [fbase '_wavinfo.mat'];
+if exist(fullfile(datapath, wavinfofile), 'file')
+	load(fullfile(datapath, wavinfofile), 'stimList');
+else
+	testdata = [];
+end
 
 %% define filter for data
 % sampling rate
@@ -230,3 +249,70 @@ if strcmpi(Dinf.test.Type, 'WavFile')
 	end
 end
 
+%% work from testdata
+% if no testdata, get outta here
+if isempty(testdata)
+	return
+else
+	spikesByStim = testdata.SpikeTimes;
+	PSTHByStim = testdata.PSTH;
+	if length(spikesByStim) ~= nwavs
+		error('%s: mismatch in # of stimuli in testdata and # of wavs', mfilename)
+	end
+end
+
+% Plot data
+if strcmpi(Dinf.test.Type, 'WavFile')
+	winfoIndx = 0;
+	for w = 1:nwavs
+		figure
+		subplot(211)
+		title({	datafile, sprintf('Stimulus: %s', wavlist{w})}, ...
+					'Interpreter', 'none');
+		rasterplot(spikesByStim{w}, [0 1000]);
+		subplot(212)
+		bar(PSTHByStim.bins, PSTHByStim.hvals{w}, 1);
+		xlabel('ms')
+		xlim([0 1000])
+
+		% draw line for stimulus onset/offset
+		onset = [];
+		offset = [];
+		% stimulus lines depend on stimulus type
+		if strcmpi(stimList(w).audio.signal.Type, 'noise')
+			onset = stimList(w).audio.Delay;
+			offset = onset + stimList(w).audio.Duration;
+		elseif strcmpi(stimList(w).audio.signal.Type, 'wav')
+			winfoIndx = winfoIndx + 1;
+			onset = stimList(w).audio.Delay;
+			offset = onset + 1000*wavInfo(winfoIndx).Duration;
+		elseif strcmpi(stimList(w).audio.signal.Type, 'null')
+		else
+			% WTF!!!???
+			error('WTF?')
+		end
+		if ~isempty(onset)
+			text(onset, 0, ':', ...
+								'Color', 'r', ...
+								'FontSize', 12, ...
+								'FontWeight', 'bold');
+			text(offset, 0, '|', ...
+								'Color', 'r', ...
+								'FontSize', 12, ...
+								'FontWeight', 'bold');
+		end
+		% draw line for opto stim
+		if stimList(w).opto.Enable
+			onset = stimList(w).optoopto.Delay;
+			offset = onset + stimList(w).opto.Dur;
+			text(onset, 0, ':', ...
+								'Color', 'g', ...
+								'FontSize', 12, ...
+								'FontWeight', 'bold');
+			text(offset, 0, '|',  ...
+								'Color', 'g', ...
+								'FontSize', 12, ...
+								'FontWeight', 'bold');
+		end
+	end
+end
