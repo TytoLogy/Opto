@@ -28,7 +28,7 @@ test.Function = @OptoInhib;
 % test.opto.Amp = 2000;
 test.opto.Enable = 0;
 test.opto.Delay = 100;
-test.opto.Dur = 200;
+test.opto.Dur = 400;
 test.opto.Amp = 2000;
 % set test Name based on opto Enable setting
 if test.opto.Enable == 1
@@ -37,7 +37,7 @@ else
 	test.Name = 'OptoInhibOFF';
 end
 
-test.OlfStim = 1;
+test.OlfStim = 0;
 if test.OlfStim
 	test.OlfSTimType = 'CatFur';
 else
