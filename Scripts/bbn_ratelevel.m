@@ -31,16 +31,16 @@ test.opto.Amp = 2000;
 test.audio.signal.Type = 'noise';
 test.audio.signal.Fmin = 4000;
 test.audio.signal.Fmax = 80000;
-test.audio.Delay = 200;
+test.audio.Delay = 100;
 test.audio.Duration = 100;
-test.audio.Level = [0 60 80];
+test.audio.Level = [0 40 60 80];
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
 test.audio.ISI = 250;
 
-test.Reps = 30;
-test.Randomize = 0;
-test.Block = 1;
+test.Reps = 10;
+test.Randomize = 1;
+test.Block = 0;
 test.saveStim = 0;
 
 %-------------------------------------------------------------------------
@@ -48,7 +48,7 @@ test.saveStim = 0;
 % TDT
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-test.AcqDuration = 1000;
+test.AcqDuration = 400;
 test.SweepPeriod = test.AcqDuration + 5;
 
  

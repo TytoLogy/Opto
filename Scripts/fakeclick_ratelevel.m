@@ -11,8 +11,8 @@
 % 		'AMP'				opto stim amplitude
 % 						or some combination of these
 %-------------------------------------------------------------------------
-test.Type = 'FREQ';
-test.Name = 'FREQ_TUNING';
+test.Type = 'LEVEL';
+test.Name = 'FAKECLICK_LEVEL';
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -21,20 +21,20 @@ test.Name = 'FREQ_TUNING';
 test.opto.Enable = 0;
 test.opto.Delay = 0;
 test.opto.Dur = 300;
-test.opto.Amp = 2000; % mV
-
+test.opto.Amp = 2000;
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Auditory stimulus settings
 %-------------------------------------------------------------------------
+
 % signal
-test.audio.signal.Type = 'tone';
-test.audio.signal.Frequency = 5000:5000:80000;
-test.audio.signal.RadVary = 1;
+test.audio.signal.Type = 'noise';
+test.audio.signal.Fmin = 4000;
+test.audio.signal.Fmax = 80000;
 test.audio.Delay = 100;
-test.audio.Duration = 100;
-test.audio.Level = 65;
-test.audio.Ramp = 5;
+test.audio.Duration = 5;
+test.audio.Level = [0 40 60 80];
+test.audio.Ramp = .1;
 test.audio.Frozen = 0;
 test.audio.ISI = 250;
 
@@ -49,7 +49,7 @@ test.saveStim = 0;
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 test.AcqDuration = 400;
-test.SweepPeriod = test.AcqDuration + 1;
+test.SweepPeriod = test.AcqDuration + 5;
 
  
 
