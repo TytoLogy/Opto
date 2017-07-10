@@ -1,6 +1,6 @@
-function [data, datainfo] = viewOptoData(varargin)
+function varargout = viewOptoData(varargin)
 %------------------------------------------------------------------------
-% [data, datainfo] = viewOptoData(varargin)
+% [data, datainfo, tracesByStim] = viewOptoData(varargin)
 %------------------------------------------------------------------------
 % % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -30,6 +30,7 @@ function [data, datainfo] = viewOptoData(varargin)
 %           - adapted from readHPData.m
 %
 % Revisions:
+%	10 Jul 2017 (SJS): some minor tweaks
 %------------------------------------------------------------------------
 % TO DO:
 %   *Documentation!
@@ -37,8 +38,7 @@ function [data, datainfo] = viewOptoData(varargin)
 %% settings for processing data
 HPFreq = 350;
 LPFreq = 6500;
-nargin
- 
+
 %% Read Data
 % set paths
 if ispc
@@ -84,7 +84,6 @@ end
 % read in wav info (if it exists)
 wavinfofile = [fbase '_wavinfo.mat'];
 if exist(fullfile(datapath, wavinfofile), 'file')
-%   load(fullfile(datapath, wavinfofile), 'stimList');
     load(fullfile(datapath, wavinfofile));
 else
     stimList = [];
@@ -171,10 +170,10 @@ end
  
 %% Pull out trials, apply filter, store in matrix
 if isfield(Dinf.channels, 'nRecordChannels')
-    nchan = Dinf.channels.nRecordChannels;
+    nchan = Dinf.channels.nRecordChannels; %#ok<NASGU>
     channelList = Dinf.channels.RecordChannelList;
 else
-    nchan = Dinf.channels.nInputChannels;
+    nchan = Dinf.channels.nInputChannels; %#ok<NASGU>
     channelList = Dinf.channels.InputChannels;
 end
  
@@ -182,21 +181,22 @@ end
 channelNumber = 8;
 channelIndex = find(channelList == channelNumber);
 if isempty(channelIndex)
-    error('Channel not recorded')
+    error('%s: Channel %d not recorded', mfilename, channelNumber);
 end
 %% Plot data for one channel, process will vary depending on stimulus type
 if strcmpi(Dinf.test.Type, 'FREQ')
     % time vector for plotting
     t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
+	 tracesByStim = cell(nfreqs, 1);
     for f = 1:nfreqs
         dlist = stimindex{f};
         ntrials = length(dlist);
-        tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
+        tracesByStim{f} = zeros(length(D{1}.datatrace(:, 1)), ntrials);
         for n = 1:ntrials
-            tmpM(:, n) = filtfilt(filtB, filtA, ...
+            tracesByStim{f}(:, n) = filtfilt(filtB, filtA, ...
                                             D{dlist(n)}.datatrace(:, channelIndex));
         end
-        stackplot(t, tmpM, 'colormode', 'black');
+        stackplot(t, tracesByStim{f}, 'colormode', 'black');
         title(sprintf('Channel %d, Freq %d', channelNumber, ...
                                     Dinf.test.stimcache.vrange(f)));
     end
@@ -204,16 +204,16 @@ end
 if strcmpi(Dinf.test.Type, 'LEVEL')
     % time vector for plotting
     t = (1000/Fs)*((1:length(D{1}.datatrace(:, 1))) - 1);
-%   for l = 1:nlevels
+	 tracesByStim = cell(nlevels, 1);
     for l = 1:nlevels
         dlist = stimindex{l};
         ntrials = length(dlist);
-        tmpM = zeros(length(D{1}.datatrace(:, 1)), ntrials);
+        tracesByStim{l} = zeros(length(D{1}.datatrace(:, 1)), ntrials);
         for n = 1:ntrials
-            tmpM(:, n) = filtfilt(filtB, filtA, ...
+            tracesByStim{l}(:, n) = filtfilt(filtB, filtA, ...
                                             D{dlist(n)}.datatrace(:, channelIndex));
         end
-        stackplot(t, tmpM, 'colormode', 'black');
+        stackplot(t, tracesByStim{l}, 'colormode', 'black');
         title(sprintf('Channel %d, Level %d', channelNumber, ...
                                     Dinf.test.stimcache.vrange(l)));
     end
@@ -229,7 +229,6 @@ if strcmpi(Dinf.test.Type, 'WavFile')
             dIndx = stimindex{w}(n);
             tracesByStim{w}(:, n) = filtfilt(filtB, filtA, ...
                                                     D{dIndx}.datatrace(:, channelIndex));
-%           tracesByStim{w}(:, n) = D{dIndx}.datatrace(:, channelIndex);
         end
         stackplot(t, tracesByStim{w}, 'colormode', 'black');
         title({ datafile, sprintf('Stimulus: %s', wavlist{w})}, ...
@@ -238,10 +237,18 @@ if strcmpi(Dinf.test.Type, 'WavFile')
         ylabel('Trial')
     end
 end
+
+%% assign outputs
+varargout{1} = D;
+varargout{2} = Dinf;
+varargout{3} = tracesByStim;
+
 %% work from testdata
 % if no testdata, get outta here
 if isempty(testdata)
     return
+elseif ~isfield(testdata, 'SpikeTimes')
+	return
 else
     spikesByStim = testdata.SpikeTimes;
     PSTHByStim = testdata.PSTH;
@@ -251,7 +258,7 @@ else
 end
 % Plot data
 if strcmpi(Dinf.test.Type, 'WavFile')
-    winfoIndx = 0;
+	winfoIndx = 0;
     for w = 1:nwavs
         figure
         subplot(211)
@@ -303,7 +310,6 @@ if strcmpi(Dinf.test.Type, 'WavFile')
         end
     end
 end
-%% assign outputs
-data = D;
-datainfo = Dinf;
+
+
  
