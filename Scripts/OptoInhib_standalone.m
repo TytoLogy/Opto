@@ -26,10 +26,16 @@ test.Function = @OptoInhib;
 % test.opto.Delay = 100;
 % test.opto.Dur = 200;
 % test.opto.Amp = 2000;
+%-----
 test.opto.Enable = 0;
-test.opto.Delay = 300;
+test.opto.Delay = 200;
 test.opto.Dur = 100;
-test.opto.Amp = 2000;
+test.opto.Amp = 1000;
+%-----
+% test.opto.Enable = 1;
+% test.opto.Delay = 750;
+% test.opto.Dur = 100;
+% test.opto.Amp = 1000;
 % set test Name based on opto Enable setting
 if test.opto.Enable == 1
 	test.Name = 'OptoInhibON';
