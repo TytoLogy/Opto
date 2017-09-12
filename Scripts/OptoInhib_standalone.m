@@ -29,7 +29,7 @@ test.Function = @OptoInhib;
 %-----
 test.opto.Enable = 0;
 test.opto.Delay = 200;
-test.opto.Dur = 100;
+test.opto.Dur = 200;
 test.opto.Amp = 1000;
 %-----
 % test.opto.Enable = 1;
