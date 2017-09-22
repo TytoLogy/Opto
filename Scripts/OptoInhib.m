@@ -88,10 +88,10 @@ caldata = handles.H.caldata;
 % Presentation settings
 %------------------------------------
 test.Name = handles.H.test.Name;
-test.Reps = 30;
+test.Reps = 10;
 test.Randomize = 1;
 test.Block = 0;
-audio.ISI = 500;
+audio.ISI = 300;
 %------------------------------------
 % Experiment settings
 %------------------------------------
@@ -101,7 +101,7 @@ test.saveStim = 0;
 % acquisition/sweep settings
 % will have to be adjusted to deal with wav file durations
 %------------------------------------
-test.AcqDuration = 1000;
+test.AcqDuration = 500;
 test.SweepPeriod = test.AcqDuration + 5;
 
 %-------------------------------------------------------------------------
@@ -127,8 +127,8 @@ audio.Delay = 200;
 % Duration is variable for WAV files - this information
 % will be found in the audio.signal.WavInfo
 % For now, this will be a dummy value
-audio.Duration = 200;
-audio.Level = 80;
+audio.Duration = 100;
+audio.Level = 65;
 audio.Ramp = 5;
 audio.Frozen = 0;
 %------------------------------------
@@ -139,7 +139,7 @@ noise.signal.Fmin = 4000;
 noise.signal.Fmax = 80000;
 noise.Delay = audio.Delay;
 noise.Duration = 100;
-noise.Level = 80;
+noise.Level = 65;
 noise.Ramp = 5;
 noise.Frozen = 0;
 %------------------------------------
