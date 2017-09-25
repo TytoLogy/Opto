@@ -34,10 +34,10 @@ test.audio.signal.Frequency = 7500:2500:40000;
 test.audio.signal.RadVary = 1;
 test.audio.Delay = 100;
 test.audio.Duration = 100;
-test.audio.Level = 55;
+test.audio.Level = 60;
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
-test.audio.ISI = 200;
+test.audio.ISI = 300;
 
 test.Reps = 10;
 test.Randomize = 1;
