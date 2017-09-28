@@ -21,8 +21,8 @@ test.Name = 'BBN_LEVEL_OPTO';
 test.opto.Enable = 0;
 % test.opto.Delay = 100;
 % test.opto.Dur = 300;
-test.opto.Delay = 175;
-test.opto.Dur = 100;
+test.opto.Delay = 100;
+test.opto.Dur = 200;
 test.opto.Amp = 2000;
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
