@@ -18,8 +18,8 @@ test.Name = 'FREQ_TUNING';
 %-------------------------------------------------------------------------
 % OPTICAL settings
 %-------------------------------------------------------------------------
-test.opto.Enable = 0;
-test.opto.Delay = 150;
+test.opto.Enable = 1;
+test.opto.Delay = 50;
 test.opto.Dur = 200;
 test.opto.Amp = 2000; % mV
 
@@ -30,7 +30,7 @@ test.opto.Amp = 2000; % mV
 % signal
 test.audio.signal.Type = 'tone';
 % test.audio.signal.Frequency = 5000:5000:80000;
-test.audio.signal.Frequency = 7500:2500:40000;
+test.audio.signal.Frequency = 7500:2500:35000;
 test.audio.signal.RadVary = 1;
 test.audio.Delay = 100;
 test.audio.Duration = 100;
