@@ -19,7 +19,7 @@ test.Name = 'FREQ_TUNING';
 % OPTICAL settings
 %-------------------------------------------------------------------------
 test.opto.Enable = 0;
-test.opto.Delay = 150;
+test.opto.Delay = 50;
 test.opto.Dur = 200;
 test.opto.Amp = 2000; % mV
 
