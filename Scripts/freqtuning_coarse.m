@@ -18,10 +18,10 @@ test.Name = 'FREQ_TUNING';
 %-------------------------------------------------------------------------
 % OPTICAL settings
 %-------------------------------------------------------------------------
-test.opto.Enable = 0;
+test.opto.Enable = 1;
 test.opto.Delay = 50;
 test.opto.Dur = 200;
-test.opto.Amp = 2000; % mV
+test.opto.Amp = 3000; % mV
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -36,7 +36,7 @@ test.audio.Duration = 100;
 test.audio.Level = 60;
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
-test.audio.ISI = 300;
+test.audio.ISI = 500;
 
 test.Reps = 10;
 test.Randomize = 1;
@@ -51,6 +51,10 @@ test.saveStim = 0;
 test.AcqDuration = 300;
 test.SweepPeriod = test.AcqDuration + 1;
 
- 
+ if test.opto.Enable
+	test.Name = [test.Name '_optoON'];
+end
+
+
 
 

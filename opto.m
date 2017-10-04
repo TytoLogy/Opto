@@ -365,7 +365,7 @@ function editOptoDur_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function editOptoAmp_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
-	if between(val, 0, 2000)
+	if between(val, 0, 2500)
 		handles.H.opto.Amp = val;
 		guidata(hObject, handles);
 	else
