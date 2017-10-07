@@ -179,6 +179,8 @@ end
  
 %% find channel data
 channelNumber = 8;
+channelNumber = 5;
+
 channelIndex = find(channelList == channelNumber);
 if isempty(channelIndex)
     error('%s: Channel %d not recorded', mfilename, channelNumber);

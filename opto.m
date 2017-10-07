@@ -365,7 +365,7 @@ function editOptoDur_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function editOptoAmp_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
-	if between(val, 0, 2500)
+	if between(val, 0, 4000)
 		handles.H.opto.Amp = val;
 		guidata(hObject, handles);
 	else
@@ -746,7 +746,7 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	handles.H.animal.Date = TytoLogy_datetime('date_compact');
 	handles.H.animal.Time = TytoLogy_datetime('time');
 	guidata(hObject, handles);	
-	[pname, fname] = opto_createDataFileName(handles, test);  %#ok<NODEF>
+	[pname, fname] = opto_createDataFileName(handles, test);
 	if fname == 0
 		optomsg(handles, 'Run Test Script Cancelled');
 		return

@@ -21,9 +21,9 @@ test.Name = 'BBN_LEVEL_OPTO';
 test.opto.Enable = 0;
 % test.opto.Delay = 100;
 % test.opto.Dur = 300;
-test.opto.Delay = 100;
-test.opto.Dur = 200;
-test.opto.Amp = 2000;
+test.opto.Delay = 200;
+test.opto.Dur = 100;
+test.opto.Amp = 3750;
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Auditory stimulus settings
@@ -33,11 +33,14 @@ test.audio.signal.Type = 'noise';
 test.audio.signal.Fmin = 4000;
 test.audio.signal.Fmax = 80000;
 test.audio.Delay = 200;
-test.audio.Duration = 50;
-test.audio.Level = 0:10:80;
-test.audio.Ramp = 1;
+test.audio.Duration = 100;
+% test.audio.Level = 0:10:80;
+test.audio.Level = [0 5 10:2:24];
+% test.audio.Level = 0;
+test.audio.Ramp = 5;
 test.audio.Frozen = 0;
-test.audio.ISI = 300;
+test.audio.ISI = 500;
+% test.audio.ISI = 100;
 
 test.Reps = 10;
 test.Randomize = 1;
