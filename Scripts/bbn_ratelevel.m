@@ -12,7 +12,7 @@
 % 						or some combination of these
 %-------------------------------------------------------------------------
 test.Type = 'LEVEL';
-test.Name = 'BBN_LEVEL';
+test.Name = 'BBN';
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -35,13 +35,13 @@ test.audio.Delay = 100;
 test.audio.Duration = 100;
 % test.audio.Level = [0 40 60 80];
 % test.audio.Level = 0:10:80;
-test.audio.Level = 0:5:40;
-% test.audio.Level = 10:2:30;
+% test.audio.Level = 0:5:40;
+test.audio.Level = 0:2:30;
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
 test.audio.ISI = 100;
 
-% test.Reps = 10;
+% test.Reps = 20;
 test.Reps = 10;
 test.Randomize = 1;
 test.Block = 0;
@@ -56,7 +56,7 @@ test.AcqDuration = 300;
 test.SweepPeriod = test.AcqDuration + 5;
 
  if test.opto.Enable
-	test.Name = 'BBN_LEVEL_optoON';
+	test.Name = [test.Name '_optoON'];
 end
 
 

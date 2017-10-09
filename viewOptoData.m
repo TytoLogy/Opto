@@ -179,7 +179,8 @@ end
  
 %% find channel data
 channelNumber = 8;
-channelNumber = 5;
+% channelNumber = 5;
+% channelNumber = 11;
 
 channelIndex = find(channelList == channelNumber);
 if isempty(channelIndex)

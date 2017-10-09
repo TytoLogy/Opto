@@ -20,8 +20,8 @@ test.Name = 'FREQ';
 %-------------------------------------------------------------------------
 test.opto.Enable = 1;
 test.opto.Delay = 200;
-test.opto.Dur = 50;
-test.opto.Amp = 3750; % mV
+test.opto.Dur = 150;
+test.opto.Amp = 4000; % mV
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -31,11 +31,13 @@ test.opto.Amp = 3750; % mV
 test.audio.signal.Type = 'tone';
 % test.audio.signal.Frequency = 5000:5000:80000;
 % test.audio.signal.Frequency = 5000:2500:25000;
-test.audio.signal.Frequency = 5000:2500:35000;
+% test.audio.signal.Frequency = 5000:2500:35000;
+test.audio.signal.Frequency = 5000:1250:25000;
+% test.audio.signal.Frequency = 5000;
 test.audio.signal.RadVary = 1;
-test.audio.Delay = 100;
+test.audio.Delay = 200;
 test.audio.Duration = 100;
-test.audio.Level = 15;
+test.audio.Level = 20;
 % test.audio.Level = 0;
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
@@ -50,12 +52,12 @@ test.saveStim = 0;
 % TDT
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-test.audio.ISI = 300;
-test.AcqDuration = 300;
+test.audio.ISI = 100;
+test.AcqDuration = 600;
 test.SweepPeriod = test.AcqDuration + 1;
 
 if test.opto.Enable
-	test.Name = [test.Name 'optoON'];
+	test.Name = [test.Name '_optoON'];
 end
 
 

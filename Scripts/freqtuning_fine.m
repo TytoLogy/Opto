@@ -12,7 +12,7 @@
 % 						or some combination of these
 %-------------------------------------------------------------------------
 test.Type = 'FREQ';
-test.Name = 'FREQ_TUNING';
+test.Name = 'FREQ';
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -30,12 +30,12 @@ test.opto.Amp = 3000; % mV
 % signal
 test.audio.signal.Type = 'tone';
 % test.audio.signal.Frequency = 5000:5000:80000;
-test.audio.signal.Frequency = 5000:2500:35000;
+test.audio.signal.Frequency = 5000:1250:25000;
 % test.audio.signal.Frequency = 10000:5000:60000;
 test.audio.signal.RadVary = 1;
 test.audio.Delay = 100;
 test.audio.Duration = 100;
-test.audio.Level = 20;
+test.audio.Level = 40;
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
 test.audio.ISI = 100;
@@ -52,7 +52,6 @@ test.saveStim = 0;
 %-------------------------------------------------------------------------
 test.AcqDuration = 300;
 test.SweepPeriod = test.AcqDuration + 1;
-
  
 if test.opto.Enable
 	test.Name = [test.Name '_optoON'];
