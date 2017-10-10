@@ -37,11 +37,17 @@ function varargout = getFilteredOptoData(varargin)
 % TO DO:
 %   *Documentation!
 %--------------------------------------------------------------------------
+
+%----------------------------------------------------------------------
 %% settings for processing data
+%----------------------------------------------------------------------
+% default filter settings
 HPFreq = 100;
 LPFreq = 10000;
 
-%% Read Data
+% default channel (for single channel data)
+channelNumber = 8;
+
 % set paths
 datapath = '';
 datafile = '';
@@ -52,14 +58,36 @@ else
 	defaultpath = '/Users/sshanbhag/Work/Data/Mouse/Opto';
 	defaultfile = '';
 end
+
+%----------------------------------------------------------------------
+% process inputs
+%----------------------------------------------------------------------
 if nargin
 	[datapath, datafile, dataext] = fileparts(varargin{1});
 	datafile = [datafile dataext];
-	if nargin == 2
-		HPFreq = varargin{2}(1);
-		LPFreq = varargin{2}(2);
+
+	if nargin > 1
+		argIndx = 2;
+		while argIndx <= nargin
+			switch upper(varargin{argIndx})
+				case 'FILTER'
+					HPFreq = varargin{argIndx+1}(1);
+					LPFreq = varargin{argIndx+1}(2);
+					argIndx = argIndx + 2;
+				
+				case {'CHANNEL', 'CHAN'}
+					channelNumber = varargin{argIndx+1};
+					argIndx = argIndx + 2;
+				
+				otherwise
+					error('Unknown input argument to %s: %s', mfilename, ...
+																	varargin{argIndx});
+			end
+		end		
 	end
 end
+
+% get data file if not given as input
 if isempty(datafile)
 	% get data file from user
 	[datafile, datapath] = uigetfile('*.dat', 'Select opto data file', ...
@@ -71,6 +99,10 @@ if isempty(datafile)
 		return
 	end
 end
+
+%----------------------------------------------------------------------
+%% Read Data
+%----------------------------------------------------------------------
 % read in raw data
 [D, Dinf] = readOptoData(fullfile(datapath, datafile));
 % read in test data (if it exists)
@@ -81,24 +113,19 @@ if exist(fullfile(datapath, testfile), 'file')
 else
 	testdata = [];
 end
-%%
 % read in wav info (if it exists)
 wavinfofile = [fbase '_wavinfo.mat'];
 if exist(fullfile(datapath, wavinfofile), 'file')
 	load(fullfile(datapath, wavinfofile));
 end
-%% define filter for data
-% sampling rate
-Fs = Dinf.indev.Fs;
-% build bandpass filter, store coefficients in filtB, filtA
-fband = [HPFreq LPFreq] ./ (0.5 * Fs);
-[filtB, filtA] = butter(5, fband);
-%% Get test info
+
+% Get test info
 Dinf = correctTestType(Dinf);
 fprintf('Test type: %s\n', Dinf.test.Type);
 
-%%
-% Some test-specific things...
+%----------------------------------------------------------------------
+%% Some test-specific things...
+%----------------------------------------------------------------------
 % for FREQ test, find indices of stimuli with same frequency
 switch upper(Dinf.test.Type)
 	case 'FREQ'
@@ -151,8 +178,9 @@ switch upper(Dinf.test.Type)
 	otherwise
 		error('%s: unsupported test type %s', mfilename, Dinf.test.Type);
 end
- 
-%% Pull out trials, apply filter, store in matrix
+
+% find channel data
+% get list of channels
 if isfield(Dinf.channels, 'nRecordChannels')
 	nchan = Dinf.channels.nRecordChannels; %#ok<NASGU>
 	channelList = Dinf.channels.RecordChannelList;
@@ -160,14 +188,24 @@ else
 	nchan = Dinf.channels.nInputChannels; %#ok<NASGU>
 	channelList = Dinf.channels.InputChannels;
 end
- 
-%% find channel data
-channelNumber = 8;
+% make sure specified channel is in the list
 channelIndex = find(channelList == channelNumber);
 if isempty(channelIndex)
 	error('%s: Channel %d not recorded', mfilename, channelNumber);
 end
-%% build tracesByStim; process will vary depending on stimulus type
+
+%----------------------------------------------------------------------
+%% Pull out trials, apply filter, store in matrix
+%----------------------------------------------------------------------
+
+% define filter for data
+% sampling rate
+Fs = Dinf.indev.Fs;
+% build bandpass filter, store coefficients in filtB, filtA
+fband = [HPFreq LPFreq] ./ (0.5 * Fs);
+[filtB, filtA] = butter(5, fband);
+
+% build tracesByStim; process will vary depending on stimulus type
 if strcmpi(Dinf.test.Type, 'FREQ')
 	tracesByStim = cell(nfreqs, 1);
 	for f = 1:nfreqs
@@ -205,12 +243,13 @@ if strcmpi(Dinf.test.Type, 'WavFile')
 	end
 end
 
+%----------------------------------------------------------------------
 %% assign outputs
+%----------------------------------------------------------------------
 varargout{1} = D;
 varargout{2} = Dinf;
 varargout{3} = tracesByStim;
 
-%% work from testdata
 % if no testdata, get outta here
 if isempty(testdata)
 	return
