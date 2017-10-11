@@ -38,6 +38,7 @@ function Fs = opto_TDTsettings(indev, outdev, ...
 % Optogen Version (FOCHS_RZ6RZ5Dsettings): 2016 by SJS  
 %------------------------------------------------------------------------
 % Revisions
+%	12 Jun 2017 (SJS): added spike detection settings
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -129,3 +130,10 @@ RPsettag(outdev, 'AttenL', 90);
 RPsettag(outdev, 'AttenR', 90);
 RPsettag(outdev, 'Mute', 0);
 
+%------------------------------------------------------------------------
+% Spike Detection
+%------------------------------------------------------------------------
+% low spike threshold in std. dev
+RPsettag(indev, 'TLo', tdt.TLo);
+% hi spike threshold in s.d.
+RPsettag(indev, 'THi', tdt.THi);

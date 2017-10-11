@@ -19,6 +19,7 @@
 
 % kludge until this is put into UI
 monitorHPFc = 350;
+hashColor = 'c';
 
 % Determine run state from value of button - need to do this in order to
 % be able to stop/start
@@ -112,12 +113,16 @@ else
 	set(ax, 'YTickLabel', yticks_txt);
 	set(ax, 'TickDir', 'out');
 	set(ax, 'Box', 'off');
-	set(fH, 'Position', [861 204 557 800]);
+	set(fH, 'Position', [792 225 557 800]);
 	xlabel('Time (ms)')
 	ylabel('Channel')
 	set(ax, 'Color', 0.75*[1 1 1]);
 	set(fH, 'Color', 0.75*[1 1 1]);
 	set(fH, 'ToolBar', 'none');
+	% spike hashes
+	hold(ax, 'on')
+	tH = scatter(ax, [], [], '.', hashColor);
+	hold(ax, 'off')
 	grid(ax, 'on');
 	
 	%------------------------------------------------------------
@@ -188,10 +193,19 @@ else
 		RPsettag(outdev, 'AttenR', AttenR);
 		% Set the Stimulus Delay
 		RPsettag(outdev, 'StimDelay', ms2bin(H.audio.Delay, outdev.Fs));
+		% Set the spike threshold
+		RPsettag(indev, 'TLo', H.TDT.TLo);
 		% play stim, record data
 		[mcresp, ~] = opto_io(S, inpts, indev, outdev, zBUS);
 		% get the monitor response
 		[monresp, ~] = opto_readbuf(indev, 'monIndex', 'monData');
+		% get the spike response
+		[spikes, nspikes, spikerms] = opto_getspikes(indev);
+		% get the spike times
+		spiketimes = (1000/indev.Fs) * ...
+							getSpikebinsFromSpikes(spikes, ...
+															handles.H.TDT.SnipLen);
+		update_ui_str(handles.textRMS, sprintf('%.4f', spikerms));
 		% plot returned values
 		% first, demux input data matrices
 		[resp, ~] = mcFastDeMux(mcresp, TDT.channels.nInputChannels);
@@ -206,11 +220,32 @@ else
 			end
 			set(pH(c), 'YData', tmpY + c*yabsmax);
 		end
+		% show detected spikes
+		% draw new ones
+		set(tH,	'XData', spiketimes, ...
+					'YData', zeros(size(spiketimes)) + ...
+											TDT.channels.MonitorChannel*yabsmax);
 		% set title string
 		title(ax, tstr, 'Interpreter', 'none');
 		% force drawing
-% 		drawnow
+ 		drawnow
 		refreshdata
+
+% 		fs = indev.Fs;
+% 		incchannels = TDT.channels.nInputChannels;
+% 		sniplen = TDT.SnipLen;
+% 		save('spikedat.mat', 'spikes', 'nspikes', 'spikerms', 'sniplen', ...
+% 							'fs', 'monresp', 'mcresp', 'incchannels', '-MAT');
+% 		spikebins = spikes(1 + (0:H.TDT.SnipLen:(length(spikes)-1)));
+% 		figure(99)
+% 		subplot(211)
+% 		plot(pdata(:, 8));
+% 		for s = 1:length(spikebins)
+% 			text(spikebins(s), pdata(spikebins(s), 8), '*', 'Color', 'g');
+% 		end
+% 		subplot(212)
+% 		plot(spikes);
+	
 		% wait for ISI
 		pause(0.001*H.audio.ISI)
 	end	% END while get(hObject, 'Value')

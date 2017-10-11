@@ -21,7 +21,7 @@ function varargout = opto(varargin)
 % See also: GUIDE, GUIDATA, GUIHANDLES
 %-------------------------------------------------------------------------
 
-% Last Modified by GUIDE v2.5 16-May-2017 15:15:39
+% Last Modified by GUIDE v2.5 12-Jun-2017 19:36:24
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -365,7 +365,7 @@ function editOptoDur_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function editOptoAmp_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
-	if between(val, 0, 2000)
+	if between(val, 0, 4000)
 		handles.H.opto.Amp = val;
 		guidata(hObject, handles);
 	else
@@ -592,6 +592,30 @@ function buttonSelectNoneChannels_Callback(hObject, eventdata, handles)
 	optomsg(handles, 'Selecting NO Channels to Record...', 'echo', 'off');
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
+function editTLo_Callback(hObject, eventdata, handles)
+	val = read_ui_str(hObject, 'n');
+	% maker sure value is in bounds
+	if ~between(val, 1, handles.H.TDT.THi)
+		optomsg(handles, ...
+					sprintf('Spike Threshold must be between 1 and %d!', ...
+									handles.H.TDT.THi));
+		update_ui_str(hObject, handles.H.TDT.THi);
+		return
+	end
+	optomsg(handles, sprintf('Spike Threshold to %d', val), ...
+																	'echo', 'off');
+	% if TDT HW is enabled, set the tag in the circuit
+	% note that since this is addressing the circuit directly, it will
+	% take affect immediately and without need for action in running
+	% scripts or searching
+	if handles.H.TDT.Enable
+		% set the spike threshold level
+		RPsettag(handles.H.TDT.indev, 'TLo', val);
+	end
+	% store value
+	handles.H.TDT.TLo = val;
+	guidata(hObject, handles);
+%-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 
@@ -712,6 +736,8 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 		% load test information from script (this will define the 
 		% "test" struct
 		run(handles.H.TestScript);
+		handles.H.test = test; %#ok<NODEF>
+		guidata(hObject, handles);
 	end
 	%------------------------------------------------
 	% date, time, output filename and path
@@ -720,7 +746,7 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	handles.H.animal.Date = TytoLogy_datetime('date_compact');
 	handles.H.animal.Time = TytoLogy_datetime('time');
 	guidata(hObject, handles);	
-	[pname, fname] = opto_createDataFileName(handles, test);  %#ok<NODEF>
+	[pname, fname] = opto_createDataFileName(handles, test);
 	if fname == 0
 		optomsg(handles, 'Run Test Script Cancelled');
 		return
@@ -729,15 +755,22 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 		optomsg(handles, ['Writing data to file: ' datafile]);
 	end
 	
+	[~, basename, ~] = fileparts(fname);
+	
 	%------------------------------------------------
 	% check if test type is 'STANDALONE'
 	%------------------------------------------------
 % 	if any(strcmpi(test.Type, handles.H.constants.TestTypes))
 	if strcmpi(test.Type, 'STANDALONE')
 		% run test.Function (function handle in test struct)
-		testdata = test.Function(handles, datafile); %#ok<NASGU>
-		save('testdata.mat', 'testdata', '-MAT');
-	
+		testout = test.Function(handles, datafile);
+		testdata = testout{1}; %#ok<NASGU>
+		respdata = testout{2}; %#ok<NASGU>
+		handles = testout{3};
+		save(fullfile(pname, [basename '_testdata.mat']), ...
+									'testdata', 'respdata', '-MAT');
+		guidata(hObject, handles);
+		
 	else
 		% not standalone, so build cache
 		[stimcache, stimseq] = opto_buildStimCache(test, handles.H.TDT, ...
@@ -752,7 +785,8 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 		% Play stimuli in cache, record neural data
 		testdata = opto_playCache(handles, datafile, ...
 												stimcache, test); %#ok<NASGU>
-		save('testdata.mat', 'testdata', '-MAT');
+		save(fullfile(pname, [basename '_testdata.mat']), ...
+									'testdata', '-MAT');
 	end
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -883,7 +917,6 @@ function buttonLoadCal_Callback(hObject, eventdata, handles)
 	[filenm, pathnm] = uigetfile({'*.mat'; '*.*'}, ...
 											'Load cal data...', ...
 											[pwd filesep]);
-	
 	% load the speaker calibration data if user doesn't hit cancel
 	if filenm
 		% try to load the calibration data
@@ -897,7 +930,6 @@ function buttonLoadCal_Callback(hObject, eventdata, handles)
 			optomsg(handles, errMsg);
 			return
 		end
-
 		% if tmpcal is a structure, load of calibration file was
 		% hopefully successful, so save it in the handles info
 		if isstruct(tmpcal)
@@ -905,14 +937,12 @@ function buttonLoadCal_Callback(hObject, eventdata, handles)
 			% update UI control limits based on calibration data
 			handles.H.Lim.F = [handles.H.caldata.Freqs(1) ...
 											handles.H.caldata.Freqs(end)];
-			
 % 			% update slider parameters
 % 			slider_limits(handles.F, handles.Lim.F);
 % 			slider_update(handles.F, handles.Ftext);
 % 			% update calibration data path and filename settings
 % 			handles.caldatapath = pathnm;
 % 			handles.caldatafile = filenm;
-			
 			update_ui_str(handles.textCalibration, fullfile(pathnm, filenm));
 			% update settings
 			guidata(hObject, handles);
@@ -944,145 +974,77 @@ function buttonDebug_Callback(hObject, eventdata, handles)
 % --- Executes during object creation, after setting all properties.
 %-------------------------------------------------------------------------
 function editAcqDuration_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
-%-------------------------------------------------------------------------
+	create_function(hObject);
 function editCircuitGain_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
-%-------------------------------------------------------------------------
+	create_function(hObject);
 function editHPFreq_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
-%-------------------------------------------------------------------------
+	create_function(hObject);
 function editLPFreq_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
-%-------------------------------------------------------------------------
+	create_function(hObject);
 function editMonGain_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
-%-------------------------------------------------------------------------
+	create_function(hObject);
 function textTestScript_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
-%-------------------------------------------------------------------------
+	create_function(hObject);
 function editISI_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
-%-------------------------------------------------------------------------
+	create_function(hObject);
 function editOptoDelay_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
+	create_function(hObject);
 function editOptoDur_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
+	create_function(hObject);
 function editOptoAmp_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
-%-------------------------------------------------------------------------
+	create_function(hObject);
 function popupAudioSignal_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
+	create_function(hObject);
 function editAudioDelay_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
+	create_function(hObject);
 function editAudioDur_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
+	create_function(hObject);
 function editAudioLevel_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
+	create_function(hObject);
 function editAudioRamp_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
+	create_function(hObject);
 function editAudioFmin_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
+	create_function(hObject);
 function editAudioFmax_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
+	create_function(hObject);
 function textAudioWavFile_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
+	create_function(hObject);
 function editAudioWavScale_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
-	end
-%-------------------------------------------------------------------------
+	create_function(hObject);
 function popupMonitorChannel_CreateFcn(hObject, eventdata, handles)
+	create_function(hObject);
+function editAnimal_CreateFcn(hObject, eventdata, handles)
+	create_function(hObject);
+function editUnit_CreateFcn(hObject, eventdata, handles)
+	create_function(hObject);
+function editRec_CreateFcn(hObject, eventdata, handles)
+	create_function(hObject);
+function editPen_CreateFcn(hObject, eventdata, handles)
+	create_function(hObject);
+function editAP_CreateFcn(hObject, eventdata, handles)
+	create_function(hObject);
+function editML_CreateFcn(hObject, eventdata, handles)
+	create_function(hObject);
+function editDepth_CreateFcn(hObject, eventdata, handles)
+	create_function(hObject);
+function editComments_CreateFcn(hObject, eventdata, handles)
+	create_function(hObject);
+function editTLo_CreateFcn(hObject, eventdata, handles)
+	create_function(hObject);
+% function editRMSTau_CreateFcn(hObject, eventdata, handles)
+% 	create_function(hObject);
+% function editSnipLen_CreateFcn(hObject, eventdata, handles)
+% 	create_function(hObject);
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+function create_function(hObject)
 	if ispc && isequal(get(hObject,'BackgroundColor'), ...
 								get(0,'defaultUicontrolBackgroundColor'))
-		 set(hObject,'BackgroundColor','white');
+		set(hObject,'BackgroundColor','white');
 	end
 %-------------------------------------------------------------------------
-function editAnimal_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		set(hObject,'BackgroundColor','white');
-	end
-function editUnit_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		set(hObject,'BackgroundColor','white');
-	end
-function editRec_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		set(hObject,'BackgroundColor','white');
-	end
-function editPen_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		set(hObject,'BackgroundColor','white');
-	end
-function editAP_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		set(hObject,'BackgroundColor','white');
-	end
-function editML_CreateFcn(hObject, eventdata, handles)
-function editDepth_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		set(hObject,'BackgroundColor','white');
-	end
-function editComments_CreateFcn(hObject, eventdata, handles)
-	if ispc && isequal(get(hObject,'BackgroundColor'), ...
-								get(0,'defaultUicontrolBackgroundColor'))
-		set(hObject,'BackgroundColor','white');
-	end
+%-------------------------------------------------------------------------
+
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % --- Executes during object deletion, before destroying properties.
@@ -1092,5 +1054,12 @@ function figure1_DeleteFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+
+
+
+
+
+
+
 
 

@@ -12,16 +12,16 @@
 % 						or some combination of these
 %-------------------------------------------------------------------------
 test.Type = 'LEVEL';
-test.Name = 'BBN_LEVEL';
+test.Name = 'BBN';
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % OPTICAL settings
 %-------------------------------------------------------------------------
 test.opto.Enable = 0;
-test.opto.Delay = 0;
-test.opto.Dur = 300;
-test.opto.Amp = 2000;
+test.opto.Delay = 100;
+test.opto.Dur = 200;
+test.opto.Amp = 3000;
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Auditory stimulus settings
@@ -31,16 +31,20 @@ test.opto.Amp = 2000;
 test.audio.signal.Type = 'noise';
 test.audio.signal.Fmin = 4000;
 test.audio.signal.Fmax = 80000;
-test.audio.Delay = 200;
+test.audio.Delay = 100;
 test.audio.Duration = 100;
-test.audio.Level = [0 60 80];
+% test.audio.Level = [0 40 60 80];
+% test.audio.Level = 0:10:80;
+% test.audio.Level = 0:5:40;
+test.audio.Level = 0:2:30;
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
-test.audio.ISI = 250;
+test.audio.ISI = 100;
 
-test.Reps = 30;
-test.Randomize = 0;
-test.Block = 1;
+% test.Reps = 20;
+test.Reps = 10;
+test.Randomize = 1;
+test.Block = 0;
 test.saveStim = 0;
 
 %-------------------------------------------------------------------------
@@ -48,9 +52,11 @@ test.saveStim = 0;
 % TDT
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-test.AcqDuration = 1000;
+test.AcqDuration = 300;
 test.SweepPeriod = test.AcqDuration + 5;
 
- 
+ if test.opto.Enable
+	test.Name = [test.Name '_optoON'];
+end
 
 

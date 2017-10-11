@@ -11,35 +11,38 @@
 % 		'AMP'				opto stim amplitude
 % 						or some combination of these
 %-------------------------------------------------------------------------
-test.Type = 'LEVEL';
+test.Type = 'FREQ';
+test.Name = 'FREQ';
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % OPTICAL settings
 %-------------------------------------------------------------------------
 test.opto.Enable = 0;
-test.opto.Delay = 0;
-test.opto.Dur = 100;
-test.opto.Amp = 50;
+test.opto.Delay = 50;
+test.opto.Dur = 200;
+test.opto.Amp = 3000; % mV
+
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Auditory stimulus settings
 %-------------------------------------------------------------------------
-
 % signal
-test.audio.signal.Type = 'noise';
-test.audio.signal.Fmin = 4000;
-test.audio.signal.Fmax = 80000;
+test.audio.signal.Type = 'tone';
+% test.audio.signal.Frequency = 5000:5000:80000;
+test.audio.signal.Frequency = 5000:1250:25000;
+% test.audio.signal.Frequency = 10000:5000:60000;
+test.audio.signal.RadVary = 1;
 test.audio.Delay = 100;
 test.audio.Duration = 100;
-test.audio.Level = 55:5:80;
+test.audio.Level = 40;
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
-test.audio.ISI = 500;
+test.audio.ISI = 100;
 
 test.Reps = 10;
 test.Randomize = 1;
-
+test.Block = 0;
 test.saveStim = 0;
 
 %-------------------------------------------------------------------------
@@ -47,9 +50,11 @@ test.saveStim = 0;
 % TDT
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-test.AcqDuration = 1000;
+test.AcqDuration = 300;
 test.SweepPeriod = test.AcqDuration + 1;
-
  
+if test.opto.Enable
+	test.Name = [test.Name '_optoON'];
+end
 
 

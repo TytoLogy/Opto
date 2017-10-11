@@ -1,6 +1,6 @@
-function [curvedata, varargout] = wav_opto(handles, datafile)
+function outdata = wav_optoOFF(handles, datafile)
 %--------------------------------------------------------------------------
-% [curvedata, rawdata] = wav_opto(handles, datafile)
+% outdata = wav_optoOFF(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -16,10 +16,10 @@ function [curvedata, varargout] = wav_opto(handles, datafile)
 %	datafile		name (full path + '.dat' filename) for data
 % 
 % Output Arguments:
-% 	curvedata	data structure	
-% 	rawdata		raw response data cell array
+% 	outdata{1}	curvedata structure	
+% 	outdata{2}	rawdata		raw response data cell array
 % 					{nTrials, nreps}
-%
+%	outdata{3}	handles
 %--------------------------------------------------------------------------
 % See Also: noise_opto, opto, opto_playCache
 %--------------------------------------------------------------------------
@@ -35,12 +35,12 @@ function [curvedata, varargout] = wav_opto(handles, datafile)
 % Created:	31 March, 2017 (SJS) from noise_opto
 %
 % Revision History:
-%	31 March, 2017 (SJS) created from noise_opto
+%	12 Jun, 2017 (SJS): pulled off common elements into separate subscripts
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
-disp 'running wav_opto!'
-curvetype = 'Wav+Opto';
+disp 'running wav_optoOFF!'
+curvetype = 'Wav';
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -49,12 +49,9 @@ curvetype = 'Wav+Opto';
 %--------------------------------------------------------
 L = 1;
 R = 2; %#ok<NASGU>
-MAX_ATTEN = 120; 
+MAX_ATTEN = 120;  %#ok<NASGU>
 % assign temporary outputs
-curvedata = []; 
-if nargout > 1
-	varargout = {};
-end
+outdata = {};
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -137,12 +134,24 @@ opto.Amp = 2000;
 % AUDITORY stimulus settings
 %------------------------------------
 %------------------------------------
+% general audio properties
+%------------------------------------
+% Delay 
+audio.Delay = 100;
+% Duration is variable for WAV files - this information
+% will be found in the audio.signal.WavInfo
+% For now, this will be a dummy value
+audio.Duration = 200;
+audio.Level = 80;
+audio.Ramp = 5;
+audio.Frozen = 0;
+%------------------------------------
 % noise signal
 %------------------------------------
 noise.signal.Type = 'noise';
 noise.signal.Fmin = 4000;
 noise.signal.Fmax = 80000;
-noise.Delay = 100;
+noise.Delay = audio.Delay;
 noise.Duration = 100;
 noise.Level = 80;
 noise.Ramp = 5;
@@ -151,7 +160,7 @@ noise.Frozen = 0;
 % null signal
 %------------------------------------
 null.signal.Type = 'null';
-null.Delay = 100;
+null.Delay = audio.Delay;
 null.Duration = noise.Duration;
 null.Level = 0;
 %------------------------------------
@@ -209,18 +218,6 @@ for n = 1:nWavs
 	wavInfo(n).ScaleFactor = WavScaleFactors(n);
 end
 clear tmp;
-%------------------------------------
-% general audio properties
-%------------------------------------
-% Delay 
-audio.Delay = 100;
-% Duration is variable for WAV files - this information
-% will be found in the audio.signal.WavInfo
-% For now, this will be a dummy value
-audio.Duration = 200;
-audio.Level = 80;
-audio.Ramp = 5;
-audio.Frozen = 0;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -265,41 +262,33 @@ end
 % indices of the different stimuli within stimList
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% preallocate stimIndices
-stimIndices = zeros(nTotalTrials, 1);
-% and assign values
 if test.Randomize
 	% assign random permutations to stimindices
 	disp('Randomizing stimulus order');
-	for r = 1:test.Reps
-		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
-							randperm(nCombinations);
-	end
+	[stimIndices, repList] = ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
+											1, 0);
 elseif isfield(test, 'Block')
 	if test.Block == 1
-		blockindex = 1;
-		for cIndx = 1:nCombinations
-			for r = 1:test.Reps
-				stimIndices(blockindex) = cIndx;
-				blockindex = blockindex + 1;
-			end
-		end
+		disp('Blocked stimulus order')
+		[stimIndices, repList] = ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
+											0, 1);
+
 	else
 		% assign sequential indices to stimindices
-		disp('NON random stimulus order');
-		for r = 1:test.Reps
-			stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
-								1:nCombinations;
-		end		
+		disp('Sequential stimulus order');
+		[stimIndices, repList] = ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
+											0, 0);
 	end
 else
 	% assign sequential indices to stimindices
-	disp('NON random stimulus order');
-	for r = 1:test.Reps
-		stimIndices( (((r-1)*nCombinations) + 1):(r*nCombinations) ) = ...
-							1:nCombinations;
-	end
-end
+	disp('Sequential stimulus order');
+		[stimIndices, repList] = ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
+											0, 0);
+end	% END if test.Randomize
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -369,91 +358,14 @@ resp = cell(nTotalTrials, 1);
 %  setup hardware
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-%--------------------------------------------------------
-% STIMULUS and Acquisition (timing)
-%--------------------------------------------------------
-% query the sample rate from the circuit - do this instead of using the
-% stored Fs within indev and outdev in order to ensure accuracy!
-inFs = RPsamplefreq(indev);
-outFs = RPsamplefreq(outdev);
-% Set the Stimulus Delay (might be adjusted for each wav file in loop)
-RPsettag(outdev, 'StimDelay', ms2bin(audio.Delay, outFs));
-% Set the Stimulus Duration
-RPsettag(outdev, 'StimDur', ms2bin(audio.Duration, outFs));
-% Set the length of time to acquire data
-RPsettag(indev, 'AcqDur', ms2bin(test.AcqDuration, inFs));
-% Set the total sweep period time - input
-RPsettag(indev, 'SwPeriod', ms2bin(test.SweepPeriod, inFs));
-% Set the total sweep period time - output
-RPsettag(outdev, 'SwPeriod', ms2bin(test.SweepPeriod, outFs));
-% Set the sweep count to 1
-RPsettag(indev, 'SwCount', 1);
-RPsettag(outdev, 'SwCount', 1);
-%--------------------------------------------------------
-% Input Filtering
-%--------------------------------------------------------
-% set the high pass filter
-RPsettag(indev, 'HPFreq', handles.H.TDT.HPFreq);
-% set the low pass filter
-RPsettag(indev, 'LPFreq', handles.H.TDT.LPFreq);
-%--------------------------------------------------------
-% Gain Settings
-%--------------------------------------------------------
-% set the overall gain for input
-RPsettag(indev, 'Gain', handles.H.TDT.CircuitGain);
-%--------------------------------------------------------
-% Audio monitor
-%--------------------------------------------------------
-% set electrode channel to monitor via audio output
-RPsettag(indev, 'MonChan', channels.MonitorChannel);
-% set monitor gain
-RPsettag(indev, 'MonGain', handles.H.TDT.MonitorGain);
-% set output channel for audio monitor (channel 9 on RZ5D 
-% is dedicated to the built-in audio speaker/monitor)
-RPsettag(indev, 'MonOutChan', channels.MonitorOutputChannel);
-% turn on audio monitor for spikes using software trigger 1
-RPtrig(indev, 1);
-%--------------------------------------------------------
-% attenuation - set to MAX_ATTEN, un-mute
-%--------------------------------------------------------
-RPsettag(outdev, 'AttenL', MAX_ATTEN);
-RPsettag(outdev, 'AttenR', MAX_ATTEN);
-RPsettag(outdev, 'Mute', 0);
+standalone_setuphardware
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Load and condition wav stimuli
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-wavS0 = cell(nWavs, 1);
-tmpFs = zeros(nWavs, 1);
-for n = 1:nWavs
-	tmpfile = fullfile(audio.signal.WavPath, wavInfo(n).Filename);
-	[wavS0{n}, tmpFs(n)] = audioread(tmpfile);
-	% need to make sure wav data is in row vector form
-	if ~isrow(wavS0{n})
-		wavS0{n} = wavS0{n}';
-	end
-	
-	% check to make sure sample rate of signal matches
-	% hardware output sample rate
-	if outFs ~= tmpFs(n)
-		% if not, resample...
-		fprintf('Resampling %s\n', wavInfo(n).Filename);
-		wavS0{n} = correctFs(wavS0{n}, tmpFs(n), outFs);
-		% and adjust other information
-		wavInfo(n).SampleRate = outFs;
-		wavInfo(n).TotalSamples = length(wavS0{n});
-		onsettime = wavInfo(n).OnsetBin / tmpFs(n);
-		offsettime = wavInfo(n).OffsetBin / tmpFs(n);
-		wavInfo(n).OnsetBin = ms2bin(1000*onsettime, outFs);
-		wavInfo(n).OffsetBin = ms2bin(1000*offsettime, outFs);
-	end
-	
-	% apply *short* ramp to ensure wav start and end is 0
-	wavS0{n} = sin2array(wavS0{n}, 1, outFs);
-	
-end
+standalone_condition_wavs
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -475,58 +387,14 @@ writeOptoDataFileHeader(datafile, test, audio, opto, channels, ...
 % Write wav information to mat file
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% create mat filename
-[fpath, fname] = fileparts(datafile);
-matfile = fullfile(fpath, [fname '_wavinfo.mat']);
-save(matfile, 'audio', 'noise', 'null', ...
-					'stimList', 'stimIndices', 'wavInfo', ...
-					'wavS0', '-MAT');
-
+standalone_write_wavinfomatfile;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Set up figure for plotting incoming data
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% generate figure, axes
-if isempty(handles.H.fH) || ~ishandle(handles.H.fH)
-	handles.H.fH = figure;
-end
-if isempty(handles.H.ax) || ~ishandle(handles.H.ax)
-	handles.H.ax = axes;
-end
-% store local copy of figure handle for simplicity in calls
-fH = handles.H.fH;
-% create/switch focus to figure, generate axis
-figure(fH);
-ax = handles.H.ax;
-% set up plot
-% calculate # of points to acquire (in units of samples)
-xv = linspace(0, test.AcqDuration, acqpts);
-xlim([0, acqpts]);
-yabsmax = 5;
-tmpData = zeros(acqpts, channels.nInputChannels);
-for n = 1:channels.nInputChannels
-	tmpData(:, n) = n*(yabsmax) + 2*(2*rand(acqpts, 1)-1);
-end
-pH = plot(ax, xv, tmpData);
-yticks_yvals = yabsmax*(1:channels.nInputChannels);
-yticks_txt = cell(channels.nInputChannels, 1);
-for n = 1:channels.nInputChannels
-	yticks_txt{n} = num2str(n);
-end
-ylim(yabsmax*[0 channels.nInputChannels+1]);
-set(ax, 'YTick', yticks_yvals);
-set(ax, 'YTickLabel', yticks_txt);
-set(ax, 'TickDir', 'out');
-set(ax, 'Box', 'off');
-set(fH, 'Position', [861 204 557 800]);		
-xlabel('Time (ms)')
-ylabel('Channel')
-set(ax, 'Color', 0.75*[1 1 1]);
-set(fH, 'Color', 0.75*[1 1 1]);
-set(fH, 'ToolBar', 'none');
-grid(ax, 'on');
+standalone_setupplots;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -554,8 +422,6 @@ grid(ax, 'on');
 cancelFlag = read_ui_val(cancelButton);
 % flag to pause experiment
 pauseFlag = 0; %#ok<NASGU>
-% index through stimuli
-sindex = 0;
 % save stimuli?
 if test.saveStim
 	stimWriteFlag = 1; %#ok<NASGU>
@@ -568,12 +434,15 @@ end
 % loop through stims
 %-------------------------------------------------------
 %-------------------------------------------------------
+% index to stimuli
+sindex = 0;
+% loop until done or cancel button is pressed
 while ~cancelFlag && (sindex < nTotalTrials)
 	%--------------------------------------------------
 	% increment counter (was initialized to 0)
 	%--------------------------------------------------
 	sindex = sindex + 1;
-	rep = ceil(sindex/nCombinations);
+	rep = repList(sindex);
 	
 	%--------------------------------------------------
 	% get current stimulus settings from stimList,using stimIndices to 
@@ -628,7 +497,7 @@ while ~cancelFlag && (sindex < nTotalTrials)
 			% in the main audio struct, audio.signal.WavFile{}
 			wavindex = find(strcmpi(Stim.audio.signal.WavFile, ...
 												audio.signal.WavFile));
-			Sn = wavS0{wavindex} * wavInfo(wavindex).ScaleFactor;
+			Sn = wavS0{wavindex} * wavInfo(wavindex).ScaleFactor; %#ok<USENS>
 			% use peak rms value for figuring atten
 			rmsval = wavInfo(wavindex).PeakRMS;
 			% will need to apply a correction factor to OptoDelay
@@ -787,35 +656,8 @@ closeOptoTrialData(datafile, time_end);
 
 %--------------------------------------------------------
 %--------------------------------------------------------
-% setup output data structure
+% finish up
 %--------------------------------------------------------
 %--------------------------------------------------------
-if ~cancelFlag
-% 	curvedata.depvars = depvars;
-% 	curvedata.depvars_sort = depvars_sort;
-% 	if stimcache.saveStim
-% 		[pathstr, fbase] = fileparts(datafile);
-% 		curvedata.stimfile = fullfile(pathstr, [fbase '_stim.mat']);
-% 	end
-end
-if nargout == 2
-	varargout{1} = resp;
-end
+standalone_cleanup
 
-%--------------------------------------------------------
-%--------------------------------------------------------
-% clean up
-%--------------------------------------------------------
-%--------------------------------------------------------
-% close curve panel
-close(PanelHandle)
-% turn off monitor using software trigger 2 sent to indev
-RPtrig(indev, 2);
-
-%--------------------------------------------------------
-%--------------------------------------------------------
-% save cancel flag status in curvedata
-%--------------------------------------------------------
-%--------------------------------------------------------
-curvedata.cancelFlag = cancelFlag;
-	

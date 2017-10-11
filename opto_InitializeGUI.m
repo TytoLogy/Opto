@@ -70,7 +70,7 @@ end
 %----------------------------------------------------------------
 % window position and size
 set(handles.figure1, 'Units', 'characters');
-set(handles.figure1, 'Position', [10  46 148.4 34.538]);
+set(handles.figure1, 'Position', [8.2000 46.3077 148.4000 34.5385]);
 % audio stimulus selector (!!!ADD SEARCH!!!)
 set(handles.popupAudioSignal, 'String', ...
 								{'Noise'; 'Tone'; '.wav'; 'Search'; 'BlockSearch'; 'OFF'});
@@ -89,3 +89,9 @@ for c = 1:16
 	clist{c} = num2str(c);
 end
 set(handles.popupMonitorChannel, 'String', clist);
+
+%----------------------------------------------------------------
+% TDT things
+%----------------------------------------------------------------
+update_ui_str(handles.editTLo, sprintf('%d', handles.H.TDT.TLo));
+

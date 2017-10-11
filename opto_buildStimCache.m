@@ -397,7 +397,7 @@ switch c.curvetype
 				c.atten{sindex} = atten;
 				c.FREQ{sindex} = FREQ;
 				c.LEVEL(sindex) = splval;
-				c.opto{sindex}.Enable = 0;
+% 				c.opto{sindex}.Enable = 0; % not sure why...
 			end	%%% End of TRIAL LOOP
 		end %%% End of REPS LOOP
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

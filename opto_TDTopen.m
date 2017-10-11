@@ -142,7 +142,9 @@ if ~TDTINIT || TDTINIT_FORCE
 		end
 		% Load circuits
 		disp('...loading circuits...')
+		disp('......loading input device')
 		outhandles.indev.status  = idev.loadFunc(outhandles.indev);
+		disp('......loading output device')
 		outhandles.outdev.status = odev.loadFunc(outhandles.outdev);
 		if outhandles.outdev.status == -99  % indev=outdev
 			outhandles.outdev.status = outhandles.indev.status; 
