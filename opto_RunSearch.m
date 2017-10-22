@@ -172,6 +172,9 @@ else
 				% otherwise, calculate atten to achieve desired output level
 				AttenL = figure_mono_atten(H.audio.Level, ...
 												rms(stim), H.caldata);
+				fprintf('level: %.2f rms: %.4f rmsdb: %.4f Atten: %.2f\n', ...
+								H.audio.Level, rms(stim), ...
+								db(H.caldata.cal.VtoPa(1).*rms(stim)), AttenL);
 			end
 			% some checks on AttenL value
 			if AttenL <= 0
