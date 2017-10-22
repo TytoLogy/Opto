@@ -1,4 +1,5 @@
-function handles = opto_InitializeGUI(hObject, eventdata, handles, varargin)
+function handles = opto_InitializeGUI(hObject, eventdata, ...
+																		handles, varargin)
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 % Opto program
@@ -27,6 +28,7 @@ function handles = opto_InitializeGUI(hObject, eventdata, handles, varargin)
 % Created: 28 September, 2016 (SJS)
 %------------------------------------------------------------------------
 % Revisions
+%	22 Oct 2017 (SJS): new cal file
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
@@ -40,7 +42,8 @@ guidata(hObject, handles);
 % Calibration data
 %----------------------------------------------------------------
 calpath = 'C:\TytoLogy\Experiments\CalData';
-calfile = 'Optorig_20170601_TDT3981_4k90k_5V_cal.mat';
+% calfile = 'Optorig_20170601_TDT3981_4k90k_5V_cal.mat';
+calfile = 'Optorig_20171022_TDT3981_4k-91k_5V_cal.mat';
 if ~exist(fullfile(calpath, calfile), 'file')
 	warning('Calibration file %s not found!', fullfile(calpath, calfile));
 	tmpcal = [];
@@ -52,10 +55,13 @@ end
 % hopefully successful, so save it in the handles info
 if isstruct(tmpcal)
 	handles.H.caldata = tmpcal;
-	% updatelimits based on calibration data
+	% update signal limits based on calibration data
 	handles.H.Lim.F = [	handles.H.caldata.Freqs(1) ...
 								handles.H.caldata.Freqs(end)	];
 	update_ui_str(handles.textCalibration, fullfile(calpath, calfile));
+	% update noise and tone DA scale factors from calibration data
+	handles.H.noise.PeakAmplitude = handles.H.caldata.DAscale;
+	handles.H.tone.PeakAmplitude = handles.H.caldata.DAscale;
 	% update settings
 	guidata(hObject, handles);
 else
@@ -73,7 +79,7 @@ set(handles.figure1, 'Units', 'characters');
 set(handles.figure1, 'Position', [8.2000 46.3077 148.4000 34.5385]);
 % audio stimulus selector (!!!ADD SEARCH!!!)
 set(handles.popupAudioSignal, 'String', ...
-								{'Noise'; 'Tone'; '.wav'; 'Search'; 'BlockSearch'; 'OFF'});
+				{'Noise'; 'Tone'; '.wav'; 'Search'; 'BlockSearch'; 'OFF'});
 update_ui_val(handles.popupAudioSignal, 1);	
 % channels 
 set(handles.tableChannelSelect, 'Data', ...
