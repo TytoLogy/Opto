@@ -1,6 +1,6 @@
-function outdata = OptoInhib(handles, datafile)
+function outdata = OptoInhib_withBG(handles, datafile)
 %--------------------------------------------------------------------------
-% outdata = OptoInhib(handles, datafile)
+% outdata = OptoInhib_withBG(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
