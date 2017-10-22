@@ -551,6 +551,8 @@ while ~cancelFlag && (sindex < nTotalTrials)
 				Sn = noise.signal.S0;
 				rmsval = noise.signal.rms;
 			end
+			% get the attenuator settings for the desired SPL
+			atten = figure_mono_atten_noise(Stim.audio.Level, rmsval, caldata);
 			% update the Stimulus Delay
 			RPsettag(outdev, 'StimDelay',  ms2bin(Stim.audio.Delay, outFs));
 		case 'NULL'
@@ -561,6 +563,8 @@ while ~cancelFlag && (sindex < nTotalTrials)
 			RPsettag(outdev, 'StimDelay',  ms2bin(Stim.audio.Delay, outFs));
 			% dummy rms val
 			rmsval = 0;
+			% get the attenuator settings for the desired SPL
+			atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
 		case 'WAV'
 			% wav file.  locate waveform in wavS0{} cell array by
 			% finding corresponding location of Stim.audio.signal.WavFile 
@@ -570,6 +574,8 @@ while ~cancelFlag && (sindex < nTotalTrials)
 			Sn = wavS0{wavindex} * wavInfo(wavindex).ScaleFactor; %#ok<USENS>
 			% use peak rms value for figuring atten
 			rmsval = wavInfo(wavindex).PeakRMS;
+			% get the attenuator settings for the desired SPL
+			atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
 			% will need to apply a correction factor to OptoDelay
 			% due to variability in in the wav stimulus onset
 			% compute correction based on outdev.Fs
@@ -589,8 +595,6 @@ while ~cancelFlag && (sindex < nTotalTrials)
 
 	% need to add dummy channel to Sn since iofunction needs stereo signal
 	Sn = [Sn; zeros(size(Sn))]; %#ok<AGROW>
-	% get the attenuator settings for the desired SPL
-	atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
 	% set the attenuators
 	setattenfunc(outdev, [atten 120]);
 	
