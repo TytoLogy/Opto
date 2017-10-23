@@ -88,7 +88,7 @@ caldata = handles.H.caldata;
 % Presentation settings
 %------------------------------------
 test.Name = handles.H.test.Name;
-test.Reps = 10;
+test.Reps = 15;
 test.Randomize = 1;
 test.Block = 0;
 audio.ISI = 300;
@@ -139,7 +139,7 @@ noise.signal.Fmin = 4000;
 noise.signal.Fmax = 80000;
 noise.Delay = audio.Delay;
 noise.Duration = 100;
-noise.Level = 65;
+noise.Level = 30;
 noise.Ramp = 5;
 noise.Frozen = 0;
 %------------------------------------
