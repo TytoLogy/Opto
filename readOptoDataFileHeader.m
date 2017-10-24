@@ -15,10 +15,19 @@ function H = readOptoDataFileHeader(fp)
 %
 % Output Arguments:
 % 
-%	H
+%	H	with fields
+% 		datafile			data file name
+% 		test				test data structure
+% 		animal			animal data structure
+% 		audio				audio data structure
+% 		opto				opto data structure
+% 		channels			channels structure
+% 		caldata			calibration data
+% 		indev				input device structure
+% 		outdev			output TDT device structure
 %
 %--------------------------------------------------------------------------
-% See Also: writeDataFileHeader, fopen, fwrite;
+% See Also: writeOptoDataFileHeader, fopen, fwrite;
 %--------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -80,3 +89,4 @@ H.indev = readStruct(fp);
 H.outdev = readStruct(fp);
 % read a string that says 'HEADER_END'
 H.endstring = readString(fp);
+
