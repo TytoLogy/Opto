@@ -1,4 +1,4 @@
-function out = writeDataFileHeader(datafile, test, audio, opto, ...
+function out = writeOptoDataFileHeader(datafile, test, audio, opto, ...
 												channels, caldata, indev, outdev)
 %--------------------------------------------------------------------------
 % out = writeDataFileHeader((datafile, test, audio, opto, ...
@@ -35,6 +35,7 @@ function out = writeDataFileHeader(datafile, test, audio, opto, ...
 % Revision History
 %	7 June 2016 (SJS): file created from writeDataFileHeader of 
 %							 HPSearch Experiment
+%	24 Oct 2017 (SJS): added animal struct output after the test struct
 %--------------------------------------------------------------------------
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -68,6 +69,8 @@ writeVector(fp, time_start, 'double');
 % now, write the test structure
 % ***embed the name of this and all structs***
 writeStruct(fp, test, 'test');
+% write the animal structure
+writeStruct(fp, animal, 'animal');
 % write the audio structure
 writeStruct(fp, audio, 'audio');
 % write the opto structure
