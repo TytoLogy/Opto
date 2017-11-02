@@ -101,7 +101,7 @@ test.saveStim = 0;
 % acquisition/sweep settings
 % will have to be adjusted to deal with wav file durations
 %------------------------------------
-test.AcqDuration = 600;
+test.AcqDuration = 1000;
 test.SweepPeriod = test.AcqDuration + 5;
 
 %-------------------------------------------------------------------------
@@ -128,7 +128,7 @@ audio.Delay = 200;
 % will be found in the audio.signal.WavInfo
 % For now, this will be a dummy value
 audio.Duration = 100;
-audio.Level = 65;
+audio.Level = 70;
 audio.Ramp = 5;
 audio.Frozen = 0;
 %------------------------------------
