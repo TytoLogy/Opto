@@ -4,7 +4,8 @@ function [wavInfo, varargout] = buildWavInfo(varargin)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
-%
+% creates wav stimulus file information data which can then be used for 
+% wav stimulus playback by the opto program
 %--------------------------------------------------------------------------
 % Input Arguments:
 % 		<no arguments>		buildWavInfo will ask for directory with .WAV
@@ -20,7 +21,7 @@ function [wavInfo, varargout] = buildWavInfo(varargin)
 % 								filename
 % 
 % 		RMSwin				rms window size (milliseconds) for computing rms in
-% 								PeakRMS
+% 								PeakRMS. Default is 5 ms
 % 								
 % Output Arguments:
 %		wavInfo				struct array with information about wavfiles
@@ -55,6 +56,7 @@ function [wavInfo, varargout] = buildWavInfo(varargin)
 % Revision History:
 %	5 Apr 2017:	changed PeakRMSBin to PeakRMSTime, added PeakRMSWin to 
 %					wavInfo struct
+%	8 Feb 2018 (SJS): added comment
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
@@ -62,6 +64,7 @@ wavDir = ''; %#ok<NASGU>
 wavInfoFile = '';
 wavInfo = [];
 rmswin = 5;
+rmsThreshFactor = 0.02;
 
 %--------------------------------------------------------------------------
 % process inputs
@@ -112,8 +115,8 @@ if isempty(wavInfoFile)
 	if filenm
 		wavInfoFile = fullfile(pathnm, filenm);
 	else
-		fprintf('%s: cancelled\n', mfilename);
-		return
+		fprintf('%s: no output file specified\n', mfilename);
+		wavInfoFile = '';
 	end
 end
 
@@ -165,7 +168,7 @@ for f = 1:nFiles
 	onoff = findWavOnsetOffset(wav, tmp.SampleRate, ...
 															'UserConfirm', ...
 															'WAVName', wavFiles(f).name, ...
-															'Threshold', 0.02, ...
+															'Threshold', rmsThreshFactor, ...
 															'Method', 'rms');
 	tmp.OnsetBin = onoff(1);
 	tmp.OffsetBin = onoff(2);
@@ -175,8 +178,10 @@ end
 %--------------------------------------------------------------------------
 % Save wavInfo to wavInfoFile
 %--------------------------------------------------------------------------
-fprintf('Writing wavInfo struct to %s\n', wavInfoFile);
-save(wavInfoFile, 'wavInfo', '-MAT');
+if ~isempty(wavInfoFile)
+	fprintf('Writing wavInfo struct to %s\n', wavInfoFile);
+	save(wavInfoFile, 'wavInfo', '-MAT');
+end
 
 if nargout == 2
 	varargout{1} = wavInfoFile;

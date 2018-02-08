@@ -4,7 +4,10 @@ function wavInfo = getWavInfo(varargin)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
+% Loads wav stimulus file information from specified .mat file, returns
+% data in wavInfo struct
 %
+% These data can then be used for playback by the opto program
 %--------------------------------------------------------------------------
 % Input Arguments:
 %	filename		name of mat file with wavInfo struct
@@ -40,6 +43,7 @@ function wavInfo = getWavInfo(varargin)
 % Created:	31 March, 2017 (SJS)
 %
 % Revision History:
+%	8 Feb 2018 (SJS): added comment
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
