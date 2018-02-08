@@ -388,7 +388,7 @@ switch c.curvetype
 				% ramp the sound on and off (important!)
 				Sn = sin2array(Sn, audio.Ramp, outdev.Fs);
 				% get the attenuator settings for the desired SPL
-				atten = figure_mono_atten(splval, rmsval, caldata);
+				atten = figure_mono_atten_tone(splval, rmsval, caldata);
 				% Store the parameters in the stimulus cache struct
 				c.stimvar{sindex} = FREQ;
 				c.Sn{sindex} = Sn;
@@ -476,7 +476,12 @@ switch c.curvetype
 				% compute RMS value
 				rmsval = rms(Sn);
 				% get the attenuator settings for the desired SPL
-				atten = figure_mono_atten(LEVEL, rmsval, caldata);
+				switch c.stimtype
+					case 'noise'
+						atten = figure_mono_atten_noise(LEVEL, rmsval, caldata);
+					case 'tone'
+						atten = figure_mono_atten_tone(LEVEL, rmsval, caldata);
+				end
 				% Store the parameters in the stimulus cache struct
 				c.stimvar{sindex} = LEVEL;
 				c.Sn{sindex} = Sn;

@@ -15,6 +15,9 @@
 %	4 Oct 2016 (SJS): 
 %	 - working on wav file output
 %	 - added header/comments
+%	22 Oct 2017 (SJS): changed attenuation calc for noise vs. tones
+%	24 Oct 2017 (SJS): last change broke search and blocksearch stim
+%							output - fix!
 %--------------------------------------------------------------------------
 
 % kludge until this is put into UI
@@ -170,8 +173,19 @@ else
 				AttenL = 0;
 			else
 				% otherwise, calculate atten to achieve desired output level
-				AttenL = figure_mono_atten(H.audio.Level, ...
+				if strcmpi(H.audio.Signal, 'TONE')
+					AttenL = figure_mono_atten_tone(H.audio.Level, ...
 												rms(stim), H.caldata);
+				elseif strcmpi(H.audio.Signal, 'NOISE')
+					AttenL = figure_mono_atten_noise(H.audio.Level, ...
+												rms(stim), H.caldata);
+				else
+					AttenL = figure_mono_atten_noise(H.audio.Level, ...
+												rms(stim), H.caldata);
+				end
+% 				fprintf('level: %.2f rms: %.4f rmsdb: %.4f Atten: %.2f\n', ...
+% 								H.audio.Level, rms(stim), ...
+% 								db(H.caldata.cal.VtoPa(1).*rms(stim)), AttenL);
 			end
 			% some checks on AttenL value
 			if AttenL <= 0

@@ -88,10 +88,10 @@ caldata = handles.H.caldata;
 % Presentation settings
 %------------------------------------
 test.Name = handles.H.test.Name;
-test.Reps = 10;
+test.Reps = 20;
 test.Randomize = 1;
 test.Block = 0;
-audio.ISI = 300;
+audio.ISI = 500;
 %------------------------------------
 % Experiment settings
 %------------------------------------
@@ -101,7 +101,7 @@ test.saveStim = 0;
 % acquisition/sweep settings
 % will have to be adjusted to deal with wav file durations
 %------------------------------------
-test.AcqDuration = 500;
+test.AcqDuration = 1000;
 test.SweepPeriod = test.AcqDuration + 5;
 
 %-------------------------------------------------------------------------
@@ -128,7 +128,7 @@ audio.Delay = 200;
 % will be found in the audio.signal.WavInfo
 % For now, this will be a dummy value
 audio.Duration = 100;
-audio.Level = 65;
+audio.Level = 70;
 audio.Ramp = 5;
 audio.Frozen = 0;
 %------------------------------------
@@ -365,9 +365,11 @@ test.optovar_name = 'Amp';
 test.optovar = opto.Amp;
 test.audiovar_name = 'WavFile';
 test.audiovar = audio.signal.WavFile;
+animal = handles.H.animal;
 % and write header to data file
-writeOptoDataFileHeader(datafile, test, audio, opto, channels, ...
-								 caldata, indev, outdev);
+writeOptoDataFileHeader(datafile, test, animal, ...
+									audio, opto, channels, ...
+									caldata, indev, outdev);
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Write wav information to mat file
@@ -482,6 +484,8 @@ while ~cancelFlag && (sindex < nTotalTrials)
 			end
 			% update the Stimulus Delay
 			RPsettag(outdev, 'StimDelay',  ms2bin(Stim.audio.Delay, outFs));
+			% get the attenuator settings for the desired SPL
+			atten = figure_mono_atten_noise(Stim.audio.Level, rmsval, caldata);
 		case 'NULL'
 			% no audio stimulus
 			Sn = syn_null(Stim.audio.Duration, outdev.Fs, 0);
@@ -490,6 +494,8 @@ while ~cancelFlag && (sindex < nTotalTrials)
 			RPsettag(outdev, 'StimDelay',  ms2bin(Stim.audio.Delay, outFs));
 			% dummy rms val
 			rmsval = 0;
+			% get the attenuator settings for the desired SPL
+			atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
 		case 'WAV'
 			% wav file.  locate waveform in wavS0{} cell array by
 			% finding corresponding location of Stim.audio.signal.WavFile 
@@ -511,6 +517,9 @@ while ~cancelFlag && (sindex < nTotalTrials)
 			end
 			% update the Stimulus Delay
 			RPsettag(outdev, 'StimDelay', correctedDelay);
+			% get the attenuator settings for the desired SPL
+			atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
+
 		otherwise
 			fprintf('unknown type %s\n', stimtype);
 			keyboard
@@ -518,8 +527,6 @@ while ~cancelFlag && (sindex < nTotalTrials)
 
 	% need to add dummy channel to Sn since iofunction needs stereo signal
 	Sn = [Sn; zeros(size(Sn))]; %#ok<AGROW>
-	% get the attenuator settings for the desired SPL
-	atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
 	% set the attenuators
 	setattenfunc(outdev, [atten 120]);
 	

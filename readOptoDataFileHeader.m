@@ -15,10 +15,19 @@ function H = readOptoDataFileHeader(fp)
 %
 % Output Arguments:
 % 
-%	H
+%	H	with fields
+% 		datafile			data file name
+% 		test				test data structure
+% 		animal			animal data structure
+% 		audio				audio data structure
+% 		opto				opto data structure
+% 		channels			channels structure
+% 		caldata			calibration data
+% 		indev				input device structure
+% 		outdev			output TDT device structure
 %
 %--------------------------------------------------------------------------
-% See Also: writeDataFileHeader, fopen, fwrite;
+% See Also: writeOptoDataFileHeader, fopen, fwrite;
 %--------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -29,6 +38,8 @@ function H = readOptoDataFileHeader(fp)
 %			- adapted from readHPDataFileHeader.m
 % 
 % Revision History
+%	24 Oct 2017 (SJS): updated code to deal with presence of "animal"
+%							 struct after "test"
 %--------------------------------------------------------------------------
 % TO DO:
 %--------------------------------------------------------------------------
@@ -54,8 +65,18 @@ H.startstring = readString(fp);
 H.time_start = readVector(fp);
 % now, read the test structure
 H.test = readStruct(fp);
-% now, read the audio structure
-H.audio = readStruct(fp);
+% need to handle situation where "animal" struct is present
+[tmpstruct, tmpname] = readStruct(fp);
+if strcmpi(tmpname, 'animal')
+	% animal struct was read
+	H.animal = tmpstruct;
+	% now, read the audio structure
+	H.audio = readStruct(fp);
+elseif strcmpi(tmpname, 'audio')
+	% otherwise, the audio struct was read and animal struct is empty
+	H.audio = tmpstruct;
+	H.animal = struct();
+end
 % now, read the opto structure
 H.opto = readStruct(fp);
 % now, read the channels structure
@@ -68,3 +89,4 @@ H.indev = readStruct(fp);
 H.outdev = readStruct(fp);
 % read a string that says 'HEADER_END'
 H.endstring = readString(fp);
+

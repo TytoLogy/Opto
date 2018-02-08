@@ -63,6 +63,9 @@ audio = test.audio;
 opto = test.opto;
 caldata = handles.H.caldata;
 
+% other structs
+animal = handles.H.animal;
+
 %--------------------------------------------------------
 %--------------------------------------------------------
 % Setup Plots using the _configurePlots script
@@ -144,8 +147,9 @@ depvars_sort = zeros(stimcache.ntrials, stimcache.nreps);
 test.stimcache = rmfield(stimcache, 'Sn');
 % remove redundant elements from test, store in test opts
 testopts = rmfield(test, {'audio', 'opto'});
-writeOptoDataFileHeader(datafile, testopts, audio, opto, channels, ...
-								 caldata, indev, outdev);
+writeOptoDataFileHeader(datafile, testopts, animal, ...
+									audio, opto, channels, ...
+									caldata, indev, outdev);
 
 %--------------------------------------------------------
 %--------------------------------------------------------
