@@ -29,16 +29,17 @@ test.opto.Amp = 3000;
 
 % signal
 test.audio.signal.Type = 'noise';
-test.audio.signal.Fmin = 25000;
+test.audio.signal.Fmin = 4000;
+% test.audio.signal.Fmin = 40000;
 test.audio.signal.Fmax = 80000;
 test.audio.Delay = 100;
 test.audio.Duration = 50;
-% test.audio.Level = [0 40 60 80];
+test.audio.Level = [0 40 60 80];
 % test.audio.Level = 0:10:70;
 % test.audio.Level = [0 15:5:40];
 % test.audio.Level = 25:5:55;
 % test.audio.Level = [0 0];
-test.audio.Level = [0 40:5:60];
+% test.audio.Level = [0 40:5:75];
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
 test.audio.ISI = 250;
