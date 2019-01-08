@@ -28,8 +28,9 @@ function [c, stimseq] = opto_buildStimCache(test, tdt, caldata)
 %	24 May, 2016 (SJS): file created from HPSearch program's
 %								HPCurve_buildStimCache function and adapted
 %	31 May, 2017 (SJS): added block sequence stimulation capability
-%	8 Jun, 201 (SJS): fixed issue with incorrect rep, trial in block 
-%		sequence mode
+%	8 Jun, 2017 (SJS): fixed issue with incorrect rep, trial in block 
+%								sequence mode
+%	8 Jan 2017 (SJS): working on FRA
 %--------------------------------------------------------------------------
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -72,8 +73,17 @@ if ~isempty(strfind(test.Type, 'OPTO'))
 else
 	nOptoAmp = 0;
 end
-% # of trials == # of stim values (ITDs, ILDs, etc.)
-c.ntrials = nLevels + nOptoAmp + nFreqs;
+% # of trials == # of stim values (ITDs, ILDs, # freqs, etc.)
+if isempty(strfind(test.Type, 'FREQ+LEVEL'))
+	% for simple (non-FRA) tests, ntrials will be sum of different levels
+	c.ntrials = nLevels + nOptoAmp + nFreqs;
+elseif strfind(test.Type, 'FREQ+LEVEL')
+	c.ntrials = nLevels * nFreqs;
+else
+	error('%s: setting ntrials, unknown test Type %s', ...
+													mfilename, test.Type);
+end
+% # total stimuli will be # of reps (per stimulus) * total # of trials
 c.nstims = c.nreps * c.ntrials;
 % assign rep and trial numbers (trial corresponds to 
 % stimulus type or parameter)
@@ -136,7 +146,7 @@ end
 switch c.curvetype		
 	
 	% LEVEL curves can use either noise or tones or opto
-	case {'LEVEL', 'LEVEL_OPTO'}
+	case {'LEVEL', 'LEVEL_OPTO', 'FREQ+LEVEL'}
 		switch c.stimtype
 			case 'noise'
 				% low freq for bandwidth of noise (Hz)
@@ -153,7 +163,8 @@ switch c.curvetype
 				% NOT YET IMPLEMENTED
 				
 			otherwise
-				warning([mfilename ': unsupported stimtype ' c.stimtype ' for curvetype ' c.curvetype])
+				warning([mfilename ': unsupported stimtype ' c.stimtype ...
+													' for curvetype ' c.curvetype])
 				c = [];
 				return
 		end
@@ -168,7 +179,8 @@ switch c.curvetype
 				% (consistent phase each time)
 				c.radvary = signal.RadVary;	
 			otherwise
-				warning([mfilename ': unsupported stimtype ' c.stimtype ' for curvetype ' c.curvetype])
+				warning([mfilename ': unsupported stimtype ' c.stimtype ...
+														' for curvetype ' c.curvetype])
 				c = [];
 				return
 		end
@@ -357,8 +369,6 @@ switch c.curvetype
 			end	%%% End of TRIAL LOOP
 		end %%% End of REPS LOOP
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-	
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	% FREQ Curve
@@ -494,6 +504,49 @@ switch c.curvetype
 		end %%% End of REPS LOOP
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% FREQ+LEVEL (FRA) Curve
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	case 'FREQ+LEVEL'	
+		% Stimulus parameter to vary (varName) and the range (stimvar)
+		c.vname = upper(c.curvetype);
+		c.vrange = {signal.Frequency; audio.Level};
+		
+		% init sindex counter
+		sindex = 0;
+		% now loop through the randomized trials
+		for rep = 1:c.nreps
+			for trial = 1:c.ntrials
+				% increment sindex counter (index into stim cache struct)
+				sindex = sindex + 1;
+				% Get the randomized stimulus variable value from c.stimvar 
+				% indices stored in c.trialRandomSequence
+				FREQ = c.vrange{1}(c.trialRandomSequence(rep, trial));
+				LEVEL = c.vrange{2}(c.trialRandomSequence(rep, trial));
+				% Synthesize noise or tone, frozed or unfrozed and 
+				% get rms values for setting attenuator
+				Sn = synmonosine(audio.Duration, outdev.Fs,...
+											FREQ, caldata.DAscale, caldata);
+				rmsval = rms(Sn);
+				% ramp the sound on and off (important!)
+				Sn = sin2array(Sn, audio.Ramp, outdev.Fs);
+				% get the attenuator settings for the desired SPL
+				atten = figure_mono_atten_tone(LEVEL, rmsval, caldata);
+				% Store the parameters in the stimulus cache struct
+				c.stimvar{sindex} = FREQ;
+				c.Sn{sindex} = Sn;
+				c.splval{sindex} = LEVEL;
+				c.rmsval{sindex} = rmsval;
+				c.atten{sindex} = atten;
+				c.FREQ{sindex} = FREQ;
+				c.LEVEL(sindex) = LEVEL;
+% 				c.opto{sindex}.Enable = 0; % not sure why...
+			end	%%% End of TRIAL LOOP
+		end %%% End of REPS LOOP
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	% Unsupported
