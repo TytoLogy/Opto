@@ -105,7 +105,8 @@ end
 
 
 
-c.vrange = {signal.Frequency; audio.Level};
+c.vrange = zeros(2, c.ntrials);
+
 
 % init sindex counter
 sindex = 0;
