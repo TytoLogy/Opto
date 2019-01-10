@@ -1,16 +1,19 @@
 Fs = 2e5;
+outdev.Fs = Fs;
+audio.Ramp = 5;
 
 caldata = fake_caldata('Fs', Fs, 'freqs', 1000:1000:Fs);
 
 c.curvetype = 'FREQ+LEVEL';
-signal.Frequency = 1000*[5 10 15];
+signal.Frequency = 1000*[1 2 5 10 15];
 signal.Type = 'tone';
 test.Type = c.curvetype;
-audio.Level = [20 30];
+audio.Level = [20 30 40 99];
+audio.Duration = 100;
 c.nreps = 5;
 
-test.Randomize = 1;
-test.Block = 1;
+test.Randomize = 0;
+test.Block = 0;
 
 
 % figure out number of different audio stimulus levels
@@ -32,8 +35,10 @@ end
 if isempty(strfind(test.Type, 'FREQ+LEVEL'))
 	% for simple (non-FRA) tests, ntrials will be sum of different levels
 	c.ntrials = nLevels + nOptoAmp + nFreqs;
+	c.nvars = 1;
 elseif strfind(test.Type, 'FREQ+LEVEL')
 	c.ntrials = nLevels * nFreqs;
+	c.nvars = 2;
 else
 	error('%s: setting ntrials, unknown test Type %s', ...
 													mfilename, test.Type);
@@ -91,6 +96,12 @@ if test.Randomize == 1
 elseif isfield(test, 'Block')
 	if test.Block == 1
 		c.trialRandomSequence = blockSequence(c.nreps, c.ntrials);
+	else
+		% play each trial in sequence for nreps times
+		c.trialRandomSequence = zeros(c.nreps, c.ntrials);
+		for m = 1:c.nreps
+			c.trialRandomSequence (m, :) = 1:c.ntrials;
+		end
 	end
 else
 	% play each trial in sequence for nreps times
@@ -104,9 +115,19 @@ end
 %%
 
 
+% create list of possible values for test stimuli
+c.vrange = zeros(c.nvars, c.ntrials);
 
-c.vrange = zeros(2, c.ntrials);
+indx = 0;
+for f = 1:nFreqs
+	for l = 1:nLevels
+		indx = indx + 1;
+		c.vrange(1, indx) = signal.Frequency(f);
+		c.vrange(2, indx) = audio.Level(l);
+	end
+end
 
+%%
 
 % init sindex counter
 sindex = 0;
@@ -117,8 +138,8 @@ for rep = 1:c.nreps
 		sindex = sindex + 1;
 		% Get the randomized stimulus variable value from c.stimvar 
 		% indices stored in c.trialRandomSequence
-		FREQ = c.vrange{1}(c.trialRandomSequence(rep, trial));
-		LEVEL = c.vrange{2}(c.trialRandomSequence(rep, trial));
+		FREQ = c.vrange(1, c.trialRandomSequence(rep, trial));
+		LEVEL = c.vrange(2, c.trialRandomSequence(rep, trial));
 		% Synthesize noise or tone, frozed or unfrozed and 
 		% get rms values for setting attenuator
 		Sn = synmonosine(audio.Duration, outdev.Fs,...

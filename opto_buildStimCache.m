@@ -187,8 +187,6 @@ switch c.curvetype
 	
 	case 'OPTO-DUR'
 		
-		
-		
 	case {'OPTO', 'OPTO-DELAY', 'OPTO-AMP'}
 	
 	otherwise
@@ -393,7 +391,7 @@ switch c.curvetype
 				% Synthesize noise or tone, frozed or unfrozed and 
 				% get rms values for setting attenuator
 				Sn = synmonosine(audio.Duration, outdev.Fs,...
-											FREQ, caldata.DAscale, caldata);
+											FREQ, caldata.DAscale, caldata, c.radvary);
 				rmsval = rms(Sn);
 				% ramp the sound on and off (important!)
 				Sn = sin2array(Sn, audio.Ramp, outdev.Fs);
@@ -462,7 +460,8 @@ switch c.curvetype
 							Sn = synmonosine(audio.Duration, ...
 															outdev.Fs, ...
 															signal.Frequency, ...
-															caldata.DAscale, caldata);
+															caldata.DAscale, ...
+															caldata.radvary);
 					end
 				else	% stimulus is frozen
 					switch c.stimtype
@@ -510,8 +509,17 @@ switch c.curvetype
 	case 'FREQ+LEVEL'	
 		% Stimulus parameter to vary (varName) and the range (stimvar)
 		c.vname = upper(c.curvetype);
-		c.vrange = {signal.Frequency; audio.Level};
-		
+		% create list of possible values for test stimuli
+		c.vrange = zeros(2, c.ntrials);
+		indx = 0;
+		for f = 1:nFreqs
+			for l = 1:nLevels
+				indx = indx + 1;
+				c.vrange(1, indx) = signal.Frequency(f);
+				c.vrange(2, indx) = audio.Level(l);
+			end
+		end
+
 		% init sindex counter
 		sindex = 0;
 		% now loop through the randomized trials
@@ -521,12 +529,12 @@ switch c.curvetype
 				sindex = sindex + 1;
 				% Get the randomized stimulus variable value from c.stimvar 
 				% indices stored in c.trialRandomSequence
-				FREQ = c.vrange{1}(c.trialRandomSequence(rep, trial));
-				LEVEL = c.vrange{2}(c.trialRandomSequence(rep, trial));
+				FREQ = c.vrange(1, c.trialRandomSequence(rep, trial));
+				LEVEL = c.vrange(2, c.trialRandomSequence(rep, trial));
 				% Synthesize noise or tone, frozed or unfrozed and 
 				% get rms values for setting attenuator
 				Sn = synmonosine(audio.Duration, outdev.Fs,...
-											FREQ, caldata.DAscale, caldata);
+											FREQ, caldata.DAscale, c.radvary, caldata);
 				rmsval = rms(Sn);
 				% ramp the sound on and off (important!)
 				Sn = sin2array(Sn, audio.Ramp, outdev.Fs);
