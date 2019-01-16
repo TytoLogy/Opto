@@ -249,8 +249,12 @@ varargout{3} = tracesByStim;
 %% work from testdata
 % if no testdata, get outta here
 if isempty(testdata)
+	fprintf('%s: testdata empty (no spiketimes or PSTH to plot)\n', ...
+						mfilename);
     return
 elseif ~isfield(testdata, 'SpikeTimes')
+	fprintf('%s: field SpikeTimes not present in testdata \n', ...
+						mfilename);
 	return
 else
     spikesByStim = testdata.SpikeTimes;
