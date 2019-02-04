@@ -33,6 +33,8 @@ function varargout = getFilteredOptoData(varargin)
 %	10 Jul 2017 (SJS): some minor tweaks
 %	10 Oct 2017 (SJS): for some reason, this was in OptoAnalysis dir; 
 %							 relocated to opto program dir
+%	4 Feb 2019 (SJS): added FREQ+LEVEL and OPTO, not fully implemented for
+%							finding tracesByStim...
 %------------------------------------------------------------------------
 % TO DO:
 %   *Documentation!
@@ -142,7 +144,7 @@ switch upper(Dinf.test.Type)
        
 % for LEVEL test, find indices of stimuli with same level (dB SPL)
 	case 'LEVEL'
-		% list of legvels, and # of levels tested
+		% list of levels, and # of levels tested
 		levellist = Dinf.test.stimcache.LEVEL;
 		nlevels = length(Dinf.test.stimcache.vrange);
 		% locate where trials for each frequency are located in the
@@ -152,6 +154,12 @@ switch upper(Dinf.test.Type)
 		for l = 1:nlevels
 			stimindex{l} = find(Dinf.test.stimcache.vrange(l) == levellist);
 		end
+
+% for FREQ+LEVEL (FRA) test
+	case 'FREQ+LEVEL'
+
+		
+
 % for OPTO test...
     case 'OPTO'
    
@@ -229,6 +237,12 @@ if strcmpi(Dinf.test.Type, 'LEVEL')
 													D{dlist(n)}.datatrace(:, channelIndex));
 		end
 	end
+end
+if strcmpi(Dinf.test.Type, 'FREQ+LEVEL')
+	tracesByStim = {};
+end
+if strcmpi(Dinf.test.Type, 'OPTO')
+	tracesByStim = {};
 end
 if strcmpi(Dinf.test.Type, 'WavFile')
 	tracesByStim = cell(nwavs, 1);

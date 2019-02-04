@@ -93,6 +93,9 @@ catch errMsg
 	return;
 end
 
+% convert test.Name into characters
+datainfo.test.Name = char(datainfo.test.Name);
+
 % check if stimcache exists
 if isfield(datainfo.test, 'stimcache')
 	% if so, get # of reps and trials from size of trialRandomSequence
@@ -179,6 +182,7 @@ else
 	datainfo.stimList = [];
 end
 
+% assign to output
 if nargout == 2
 	varargout{1} = datainfo;
 end
