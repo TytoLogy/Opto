@@ -118,6 +118,7 @@ end
 % read in wav info (if it exists)
 wavinfofile = [fbase '_wavinfo.mat'];
 if exist(fullfile(datapath, wavinfofile), 'file')
+	fprintf('\tReading wav info from %s\n', wavinfofile);
 	load(fullfile(datapath, wavinfofile));
 end
 
@@ -131,6 +132,7 @@ fprintf('Test type: %s\n', Dinf.test.Type);
 % for FREQ test, find indices of stimuli with same frequency
 switch upper(Dinf.test.Type)
 	case 'FREQ'
+		fprintf('\t%s test, finding indices\n', Dinf.test.Type);
 		% list of frequencies, and # of freqs tested
 		freqlist = cell2mat(Dinf.test.stimcache.FREQ);
 		nfreqs = length(Dinf.test.stimcache.vrange);
@@ -144,6 +146,7 @@ switch upper(Dinf.test.Type)
        
 % for LEVEL test, find indices of stimuli with same level (dB SPL)
 	case 'LEVEL'
+		fprintf('\t%s test, finding indices\n', Dinf.test.Type);
 		% list of levels, and # of levels tested
 		levellist = Dinf.test.stimcache.LEVEL;
 		nlevels = length(Dinf.test.stimcache.vrange);
@@ -155,16 +158,69 @@ switch upper(Dinf.test.Type)
 			stimindex{l} = find(Dinf.test.stimcache.vrange(l) == levellist);
 		end
 
-% for FREQ+LEVEL (FRA) test
+% for FRA (FREQ+LEVEL) test, find indices of stimuli with
+% freq and same level (dB SPL)
 	case 'FREQ+LEVEL'
+		fprintf('\t%s test, finding freq and level indices\n', Dinf.test.Type);
+		% convert stimtype and curvetype to strings
+		if isnumeric(Dinf.test.stimcache.stimtype)
+			Dinf.test.stimcache.stimtype = char(Dinf.test.stimcache.stimtype);
+		end
+		if isnumeric(Dinf.test.stimcache.curvetype)
+			Dinf.test.stimcache.curvetype = char(Dinf.test.stimcache.curvetype);
+		end
+		% if necessary, convert cells to matrices
+		testcell = {'splval', 'rmsval', 'atten', 'FREQ', 'LEVEL'};
+		for c = 1:length(testcell)
+			if iscell(Dinf.test.stimcache.(testcell{c}))
+				Dinf.test.stimcache.(testcell{c}) = ...
+										cell2mat(Dinf.test.stimcache.(testcell{c}));
+			end
+		end
+		% list of stimulus freqs, # of freqs tested
+		freqlist = unique(Dinf.test.stimcache.FREQ, 'sorted');
+		nfreqs = length(freqlist);
+		% list of stimulus levels, # of levels tested
+		levellist = unique(Dinf.test.stimcache.LEVEL, 'sorted');
+		nlevels = length(levellist);
+		%{
+			Raw data are in a vector of length nstims, in order of
+			presentation.
 
+			values used for the two variables (Freq. and Level) are stored in
+			vrange matrix, which is of length (nfreq X nlevel) and holds
+			values as row 1 = freq, row 2 = level
+
+			e.g. Dinf.test.stimcache.vrange(:, 1:5) = 
+				4000  4000  4000  4000  4000
+				0     10    20    30    40
+
+			trialRandomSequence holds randomized list of indices into vrange,
+			has dimensions of [nreps, ntrials]
+
+			To sort the data for FRA: (1)	for each freq and level combination,
+			locate the indices for that combination in the respective FREQ and
+			LEVEL list. (2)	These indices can then be used within the D{}
+			array
+		%}
+		stimindex = cell(nlevels, nfreqs);
+		for f = 1:nfreqs
+			for l = 1:nlevels
+				currentF = freqlist(f);
+				currentL = levellist(l);
+				stimindex{l, f} = find( (Dinf.test.stimcache.FREQ == currentF) & ...
+												(Dinf.test.stimcache.LEVEL == currentL) );
+			end
+		end
 		
 
 % for OPTO test...
     case 'OPTO'
-   
+  		fprintf('\t%s test, finding indices\n', Dinf.test.Type);
+ 
 % for WavFile, need to find indices with same filename.
 	case 'WAVFILE'
+		fprintf('\t%s test, finding indices\n', Dinf.test.Type);
 		% get list of stimuli (wav file names)
 		nwavs = length(Dinf.stimList);
 		wavlist = cell(nwavs, 1);
@@ -200,18 +256,24 @@ end
 channelIndex = find(channelList == channelNumber);
 if isempty(channelIndex)
 	error('%s: Channel %d not recorded', mfilename, channelNumber);
+else
+	fprintf('\tChannels:')
+	fprintf('%d ', channelList);
+	fprintf('\n');
 end
+
 
 %----------------------------------------------------------------------
 %% Pull out trials, apply filter, store in matrix
 %----------------------------------------------------------------------
-
 % define filter for data
 % sampling rate
 Fs = Dinf.indev.Fs;
 % build bandpass filter, store coefficients in filtB, filtA
 fband = [HPFreq LPFreq] ./ (0.5 * Fs);
 [filtB, filtA] = butter(5, fband);
+
+fprintf('\tFiltering and sorting data\n');
 
 % build tracesByStim; process will vary depending on stimulus type
 if strcmpi(Dinf.test.Type, 'FREQ')
@@ -239,7 +301,31 @@ if strcmpi(Dinf.test.Type, 'LEVEL')
 	end
 end
 if strcmpi(Dinf.test.Type, 'FREQ+LEVEL')
-	tracesByStim = {};
+	% allocate cell array for traces, levels in rows, freqs in cols
+	tracesByStim = cell(nlevels, nfreqs);
+	% loop through freqs and levels
+	for f = 1:nfreqs
+		for l = 1:nlevels
+			% get list of indices for this level + freq combination
+			dlist = stimindex{l, f};
+			% how many trials?
+			ntrials = length(dlist);
+			if ntrials ~= Dinf.test.Reps
+				wstr = [ mfilename ': ' ...
+							sprintf('only %d of desired ', ntrials) ...
+							sprintf('%d reps', Dinf.test.Reps) ...
+							sprintf('for F(%d) = %d, ', f, freqlist(f)) ...
+							sprintf('L(%d) = %d', l, levellist(l)) ];
+				warning(wstr);
+			end
+			tracesByStim{l, f} = zeros(length(D{1}.datatrace(:, 1)), ntrials);
+			for n = 1:ntrials
+				tracesByStim{l, f}(:, n) = ...
+							filtfilt(filtB, filtA, ...
+											D{dlist(n)}.datatrace(:, channelIndex));
+			end
+		end
+	end
 end
 if strcmpi(Dinf.test.Type, 'OPTO')
 	tracesByStim = {};
