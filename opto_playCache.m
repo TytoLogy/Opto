@@ -376,11 +376,11 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 									getSpikebinsFromSpikes(spikes, ...
 														handles.H.TDT.SnipLen);
 	update_ui_str(handles.textRMS, sprintf('%.4f', spikerms));
-	% show detected spikes
-	% draw new ones
-	set(tH,	'XData', spiketimes{sindex}, ...
-				'YData', zeros(size(spiketimes{sindex})) + ...
-										TDT.channels.MonitorChannel*yabsmax);
+	% show detected spikes !!! not working bad handle to plot
+% 	% draw new ones
+% 	set(tH,	'XData', spiketimes{sindex}, ...
+% 				'YData', zeros(size(spiketimes{sindex})) + ...
+% 										TDT.channels.MonitorChannel*yabsmax);
 	% force drawing
 	drawnow
 	refreshdata
