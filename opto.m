@@ -21,7 +21,7 @@ function varargout = opto(varargin)
 % See also: GUIDE, GUIDATA, GUIHANDLES
 %-------------------------------------------------------------------------
 
-% Last Modified by GUIDE v2.5 12-Jun-2017 19:36:24
+% Last Modified by GUIDE v2.5 21-Feb-2019 15:26:17
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -210,8 +210,11 @@ function editAudioFmin_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	switch upper(handles.H.audio.Signal)
 		case 'NOISE'
-			if between(val, 3500, handles.H.noise.Fmax)
+			if between(val, handles.H.Lim.F(1), handles.H.noise.Fmax)
 				handles.H.noise.Fmin = val;
+				update_ui_val(handles.sliderAudioFmin, val);
+				% set sliderAudioFmax ctrl min val
+				set(handles.sliderAudioFmax, 'Min', val);
 				guidata(hObject, handles);
 				optomsg(handles, sprintf('Noise Fmin: %.0f', ...
 													handles.H.noise.Fmin), ...
@@ -221,7 +224,45 @@ function editAudioFmin_Callback(hObject, eventdata, handles)
 				update_ui_str(hObject, handles.H.noise.Fmin);
 			end
 		case 'TONE'
-			if between(val, 3500, handles.H.TDT.outdev.Fs / 2)
+			if between(val, handles.H.Lim.F(1), handles.H.TDT.outdev.Fs / 2)
+				handles.H.tone.Frequency = val;
+				update_ui_val(handles.sliderAudioFmin, val);
+				guidata(hObject, handles);
+				optomsg(handles, sprintf('Tone Freq: %.0f', ...
+													handles.H.tone.Frequency), ...
+													'echo', 'off');
+			else
+				optomsg(handles, 'invalid audio tone Frequency');
+				update_ui_str(hObject, handles.H.tone.Frequency);
+			end
+	end
+	guidata(hObject, handles);
+%-------------------------------------------------------------------------
+% --- Executes on slider movement.
+function sliderAudioFmin_Callback(hObject, eventdata, handles)
+% need to
+% (1) get value
+% (2) update noise or tone freq
+% (3) adjust min value limit of sliderAudioFmax ctrl (for noise only)
+	val = read_ui_val(hObject);
+	switch upper(handles.H.audio.Signal)
+		case 'NOISE'
+			% check if value is in range
+			if between(val, handles.H.Lim.F(1), handles.H.noise.Fmax)
+				% update value in H.noise
+				handles.H.noise.Fmin = val;
+				% set sliderAudioFmax ctrl min val
+				set(handles.sliderAudioFmax, 'Min', val);
+				guidata(hObject, handles);
+				optomsg(handles, sprintf('Noise Fmin: %.0f', ...
+													handles.H.noise.Fmin), ...
+													'echo', 'off');
+			else
+				optomsg(handles, 'invalid audio noise Fmin');
+				update_ui_val(hObject, handles.H.noise.Fmin);
+			end
+		case 'TONE'
+			if between(val, handles.H.Lim.F(1), handles.H.TDT.outdev.Fs / 2)
 				handles.H.tone.Frequency = val;
 				guidata(hObject, handles);
 				optomsg(handles, sprintf('Tone Freq: %.0f', ...
@@ -248,6 +289,14 @@ function editAudioFmax_Callback(hObject, eventdata, handles)
 		update_ui_str(hObject, handles.H.noise.Fmax);
 	end
 	guidata(hObject, handles);
+%-------------------------------------------------------------------------
+% --- Executes on slider movement.
+function sliderAudioFmax_Callback(hObject, eventdata, handles)
+% hObject    handle to sliderAudioFmax (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider	
 %-------------------------------------------------------------------------
 function buttonAudioWavFile_Callback(hObject, eventdata, handles)
 	WAVDIR = 'C:\TytoLogy\Experiments\WAVs';
@@ -1031,10 +1080,21 @@ function editComments_CreateFcn(hObject, eventdata, handles)
 	create_function(hObject);
 function editTLo_CreateFcn(hObject, eventdata, handles)
 	create_function(hObject);
+function sliderAudioFmin_CreateFcn(hObject, eventdata, handles)
+	if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+		 set(hObject,'BackgroundColor',[.9 .9 .9]);
+	end
+function sliderAudioFmax_CreateFcn(hObject, eventdata, handles)
+	if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+		 set(hObject,'BackgroundColor',[.9 .9 .9]);
+	end
 % function editRMSTau_CreateFcn(hObject, eventdata, handles)
 % 	create_function(hObject);
 % function editSnipLen_CreateFcn(hObject, eventdata, handles)
 % 	create_function(hObject);
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 function create_function(hObject)
@@ -1054,7 +1114,6 @@ function figure1_DeleteFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-
 
 
 

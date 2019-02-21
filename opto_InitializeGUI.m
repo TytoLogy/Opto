@@ -76,7 +76,7 @@ end
 %----------------------------------------------------------------
 % window position and size
 set(handles.figure1, 'Units', 'characters');
-set(handles.figure1, 'Position', [8.2000 46.3077 148.4000 34.5385]);
+set(handles.figure1, 'Position', [8.2000 46.3077 120 54]);
 % audio stimulus selector (!!!ADD SEARCH!!!)
 set(handles.popupAudioSignal, 'String', ...
 				{'Noise'; 'Tone'; '.wav'; 'Search'; 'BlockSearch'; 'OFF'});
@@ -86,6 +86,13 @@ set(handles.tableChannelSelect, 'Data', ...
 										handles.H.TDT.channels.RecordChannels);
 set(handles.tableChannelSelect, 'ColumnName', 'Record');
 guidata(hObject, handles)
+
+% update slider limits and values
+set(handles.sliderAudioFmin, 'Min', handles.H.Lim.F(1));
+set(handles.sliderAudioFmin, 'Max', handles.H.Lim.F(2));
+update_ui_val(handles.sliderAudioFmin, handles.H.Lim.F(1));
+guidata(hObject, handles);
+
 
 %----------------------------------------------------------------
 % list of channels for monitor popup
