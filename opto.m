@@ -21,7 +21,7 @@ function varargout = opto(varargin)
 % See also: GUIDE, GUIDATA, GUIHANDLES
 %-------------------------------------------------------------------------
 
-% Last Modified by GUIDE v2.5 21-Feb-2019 15:26:17
+% Last Modified by GUIDE v2.5 27-Feb-2019 17:52:21
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -184,6 +184,17 @@ function editAudioDur_Callback(hObject, eventdata, handles)
 		RPsettag(handles.H.TDT.outdev, 'StimDur', handles.H.audio.Duration);
 	end	
 %-------------------------------------------------------------------------
+function editAudioRamp_Callback(hObject, eventdata, handles)
+	val = read_ui_str(hObject, 'n');
+	if between(val, 0, handles.H.audio.Duration)
+		handles.H.audio.Ramp = val;
+		guidata(hObject, handles);
+	else
+		optomsg(handles, 'invalid audio Ramp');
+		update_ui_str(hObject, handles.H.audio.Ramp);
+	end
+	guidata(hObject, handles);
+%-------------------------------------------------------------------------
 function editAudioLevel_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	if between(val, 0, 100)
@@ -195,14 +206,16 @@ function editAudioLevel_Callback(hObject, eventdata, handles)
 	end
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
-function editAudioRamp_Callback(hObject, eventdata, handles)
-	val = read_ui_str(hObject, 'n');
-	if between(val, 0, handles.H.audio.Duration)
-		handles.H.audio.Ramp = val;
+function sliderAudioLevel_Callback(hObject, eventdata, handles)
+
+	val = round(read_ui_val(hObject));
+	if between(val, 0, 100)
+		handles.H.audio.Level = val;
+		update_ui_str(handles.editAudioLevel, handles.H.audio.Level);
 		guidata(hObject, handles);
 	else
-		optomsg(handles, 'invalid audio Ramp');
-		update_ui_str(hObject, handles.H.audio.Ramp);
+		optomsg(handles, 'invalid audio Level');
+		update_ui_val(hObject, handles.H.audio.Level);
 	end
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
@@ -244,7 +257,7 @@ function sliderAudioFmin_Callback(hObject, eventdata, handles)
 % (1) get value
 % (2) update noise or tone freq
 % (3) adjust min value limit of sliderAudioFmax ctrl (for noise only)
-	val = read_ui_val(hObject);
+	val = round(read_ui_val(hObject));
 	switch upper(handles.H.audio.Signal)
 		case 'NOISE'
 			% check if value is in range
@@ -252,7 +265,9 @@ function sliderAudioFmin_Callback(hObject, eventdata, handles)
 				% update value in H.noise
 				handles.H.noise.Fmin = val;
 				% set sliderAudioFmax ctrl min val
-				set(handles.sliderAudioFmax, 'Min', val);
+				set(handles.sliderAudioFmax, 'Min', handles.H.noise.Fmin);
+				% update audioFmin box
+				update_ui_str(handles.editAudioFmin, handles.H.noise.Fmin);
 				guidata(hObject, handles);
 				optomsg(handles, sprintf('Noise Fmin: %.0f', ...
 													handles.H.noise.Fmin), ...
@@ -264,6 +279,8 @@ function sliderAudioFmin_Callback(hObject, eventdata, handles)
 		case 'TONE'
 			if between(val, handles.H.Lim.F(1), handles.H.TDT.outdev.Fs / 2)
 				handles.H.tone.Frequency = val;
+				% update audioFmin box
+				update_ui_str(handles.editAudioFmin, handles.H.tone.Frequency);
 				guidata(hObject, handles);
 				optomsg(handles, sprintf('Tone Freq: %.0f', ...
 													handles.H.tone.Frequency), ...
@@ -280,6 +297,8 @@ function editAudioFmax_Callback(hObject, eventdata, handles)
 	if between(val, handles.H.noise.Fmin, ...
 							handles.H.TDT.outdev.Fs / 2)
 		handles.H.noise.Fmax = val;
+		% set sliderAudioFmax ctrl min val
+		set(handles.sliderAudioFmin, 'Max', handles.H.noise.Fmax);
 		guidata(hObject, handles);
 		optomsg(handles, sprintf('Noise Fmax: %.0f', ...
 													handles.H.noise.Fmax), ...
@@ -290,13 +309,36 @@ function editAudioFmax_Callback(hObject, eventdata, handles)
 	end
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
-% --- Executes on slider movement.
 function sliderAudioFmax_Callback(hObject, eventdata, handles)
-% hObject    handle to sliderAudioFmax (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider	
+% --- Executes on slider movement.
+% need to
+% (1) get value
+% (2) update noise or tone freq
+% (3) adjust max value limit of sliderAudioFmin ctrl (for noise only)
+	val = round(read_ui_val(hObject));
+	switch upper(handles.H.audio.Signal)
+		case 'NOISE'
+			% check if value is in range [noiseFmin, Lim.F(2)]
+			if between(val, handles.H.noise.Fmin, handles.H.Lim.F(2))
+				% update value in H.noise
+				handles.H.noise.Fmax = val;
+				% set sliderAudioFmin ctrl max val
+				set(handles.sliderAudioFmin, 'Max', handles.H.noise.Fmax);
+				% update audioFmax box
+				update_ui_str(handles.editAudioFmax, handles.H.noise.Fmax);
+				guidata(hObject, handles);
+				optomsg(handles, sprintf('Noise Fmin: %.0f', ...
+													handles.H.noise.Fmax), ...
+													'echo', 'off');
+			else
+				optomsg(handles, 'invalid audio noise Fmax');
+				update_ui_val(hObject, handles.H.noise.Fmax);
+			end
+		case 'TONE'
+			optomsg(handles, '???????');
+			update_ui_val(hObject, handles.H.noise.Fmax);
+	end
+	guidata(hObject, handles);
 %-------------------------------------------------------------------------
 function buttonAudioWavFile_Callback(hObject, eventdata, handles)
 	WAVDIR = 'C:\TytoLogy\Experiments\WAVs';
@@ -1088,6 +1130,10 @@ function sliderAudioFmax_CreateFcn(hObject, eventdata, handles)
 	if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
 		 set(hObject,'BackgroundColor',[.9 .9 .9]);
 	end
+function sliderAudioLevel_CreateFcn(hObject, eventdata, handles)
+	if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+		 set(hObject,'BackgroundColor',[.9 .9 .9]);
+	end	
 % function editRMSTau_CreateFcn(hObject, eventdata, handles)
 % 	create_function(hObject);
 % function editSnipLen_CreateFcn(hObject, eventdata, handles)

@@ -85,12 +85,18 @@ update_ui_val(handles.popupAudioSignal, 1);
 set(handles.tableChannelSelect, 'Data', ...
 										handles.H.TDT.channels.RecordChannels);
 set(handles.tableChannelSelect, 'ColumnName', 'Record');
-guidata(hObject, handles)
+guidata(hObject, handles);
 
-% update slider limits and values
+% update Level slider limits and values
+update_ui_val(handles.sliderAudioLevel, 50);
+% update Fmin slider limits and values
 set(handles.sliderAudioFmin, 'Min', handles.H.Lim.F(1));
 set(handles.sliderAudioFmin, 'Max', handles.H.Lim.F(2));
 update_ui_val(handles.sliderAudioFmin, handles.H.Lim.F(1));
+% update Fmax slider limits and values
+set(handles.sliderAudioFmax, 'Min', handles.H.Lim.F(1));
+set(handles.sliderAudioFmax, 'Max', handles.H.Lim.F(2));
+update_ui_val(handles.sliderAudioFmax, handles.H.Lim.F(2));
 guidata(hObject, handles);
 
 
