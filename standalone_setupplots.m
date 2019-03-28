@@ -2,7 +2,13 @@
 %
 % Initializes plots for sweep display, PSTHs, Raster plots
 %
+% 28 Mar 2019 (SJS): Updated for MTwav()
+
 disp 'setting up plots'
+
+% # of plots
+PLOT_ROWS = 5;
+PLOT_COLS = 2;
 
 % color for detected spikes
 hashColor = 'c';
@@ -83,7 +89,7 @@ nPSTH = length(stimList);
 pstAxes = zeros(nPSTH, 1);
 % subplots
 for p = 1:nPSTH
-	pstAxes(p) = subplot(3, 2, p);
+	pstAxes(p) = subplot(PLOT_ROWS, PLOT_COLS, p);
 	% write titles for plots
 	if any(strcmpi(stimList(p).audio.signal.Type, {'null', 'noise'}))
 		title(	pstAxes(p), ...
