@@ -125,12 +125,16 @@ PSTH.hvals = cell(nPSTH, 1);
 for p = 1:nPSTH
 	if p == 1
 		% create null psthdata and store bins
+% 		[PSTH.hvals{p}, PSTH.bins] = ...
+% 									psth(	{}, binSize, ...
+% 											[0 handles.H.TDT.AcqDuration]);
 		[PSTH.hvals{p}, PSTH.bins] = ...
 									psth(	{}, binSize, ...
-											[0 handles.H.TDT.AcqDuration]);
+											[0 test.AcqDuration]);
 	else
 		% just store hvals
-		PSTH.hvals{p} = psth({}, binSize, [0 handles.H.TDT.AcqDuration]);
+% 		PSTH.hvals{p} = psth({}, binSize, [0 handles.H.TDT.AcqDuration]);
+		PSTH.hvals{p} = psth({}, binSize, [0 test.AcqDuration]);
 	end
 end
 % offset psth bins by binSize/2 to get things to line up properly when
@@ -144,10 +148,13 @@ pstBar = zeros(nPSTH, 1);
 for p = 1:nPSTH
 	pstBar(p) = bar(pstAxes(p), PSTH.bins, PSTH.hvals{p}, 1);
 	% set xlimits
+% 	xlim(pstAxes(p), [-0.5*binSize ...
+% 										(handles.H.TDT.AcqDuration+0.5*binSize)]);
 	xlim(pstAxes(p), [-0.5*binSize ...
-										(handles.H.TDT.AcqDuration+0.5*binSize)]);
+										(test.AcqDuration+0.5*binSize)]);
 	% set xtick properties
-	set(pstAxes(p), 'XTick', 0:200:handles.H.TDT.AcqDuration);
+% 	set(pstAxes(p), 'XTick', 0:200:handles.H.TDT.AcqDuration);
+	set(pstAxes(p), 'XTick', test.AcqDuration);
 	set(pstAxes(p), 'TickDir', 'out');
 	set(pstAxes(p), 'XMinorTick', 'on');
 	set(pstAxes(p), 'TickLen', 3*get(pstAxes(p), 'TickLen'));
