@@ -183,7 +183,7 @@ WavScaleFactors = [	4.436, ...
 							2.765	...
 						];
 audio.signal.Type = 'wav';
-audio.signal.WavPath = 'C:\TytoLogy\Experiments\Wavs';
+audio.signal.WavPath = 'C:\TytoLogy\Experiments\Wavs\wavData_28Mar2019';
 %------------------------------------
 % wav properties
 %------------------------------------

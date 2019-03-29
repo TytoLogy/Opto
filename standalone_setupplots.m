@@ -6,9 +6,6 @@
 
 disp 'setting up plots'
 
-% # of plots
-PLOT_ROWS = 5;
-PLOT_COLS = 2;
 
 % color for detected spikes
 hashColor = 'c';

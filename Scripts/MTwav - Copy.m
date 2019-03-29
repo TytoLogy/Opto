@@ -1,6 +1,6 @@
-function outdata = MTwav(handles, datafile)
+function [curvedata, varargout] = MTwav(handles, datafile)
 %--------------------------------------------------------------------------
-% outdata = wav_optoOFF(handles, datafile)
+% [curvedata, rawdata] = MTwav(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -12,14 +12,13 @@ function outdata = MTwav(handles, datafile)
 %
 %--------------------------------------------------------------------------
 % Input Arguments:
-%	handles		exp handles from calling gui (H)
+%	H		exp handles from calling gui (H)
 %	datafile		name (full path + '.dat' filename) for data
 % 
 % Output Arguments:
-% 	outdata{1}	curvedata structure	
-% 	outdata{2}	rawdata		raw response data cell array
+% 	curvedata	data structure	
+% 	rawdata		raw response data cell array
 % 					{nTrials, nreps}
-%	outdata{3}	handles
 %
 %--------------------------------------------------------------------------
 % See Also: noise_opto, opto, opto_playCache
@@ -36,14 +35,13 @@ function outdata = MTwav(handles, datafile)
 % Created:	31 March, 2017 (SJS) from noise_opto
 %
 % Revision History:
-%	12 Jun 2017 (SJS): pulled off common elements into separate subscripts
-%	13 Jun 2017 (SJS): working on separate psths for each stimulus 
+%	12 Jun, 2017 (SJS): pulled off common elements into separate subscripts
 %	28 Mar, 2019 (SJS): created for use with M. Tehrani's vocal stimuli
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
-disp 'running wav_optoOFF!'
-curvetype = 'Wav+OptoOFF';
+disp 'running wav!'
+curvetype = 'Wav';
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -54,13 +52,10 @@ L = 1;
 R = 2; %#ok<NASGU>
 MAX_ATTEN = 120;  %#ok<NASGU>
 % assign temporary outputs
-outdata = {};
-
-% # of plots for PSTH and rasters - the product of PLOT_ROWs and PLOT_COLS
-% must be greater than or equal to the number of wav files + 2 (need to
-% account for "null" stimulus and noise stimulus)
-PLOT_ROWS = 4; %#ok<NASGU>
-PLOT_COLS = 3; %#ok<NASGU>
+curvedata = []; 
+if nargout > 1
+	varargout = {};
+end
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -90,13 +85,13 @@ caldata = handles.H.caldata;
 %-------------------------------------------------------------------------
 % Experiment settings
 %-------------------------------------------------------------------------
-%----------------------------------------------------------
-% Presentation settings - ISI, # reps, randomize, etc.
-%----------------------------------------------------------
-test.Reps = 10;
+%------------------------------------
+% Presentation settings
+%------------------------------------
+test.Reps = 3;
 test.Randomize = 1;
 test.Block = 0;
-audio.ISI = 200;
+audio.ISI = 250;
 %------------------------------------
 % Experiment settings
 %------------------------------------
@@ -106,7 +101,7 @@ test.saveStim = 0;
 % acquisition/sweep settings
 % will have to be adjusted to deal with wav file durations
 %------------------------------------
-test.AcqDuration = 500;
+test.AcqDuration = 1000;
 test.SweepPeriod = test.AcqDuration + 5;
 
 %-------------------------------------------------------------------------
@@ -138,29 +133,17 @@ test.SweepPeriod = test.AcqDuration + 5;
 opto.Enable = 0;
 opto.Delay = 0;
 opto.Dur = 200;
-opto.Amp = 0;
+opto.Amp = 2000;
 %------------------------------------
 % AUDITORY stimulus settings
 %------------------------------------
-%------------------------------------
-% general audio properties
-%------------------------------------
-% Delay 
-audio.Delay = 100;
-% Duration is variable for WAV files - this information
-% will be found in the audio.signal.WavInfo
-% For now, this will be a dummy value
-audio.Duration = 200;
-audio.Level = 80;
-audio.Ramp = 5;
-audio.Frozen = 0;
 %------------------------------------
 % noise signal
 %------------------------------------
 noise.signal.Type = 'noise';
 noise.signal.Fmin = 4000;
 noise.signal.Fmax = 80000;
-noise.Delay = audio.Delay;
+noise.Delay = 100;
 noise.Duration = 100;
 noise.Level = 80;
 noise.Ramp = 5;
@@ -169,12 +152,25 @@ noise.Frozen = 0;
 % null signal
 %------------------------------------
 null.signal.Type = 'null';
-null.Delay = audio.Delay;
+null.Delay = 100;
 null.Duration = noise.Duration;
-null.Level = 0;
+null.Level = 0; %#ok<STRNU>
+%------------------------------------
+% general audio properties
+%------------------------------------
+% Delay - use same as one for noise
+audio.Delay = noise.Delay;
+% Duration is variable for WAV files - this information
+% will be found in the audio.signal.WavInfo
+% For now, this will be a dummy value
+audio.Duration = 200;
+audio.Level = 80;
+audio.Ramp = 5;
+audio.Frozen = 0;
 %------------------------------------
 % WAV
 %------------------------------------
+% Specify wav signal(s)
 WavesToPlay = {	'MFV_NL_filtered_normalized.wav', ...
 						'MFV_harmonic_normalized.wav', ...
 						'MFV_tonal_normalized.wav', ...
@@ -229,35 +225,33 @@ wavInfo = repmat( AllwavInfo(1), length(WavesToPlay), 1);
 for w = 1:length(WavesToPlay)
 	wavInfo(w) = AllwavInfo(strcmp(WavesToPlay(w), AllwavNames));
 end
-%------------------------------------
+%--------------------------------------------------------------------
 % create list of filenames - need to do a bit of housekeeping
-%------------------------------------
+%--------------------------------------------------------------------
 audio.signal.WavFile = cell(nWavs, 1);
 tmp = {};
 [tmp{1:nWavs, 1}] = deal(wavInfo.Filename);
-% assign wav filenames to wavInfo (if they already have .wav attached, this
-% should not affect things due to use of fileparts function to extract
-% basename from file name in wavInfo)
+% assign wav filenames to wavInfo
 for n = 1:nWavs
 	[~, basename] = fileparts(tmp{n});
 	audio.signal.WavFile{n} = [basename '.wav'];
 	% make sure Filename in wavInfo matches
 	wavInfo(n).Filename = audio.signal.WavFile{n};
+	% assign scaling factor
 	wavInfo(n).ScaleFactor = WavScaleFactors(n);
 end
 clear tmp;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% build list of unique stimuli
+% build list of stimuli
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % varied variables for opto and audio
 optovar = opto.Amp;
 audiowavvar = audio.signal.WavFile;
-% total # of varied variables (increase # of audio vars by 2
-% to account for additional noise and null stimuli)
-nCombinations = numel(optovar) * (numel(audiowavvar) + 2);
+% total # of varied variables = # opto vars * # audio vars
+nCombinations = numel(optovar) * (numel(audiowavvar));
 % # of total trials;
 nTotalTrials = nCombinations * test.Reps;
 % create list to hold parameters for varied variables
@@ -270,18 +264,10 @@ stimList = repmat(	...
 % outer loop cycles through optical variables
 sindex = 0;
 for oindex = 1:numel(optovar)
-	for aindex = 1:(numel(audiowavvar) + 2)
+	for aindex = 1:(numel(audiowavvar))
 		sindex = sindex + 1;
 		stimList(sindex).opto.Amp = optovar(oindex);
-		% assign audio stim 1 to null
-		if aindex == 1
-			stimList(sindex).audio = null;
-		% assign audio stim 2 to noise
-		elseif aindex == 2
-			stimList(sindex).audio = noise;
-		else
-			stimList(sindex).audio.signal.WavFile = audiowavvar{aindex-2};
-		end
+		stimList(sindex).audio.signal.WavFile = audiowavvar{aindex};
 	end
 end
 %-------------------------------------------------------------------------
@@ -440,7 +426,7 @@ standalone_setupplots;
 % Initialize cancel/pause button
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-[PanelHandle, cancelButton, pauseButton] = cancelpausepanel; %#ok<ASGLU>
+[PanelHandle, cancelButton, pauseButton] = cancelpausepanel;
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -452,6 +438,7 @@ standalone_setupplots;
 cancelFlag = read_ui_val(cancelButton);
 % flag to pause experiment
 pauseFlag = 0; %#ok<NASGU>
+
 % save stimuli?
 if test.saveStim
 	stimWriteFlag = 1; %#ok<NASGU>
@@ -472,24 +459,15 @@ while ~cancelFlag && (sindex < nTotalTrials)
 	% increment counter (was initialized to 0)
 	%--------------------------------------------------
 	sindex = sindex + 1;
-	%--------------------------------------------------
-	% psth and stimulus index
-	%--------------------------------------------------
-	pIndx = stimIndices(sindex);
-	%--------------------------------------------------
-	% rep #s
-	%--------------------------------------------------
-	% get current rep;
 	rep = repList(sindex);
-	% increment current index
-	currentRep(pIndx) = currentRep(pIndx) + 1; %#ok<AGROW>
+	
 	%--------------------------------------------------
 	% get current stimulus settings from stimList,using stimIndices to 
 	% index into stimList
 	%--------------------------------------------------
 	fprintf('sindex: %d (%d)\n', sindex, nTotalTrials);
-	fprintf('stimIndices(%d): %d\n', sindex, pIndx);
-	Stim = stimList(pIndx);
+	fprintf('stimIndices(%d): %d\n', sindex, stimIndices(sindex));
+	Stim = stimList(stimIndices(sindex));
 	stimtype = Stim.audio.signal.Type;
 	
 	fprintf('sindex: %d\t rep: %d(%d)\tType: %s\n', sindex, rep, ...
@@ -594,8 +572,6 @@ while ~cancelFlag && (sindex < nTotalTrials)
 	% play the sound and return the response
 	try
 		[rawdata, ~] = iofunc(Sn, acqpts, indev, outdev, zBUS);
-		% get the spike response
-		[spikes, nspikes] = opto_getspikes(indev); %#ok<ASGLU>
 	catch
 		keyboard
 	end
@@ -607,10 +583,10 @@ while ~cancelFlag && (sindex < nTotalTrials)
 		% demultiplex the returned vector and store the response
 		% mcDeMux returns an array that is [nChannels, nPoints]
 		tmpD = mcFastDeMux(rawdata, channels.nInputChannels);
-		resp{pIndx} = tmpD;
+		resp{stimIndices(sindex)} = tmpD;
 		recdata = tmpD(:, channels.RecordChannelList);
 	else
-		resp{pIndx} =  rawdata;
+		resp{stimIndices(sindex)} =  rawdata;
 		recdata = rawdata;
 	end
 
@@ -638,11 +614,8 @@ while ~cancelFlag && (sindex < nTotalTrials)
  	title(aX, tstr, 'Interpreter', 'none');
 							
 	% build data matrix to plot from filtered data
-	% get monitor data from buffer
 	[monresp, ~] = opto_readbuf(indev, 'monIndex', 'monData');
-	% demux input data matrices	
 	[pdata, ~] = mcFastDeMux(monresp, channels.nInputChannels);
-	% assign data to plot
 	for c = 1:channels.nInputChannels
 		if channels.RecordChannels{c}
 			tmpY = pdata(:, c)';
@@ -652,36 +625,11 @@ while ~cancelFlag && (sindex < nTotalTrials)
 		% update plot
 		set(pH(c), 'YData', tmpY + c*yabsmax);
 	end
-	% update plots
-	refreshdata
-	% show detected spikes
-	% compute spike bins
-	spikebins = getSpikebinsFromSpikes(spikes, handles.H.TDT.SnipLen);
-	% assign spiketimes to currentRep within storage cell array
-	SpikeTimes{pIndx}{currentRep(pIndx)} = (1000/indev.Fs) * ...
-																	spikebins; %#ok<AGROW>
-	SpikeTimes{pIndx}{currentRep(pIndx)} = ...
-				[SpikeTimes{pIndx}{currentRep(pIndx)} 100*pIndx]; %#ok<AGROW>
-	% draw new hash marks on sweep plot
-	set(tH,	'XData', ...
-					SpikeTimes{pIndx}{currentRep(pIndx)}, ...
-				'YData', ...
-					zeros(size(SpikeTimes{pIndx}{currentRep(pIndx)})) + ...
- 							handles.H.TDT.channels.MonitorChannel*yabsmax);
-	% update PSTH
-	PSTH.hvals{pIndx} = psth(	SpikeTimes{pIndx}, ...
-										binSize, ...
-										[0 handles.H.TDT.AcqDuration]);
-	bar(pstAxes(pIndx), PSTH.bins, PSTH.hvals{pIndx}, 1);
-% 	% update raster
-% 	rasterplot(		SpikeTimes{pIndx}, ...
-% 						[0 handles.H.TDT.AcqDuration], ...
-% 						'|', ...
-% 						12, ...
-% 						'k', ...
-% 						rstAxes(pIndx)	);
+	drawnow
+
 	% check state of cancel button
 	cancelFlag = read_ui_val(cancelButton);
+
 	% check state of pause button
 	pauseFlag = read_ui_val(pauseButton);
 	while pauseFlag
@@ -690,6 +638,7 @@ while ~cancelFlag && (sindex < nTotalTrials)
 		drawnow;
 	end
 	update_ui_str(pauseButton, 'Pause');
+
 	% pause for the inter-stimulus interval
 	pause(0.001*audio.ISI);
 end %%% End of REPS LOOP
@@ -724,9 +673,35 @@ closeOptoTrialData(datafile, time_end);
 
 %--------------------------------------------------------
 %--------------------------------------------------------
-% finish up
+% setup output data structure
 %--------------------------------------------------------
 %--------------------------------------------------------
-standalone_cleanup
+if ~cancelFlag
+% 	curvedata.depvars = depvars;
+% 	curvedata.depvars_sort = depvars_sort;
+% 	if stimcache.saveStim
+% 		[pathstr, fbase] = fileparts(datafile);
+% 		curvedata.stimfile = fullfile(pathstr, [fbase '_stim.mat']);
+% 	end
+end
+if nargout == 2
+	varargout{1} = resp;
+end
 
+%--------------------------------------------------------
+%--------------------------------------------------------
+% clean up
+%--------------------------------------------------------
+%--------------------------------------------------------
+% close curve panel
+close(PanelHandle)
+% turn off monitor using software trigger 2 sent to indev
+RPtrig(indev, 2);
+
+%--------------------------------------------------------
+%--------------------------------------------------------
+% save cancel flag status in curvedata
+%--------------------------------------------------------
+%--------------------------------------------------------
+curvedata.cancelFlag = cancelFlag;
 	

@@ -237,7 +237,8 @@ function editAudioFmin_Callback(hObject, eventdata, handles)
 				update_ui_str(hObject, handles.H.noise.Fmin);
 			end
 		case 'TONE'
-			if between(val, handles.H.Lim.F(1), handles.H.TDT.outdev.Fs / 2)
+			if between(val, handles.H.Lim.F(1), ...
+										floor(handles.H.TDT.outdev.Fs / 2))
 				handles.H.tone.Frequency = val;
 				update_ui_val(handles.sliderAudioFmin, val);
 				guidata(hObject, handles);
