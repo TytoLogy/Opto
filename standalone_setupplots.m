@@ -6,7 +6,6 @@
 
 disp 'setting up plots'
 
-
 % color for detected spikes
 hashColor = 'c';
 % binsize (ms)
@@ -97,7 +96,8 @@ for p = 1:nPSTH
 		title(	pstAxes(p), ...
 					wname, ...
 					'Interpreter', 'none', ...
-					'FontSize', 10);
+					'FontSize', 9, ...
+					'FontWeight', 'normal');
 	else
 		% WTF!!!???
 		error('WTF?')
