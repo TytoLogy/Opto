@@ -108,6 +108,8 @@ for c = 1:16
 	clist{c} = num2str(c);
 end
 set(handles.popupMonitorChannel, 'String', clist);
+update_ui_val(handles.popupMonitorChannel, ...
+										handles.H.TDT.channels.MonitorChannel);
 
 %----------------------------------------------------------------
 % TDT things
