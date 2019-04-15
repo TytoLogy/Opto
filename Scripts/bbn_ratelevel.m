@@ -10,6 +10,7 @@
 % 		'DUR'				opto stim duration
 % 		'AMP'				opto stim amplitude
 % 						or some combination of these
+% 'WAV+LEVEL'
 %-------------------------------------------------------------------------
 test.Type = 'LEVEL';
 test.Name = 'BBN';

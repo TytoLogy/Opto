@@ -78,6 +78,12 @@ if ~isempty(strfind(test.Type, 'OPTO'))
 else
 	nOptoAmp = 0;
 end
+% # of wavs?
+if ~isempty(strfind(test.Name, 'WAV'))
+	nWavs = length(audio.signal.WavesToPlay);
+else
+	nWavs = 0;
+end
 
 % store number of combinations in ntrials
 % # of trials == # of stim values (ITDs, ILDs, # freqs, etc.)
@@ -86,6 +92,8 @@ if isempty(strfind(test.Type, 'FREQ+LEVEL'))
 	c.ntrials = nLevels + nOptoAmp + nFreqs;
 elseif strfind(test.Type, 'FREQ+LEVEL')
 	c.ntrials = nLevels * nFreqs;
+elseif strfind(test.Type, 'WAV+LEVEL')
+	c.ntrials = nLevels * nWavs;
 else
 	error('%s: setting ntrials, unknown test Type %s', ...
 													mfilename, test.Type);
@@ -197,9 +205,13 @@ switch c.curvetype
 	% vary opto duration, auditory stim is fixed
 	case 'OPTO-DUR'
 	
-	% other opto motdes
+	% other opto modes
 	case {'OPTO', 'OPTO-DELAY', 'OPTO-AMP'}
 	
+	% wav
+	case {'WAV', 'WAV+LEVEL'}
+		c.wavinfo = process_wav_info(audio);
+		
 	otherwise
 		error([mfilename ': unsupported curvetype ' c.curvetype])
 end		
@@ -215,10 +227,7 @@ elseif isfield(test, 'Block')
 	end
 else
 	% play each trial in sequence for nreps times
-	c.trialRandomSequence = zeros(c.nreps, c.ntrials);
-	for m = 1:c.nreps
-		c.trialRandomSequence (m, :) = 1:c.ntrials;
-	end
+	c.trialRandomSequence = sequentialSequence(c.nreps, c.ntrials);
 end
 % assign to output variable
 if nargout > 1
