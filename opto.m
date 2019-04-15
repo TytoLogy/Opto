@@ -856,27 +856,32 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	if strcmpi(test.Type, 'STANDALONE')
 		% run test.Function (function handle in test struct)
 		testout = test.Function(handles, datafile);
+		% get returned test data (settings for test) and resp data (spikes)
 		testdata = testout{1}; %#ok<NASGU>
 		respdata = testout{2}; %#ok<NASGU>
 		handles = testout{3};
+		% save to .mat file
 		save(fullfile(pname, [basename '_testdata.mat']), ...
 									'testdata', 'respdata', '-MAT');
 		guidata(hObject, handles);
 		
 	else
-		% not standalone, so build cache
+		% not standalone, so build cache using test settings, TDT hardware
+		% information, calibration data
 		[stimcache, stimseq] = opto_buildStimCache(test, handles.H.TDT, ...
 																handles.H.caldata);
+		% save stimulus cache and stimulus sequence in H struct
 		handles.H.stimcache = stimcache;
 		handles.H.stimseq = stimseq;
 		guidata(hObject, handles);
+		% save to stims.mat for debugging
 		save stims.mat stimcache stimseq
 		% add stimseq to test struct (kludgey...)
 		test.stimseq = stimseq;
-	
 		% Play stimuli in cache, record neural data
 		testdata = opto_playCache(handles, datafile, ...
 												stimcache, test); %#ok<NASGU>
+		% save to .mat file
 		save(fullfile(pname, [basename '_testdata.mat']), ...
 									'testdata', '-MAT');
 	end

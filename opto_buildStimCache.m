@@ -31,12 +31,14 @@ function [c, stimseq] = opto_buildStimCache(test, tdt, caldata)
 %	8 Jun, 2017 (SJS): fixed issue with incorrect rep, trial in block 
 %								sequence mode
 %	8 Jan 2017 (SJS): working on FRA
+%	15 Apr 2019 (SJS): beginning work on WAV, incl. randomization checks
 %--------------------------------------------------------------------------
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % some setup and initialization
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % pull out individual elements of test struct for the sake of clarity
+%	audio = settings relevant to audio
 audio = test.audio;
 opto = test.opto;
 signal = test.audio.signal;
@@ -53,6 +55,9 @@ c.nreps = test.Reps;
 % save stimulus?
 c.saveStim = test.saveStim;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% determine number of unique stimulus combinations
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % figure out number of different audio stimulus levels
 if ~isempty(strfind(test.Type, 'LEVEL'))
 	nLevels = length(audio.Level);
@@ -67,12 +72,14 @@ elseif strcmp(signal.Type, 'tone')
 else
 	nFreqs = 0;
 end
-% check for OPTO tag
+% check for OPTO tag and determine number of opto levels
 if ~isempty(strfind(test.Type, 'OPTO'))
 	nOptoAmp = length(opto.Amp);
 else
 	nOptoAmp = 0;
 end
+
+% store number of combinations in ntrials
 % # of trials == # of stim values (ITDs, ILDs, # freqs, etc.)
 if isempty(strfind(test.Type, 'FREQ+LEVEL'))
 	% for simple (non-FRA) tests, ntrials will be sum of different levels
@@ -126,7 +133,9 @@ else
 	end
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % allocate some arrays for storage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c.Sn = cell(c.nstims, 1);
 c.splval = cell(c.nstims, 1);
 c.rmsval = cell(c.nstims, 1);
@@ -185,8 +194,10 @@ switch c.curvetype
 				return
 		end
 	
+	% vary opto duration, auditory stim is fixed
 	case 'OPTO-DUR'
-		
+	
+	% other opto motdes
 	case {'OPTO', 'OPTO-DELAY', 'OPTO-AMP'}
 	
 	otherwise

@@ -1,7 +1,7 @@
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% test_stimllistgen
-%	tests buildStimCache and buildStimIndices
+% test_stimcachebuild
+%	tests opto_buildStimCache
 %	rev. 15 Apr, 2019 (SJS)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -48,7 +48,7 @@ audio.Frozen = 0;
 % Presentation settings
 %------------------------------------
 Reps = 2;
-Randomize = 0;
+Randomize = 1;
 Block = 1;
 audio.ISI = 1000;
 
@@ -64,13 +64,43 @@ saveStim = 0;
 AcqDuration = 1000;
 SweepPeriod = 1001;
 
+%------------------------------------
+% TDT settings
+%------------------------------------
+outdev.Fs = 200000;
+%----------------------------------------------------------------
+% Calibration data
+%----------------------------------------------------------------
+if ispc
+	calpath = '..\CalData';
+else
+	calpath = '../CalData';
+end
+% calfile = 'Optorig_20170601_TDT3981_4k90k_5V_cal.mat';
+calfile = 'Optorig_20171022_TDT3981_4k-91k_5V_cal.mat';
+if ~exist(fullfile(calpath, calfile), 'file')
+	warning('Calibration file %s not found!', fullfile(calpath, calfile));
+	fprintf('\nUsing fake cal data\n');
+	caldata = fake_caldata('Fs', outdev.Fs, 'calshape', 'flat', ...
+														'freqs', 4000:1000:200000, ...
+														'DAscale', 5);
+else
+	% load the calibration data
+	caldata = load_cal(fullfile(calpath, calfile));
+end
 
-
-
-
-
-
-
+%-------------------------------------------------------------------------
+% assign values to required structs
+%-------------------------------------------------------------------------
+test = struct(	'audio',audio, ...
+					'opto', opto, ...
+					'Reps', Reps, ...
+					'Randomize', Randomize, ...
+					'Block', Block, ...
+					'saveStim', saveStim, ...
+					'Type', 'LEVEL', ...
+					'Name', 'BBN');
+tdt = struct('outdev', outdev);
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -99,6 +129,14 @@ for oindex = 1:numel(optovar)
 	end
 end
 
+
+%% test build cache
+
+[C, S] = opto_buildStimCache(test, tdt, caldata)
+
+
+%% other stuff
+%{
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % randomize in blocks (if necessary) by creating a randomized list of 
@@ -123,4 +161,4 @@ else
 end
 
 [S, R] = buildStimIndices(nCombinations*Reps, nCombinations, Reps, Randomize, Block);
-
+%}
