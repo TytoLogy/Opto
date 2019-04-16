@@ -204,10 +204,7 @@ elseif isfield(test, 'Block')
 	end
 else
 	% play each trial in sequence for nreps times
-	c.trialRandomSequence = zeros(c.nreps, c.ntrials);
-	for m = 1:c.nreps
-		c.trialRandomSequence (m, :) = 1:c.ntrials;
-	end
+	c.trialRandomSequence = sequentialSequence(c.nreps, c.ntrials);
 end
 % assign to output variable
 if nargout > 1
