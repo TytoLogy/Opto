@@ -37,7 +37,7 @@ test.audio.Duration = 100;
 test.audio.Level = 0:10:80;
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
-test.audio.ISI = 100;
+test.audio.ISI = 150;
 
 test.Reps = 10;
 test.Randomize = 1;
