@@ -22,6 +22,7 @@ function out = findWavOnsetOffset(wav, Fs, varargin)
 %	'Method'				threshold detect method
 % 								'drmsdt'		use slope of RMS (default)
 % 								'rms'			use RMS
+%	'Axis'				use defined axis handle for plot
 %
 % Output Arguments:
 %	 [onset offset] bins in 1X2 vector
@@ -37,6 +38,7 @@ function out = findWavOnsetOffset(wav, Fs, varargin)
 % Created:	4 April, 2017 (SJS)
 %
 % Revision History:
+%	18 Apr 2019 (SJS): added Axis input
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
@@ -49,6 +51,7 @@ function out = findWavOnsetOffset(wav, Fs, varargin)
 	threshold = 0.1;
 	wavname = '';
 	method = 'drmsdt';
+	axH = [];
 	
 	valid_methods = {'drmsdt', 'rms'};
 	
@@ -90,6 +93,14 @@ function out = findWavOnsetOffset(wav, Fs, varargin)
 						method = tmp;
 					end
 					aindex = aindex + 2;
+					
+				case 'AXIS'
+					if ~ishandle(varargin{aindex+1})
+						error('%s: not valid axis handle', mfilename);
+					else
+						axH = varargin{aindex+1};
+					end
+					aindex = aindex + 2;
 
 				otherwise
 					error('%s: Unknown option %s', mfilename, varargin{aindex});
@@ -97,17 +108,24 @@ function out = findWavOnsetOffset(wav, Fs, varargin)
 		end
 	end
 
+	% if axH ius empty, use current axes or use current
+	if isempty(axH)
+		axH = gca;
+	end
+	
 	%------------------------------------------------------------------------
 	% find onset
 	%------------------------------------------------------------------------
 	if strcmpi(method, 'rms')
 		onset = rms_onset(wav, Fs, userconfirm, rmswin_ms, meanwin, ...
 																		threshold, ...
-																		['ONSET:' wavname]);
+																		['ONSET:' wavname], ...
+																		axH);
 	else
 		onset = drmsdt_onset(wav, Fs, userconfirm, rmswin_ms, meanwin, ...
 																		threshold, ...
-																		['ONSET:' wavname]);		
+																		['ONSET:' wavname], ...
+																		axH);		
 	end
 	
 	%------------------------------------------------------------------------
@@ -139,10 +157,16 @@ end	% END of findWavOnset
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 function out = rms_onset(wav, Fs, userconfirm, rmswin_ms, ...
-														meanwin, threshold, ptitle)
+														meanwin, threshold, ptitle, varargin)
 %--------------------------------------------------------------------------
+	% select axes or figure in which to draw
+	if ~isempty(varargin)
+		axes(varargin{1});
+	else
+		figure(314);
+	end
+	
 	% plot signal in blue
-	figure(314);
 	dt = (1/Fs);
 	t_wav = 1000 * dt * ( 0:(length(wav) - 1) );
 	plot(t_wav, wav, 'b.');
@@ -238,10 +262,16 @@ end
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 function out = drmsdt_onset(wav, Fs, userconfirm, rmswin_ms, ...
-														meanwin, threshold, ptitle)
+														meanwin, threshold, ptitle, varargin)
 %--------------------------------------------------------------------------
+	% select axes or figure in which to draw
+	if ~isempty(varargin)
+		axes(varargin{1});
+	else
+		figure(314);
+	end
+
 	% plot signal in blue
-	figure(314);
 	dt = (1/Fs);
 	t_wav = 1000 * dt * ( 0:(length(wav) - 1) );
 	plot(t_wav, wav, 'b.');
