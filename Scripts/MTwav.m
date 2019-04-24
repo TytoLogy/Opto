@@ -265,7 +265,7 @@ standalone_write_wavinfomatfile;
 % Set up figure for plotting incoming data
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-standalone_setupplots;
+standalone_wav_setupplots;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -451,6 +451,7 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 		% get the spike response
 		[spikes, nspikes] = opto_getspikes(indev); %#ok<ASGLU>
 	catch
+		disp('%s: trapped error in stimulus IO', mfilename);
 		keyboard
 	end
 	
