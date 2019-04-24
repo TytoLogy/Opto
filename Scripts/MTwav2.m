@@ -1,4 +1,4 @@
-function outdata = MTwav(handles, datafile)
+function outdata = MTwav2(handles, datafile)
 %--------------------------------------------------------------------------
 % outdata = wav_optoOFF(handles, datafile)
 %--------------------------------------------------------------------------
@@ -89,6 +89,9 @@ caldata = handles.H.caldata;
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Experiment settings
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% %%% EDIT THESE TO CHANGE EXPERIMENTAL PARAMETERS (reps, ISI, etc.) %%%%
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 %-------------------------------------------------------------------------
 %----------------------------------------------------------
 % Presentation settings - ISI, # reps, randomize, etc.
@@ -102,6 +105,10 @@ audio.ISI = 200;
 %------------------------------------
 % save output stimuli? (0 = no, 1 = yes)
 test.saveStim = 0;
+% stimulus levels to test
+test.Level = [40 60 80];
+% use null stim?
+test.NullStim = 1;
 %------------------------------------
 % acquisition/sweep settings
 % will have to be adjusted to deal with wav file durations
@@ -176,6 +183,7 @@ null.Level = 0;
 %------------------------------------
 % WAV
 %------------------------------------
+% names of wav files to use as stimuli
 WavesToPlay = {	'1-stepUSVwithNLs_adj.wav', ...
 						'2-stepUSV_adj.wav', ...
 						'chevron_adj.wav', ...
@@ -192,7 +200,9 @@ nWavs = length(WavesToPlay);
 % and scaling factors (to achieve desired amplitude)
 % % % temporarily use 1 as scaling factor - fix after calibration!!!
 WavScaleFactors = ones(nWavs, 1);
-% level achieved at given scale factor
+
+% max level achievable at given scale factor 
+% (determined using FlatWav program)
 WavLevelAtScale = [	90.4, ...
 							91.75, ...
 							90.74, ...
@@ -223,9 +233,11 @@ WavLevelAtScale = [	90.4, ...
 % 						];
 
 audio.signal.Type = 'wav';
-audio.signal.WavPath = 'C:\TytoLogy\Experiments\Wavs';
+audio.signal.WavPath = 'C:\TytoLogy\Experiments\WAVs';
+
 %------------------------------------
-% wav properties
+% wav properties - use to build database of properties stored in wavInfo
+% struct
 %------------------------------------
 % select only waves in list
 % get information about stimuli
@@ -274,6 +286,10 @@ optovar = opto.Amp;
 audiowavvar = audio.signal.WavFile;
 % total # of varied variables (increase # of audio vars by 2
 % to account for additional noise and null stimuli)
+nOptoStim = numel(optovar);
+nAudioLevels = numel(test.Level);
+nAudioStim = numel(audiowavvar) + nNullStim;
+
 nCombinations = numel(optovar) * (numel(audiowavvar) + 2);
 % # of total trials;
 nTotalTrials = nCombinations * test.Reps;
