@@ -1,6 +1,6 @@
-function outdata = MTwav2(handles, datafile)
+function outdata = MTwav(handles, datafile)
 %--------------------------------------------------------------------------
-% outdata = wav_optoOFF(handles, datafile)
+% outdata = MTwav(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -39,11 +39,9 @@ function outdata = MTwav2(handles, datafile)
 %	12 Jun 2017 (SJS): pulled off common elements into separate subscripts
 %	13 Jun 2017 (SJS): working on separate psths for each stimulus 
 %	28 Mar, 2019 (SJS): created for use with M. Tehrani's vocal stimuli
+%	24 Apr, 2019 (SJS): reworking and testing.
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
-
-disp 'running wav_optoOFF!'
-curvetype = 'Wav+OptoOFF';
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -90,141 +88,30 @@ caldata = handles.H.caldata;
 %-------------------------------------------------------------------------
 % Experiment settings
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% %%% EDIT THESE TO CHANGE EXPERIMENTAL PARAMETERS (reps, ISI, etc.) %%%%
+% %%% EDIT MTwav_settings TO CHANGE EXPERIMENTAL 
+% PARAMETERS (reps, ISI, etc.) %%%%
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 %-------------------------------------------------------------------------
-%----------------------------------------------------------
-% Presentation settings - ISI, # reps, randomize, etc.
-%----------------------------------------------------------
-test.Reps = 10;
-test.Randomize = 0;
-test.Block = 1;
-audio.ISI = 200;
-%------------------------------------
-% Experiment settings
-%------------------------------------
-% save output stimuli? (0 = no, 1 = yes)
-test.saveStim = 0;
-% stimulus levels to test
-test.Level = [40 60 80];
-% use null stim?
-test.NullStim = 1;
-% use Noist stim?
-test.NoiseStim = 1;
-%------------------------------------
-% acquisition/sweep settings
-% will have to be adjusted to deal with wav file durations
-%------------------------------------
-test.AcqDuration = 500;
-test.SweepPeriod = test.AcqDuration + 5;
+run('Scripts\MTwav_settings')
+
+if opto.Enable
+	disp 'running wav_optoOFF!'
+	curvetype = 'Wav+OptoOFF';
+else
+	disp 'running wav_optoON!'
+	curvetype = 'Wav+OptoON';	
+end
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% define stimulus (optical, audio) structs
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-%------------------------------------
-% OPTICAL settings
-%	Enable	0 -> optical stim OFF, 1 -> optical stim ON
-%	Delay		onset of optical stim from start of sweep (ms)
-% 	Dur		duration (ms) of optical stimulus
-% 	Amp		amplitude (mV) of optical stim
-% 					*** IMPORTANT NOTE ***
-% 					This method of amplitude control will only work with the 
-% 					Thor Labs fiber-coupled LED driver.
-% 					For the Shanghai Dream Laser, output level can only be 
-% 					controlled using the rotary potentiometer on the Laser power
-% 					supply. If using the Shanghai Dream Laser for stimulation,
-% 					set Amp to 5000 millivolts (5 V)
-% 
-% 	To test a range of values (for Delay, Dur, Amp), use a vector of values
-% 	instead of a single number (e.g., [20 40 60] or 20:20:60)
-%------------------------------------
-% opto.Enable = 1;
-% opto.Delay = 100;
-% opto.Dur = 100;
-% opto.Amp = 250;
-opto.Enable = 0;
-opto.Delay = 0;
-opto.Dur = 200;
-opto.Amp = 0;
-%------------------------------------
-% AUDITORY stimulus settings
-%------------------------------------
-%------------------------------------
-% general audio properties
-%------------------------------------
-% Delay 
-audio.Delay = 100;
-% Duration is variable for WAV files - this information
-% will be found in the audio.signal.WavInfo
-% For now, this will be a dummy value
-audio.Duration = 200;
-% Level(s) for wav output
-audio.Level = 80;
-audio.Ramp = 5;
-audio.Frozen = 0;
-%------------------------------------
-% noise signal
-%------------------------------------
-noise.signal.Type = 'noise';
-noise.signal.Fmin = 4000;
-noise.signal.Fmax = 80000;
-noise.Delay = audio.Delay;
-noise.Duration = 100;
-noise.Level = 80;
-noise.Ramp = 5;
-noise.Frozen = 0;
-%------------------------------------
-% null signal
-%------------------------------------
-null.signal.Type = 'null';
-null.Delay = audio.Delay;
-null.Duration = noise.Duration;
-null.Level = 0;
-%------------------------------------
-% WAV
-%------------------------------------
-audio.signal.Type = 'wav';
-audio.signal.WavPath = 'C:\TytoLogy\Experiments\WAVs';
-% names of wav files to use as stimuli
-WavesToPlay = {	'1-stepUSVwithNLs_adj.wav', ...
-						'2-stepUSV_adj.wav', ...
-						'chevron_adj.wav', ...
-						'chevronwithNLs_adj.wav', ...
-						'flat_adj.wav', ...
-						'LFH_adj.wav', ...
-						'MFV_harmonic_normalized_adj.wav', ...
-						'MFV_NL_filtered_normalized_adj.wav', ...
-						'MFV_tonal_normalized_adj.wav', ...
-						'noisy_adj.wav', ...
-					};
-nWavs = length(WavesToPlay);
-
-% and scaling factors (to achieve desired amplitude)
-% % % temporarily use 1 as scaling factor - fix after calibration!!!
-WavScaleFactors = ones(nWavs, 1);
-
-% max level achievable at given scale factor 
-% (determined using FlatWav program)
-WavLevelAtScale = [	90.4, ...
-							91.75, ...
-							90.74, ...
-							94.53, ...
-							90.04, ...
-							99.62, ...
-							102.2, ...
-							95.61, ...
-							102.64, ...
-							91.18, ...
-						];
-
 % construct wavInfo struct "database" for desired wav stimuli
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 [wavInfo, audio.signal.WavFile] = opto_create_wav_stimulus_info( ...
 														audio.signal.WavPath, ...
 														WavesToPlay, ...
 														WavScaleFactors, ...
-														WavLevelAtScale);
+														WavLevelAtScale); %#ok<NODEF>
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -232,7 +119,7 @@ WavLevelAtScale = [	90.4, ...
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 
-[stimList, counts] = opto_build_stimList(test, audio, opto, noise, null);
+[stimList, counts] = opto_build_stimList(test, audio, opto, noise, nullstim); %#ok<NODEF>
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -279,7 +166,7 @@ end	% END if test.Randomize
 %-------------------------------------------------------------------------
 % check durations of wav stimuli
 % first, create a vector stimulus durations
-[tmp{1:numel(audiowavvar)}] = deal(wavInfo.Duration);
+[tmp{1:numel(audio.signal.WavFile)}] = deal(wavInfo.Duration);
 durations = cell2mat(tmp);
 clear tmp;
 maxDur = max(1000*durations);
@@ -421,7 +308,7 @@ end
 % index to stimuli
 sindex = 0;
 % loop until done or cancel button is pressed
-while ~cancelFlag && (sindex < nTotalTrials)
+while ~cancelFlag && (sindex < counts.nTotalTrials)
 	%--------------------------------------------------
 	% increment counter (was initialized to 0)
 	%--------------------------------------------------
@@ -441,7 +328,7 @@ while ~cancelFlag && (sindex < nTotalTrials)
 	% get current stimulus settings from stimList,using stimIndices to 
 	% index into stimList
 	%--------------------------------------------------
-	fprintf('sindex: %d (%d)\n', sindex, nTotalTrials);
+	fprintf('sindex: %d (%d)\n', sindex, counts.nTotalTrials);
 	fprintf('stimIndices(%d): %d\n', sindex, pIndx);
 	Stim = stimList(pIndx);
 	stimtype = Stim.audio.signal.Type;
@@ -486,7 +373,7 @@ while ~cancelFlag && (sindex < nTotalTrials)
 			% no audio stimulus
 			Sn = syn_null(Stim.audio.Duration, outdev.Fs, 0);
 			% dummy rms val
-			rmsval = 0;
+			rmsval = 0; %#ok<NASGU>
 			% max atten for null stim
 			atten = 120;
 

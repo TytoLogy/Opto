@@ -1,5 +1,5 @@
 function [stimList, varargout] = opto_build_stimList(test, audio, opto, ...
-																			noise, null)
+																			noise, nullstim)
 %--------------------------------------------------------------------------
 % [stimList, counts] = opto_build_stimList(test, audio, opto)
 %--------------------------------------------------------------------------
@@ -101,7 +101,7 @@ if nNullStim
 		sindex = sindex + 1;
 		stimList(sindex).opto.Amp = optovar(oindex);
 		% assign null to audio stim
-		stimList(sindex).audio = null;
+		stimList(sindex).audio = nullstim;
 	end
 end
 
