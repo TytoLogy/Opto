@@ -401,26 +401,37 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 			% use wavindex for psth id
 			% see standalone_wav_settupplots.m script
 			pIndx = wavindex;
-			
-			% will need to apply a correction factor to OptoDelay
-			% due to variability in in the wav stimulus onset
+
+%-----------------------------------------------------------
+% 4/24/2019 (SJS):
+%-----------------------------------------------------------
+% removing this correction to delay now that wav files
+% have uniform onset delay
+%-----------------------------------------------------------
+% 			% will need to apply a correction factor to OptoDelay
+% 			% due to variability in in the wav stimulus onset
 % 			optoDelayCorr = ms2bin( bin2ms( wavInfo(wavindex).OnsetBin, ...
 % 								                 outdev.Fs ), ...
 % 										   indev.Fs);
 %  			optoDelayCorr = 0;
+% 
+% 			% will need to apply a correction factor to OptoDelay
+% 			% due to variability in in the wav stimulus onset
+% 			% compute correction based on outdev.Fs
+% 			optoDelayCorr = wavInfo(wavindex).OnsetBin;
+% 			correctedDelay = ms2bin(Stim.audio.Delay, outFs) - optoDelayCorr;
+% 			if correctedDelay < 0
+% 				warning('%s: correctedDelay < 0! Using 0 as min value', ...
+% 								mfilename);
+% 				correctedDelay = 0;
+% 			end
+% 			correctedDelay = ms2bin(Stim.audio.Delay, outFs) - optoDelayCorr;
+% 			% update the Stimulus Delay
+% 			RPsettag(outdev, 'StimDelay', correctedDelay);
+%-----------------------------------------------------------
 
-			% will need to apply a correction factor to OptoDelay
-			% due to variability in in the wav stimulus onset
-			% compute correction based on outdev.Fs
-			optoDelayCorr = wavInfo(wavindex).OnsetBin;
-			correctedDelay = ms2bin(Stim.audio.Delay, outFs) - optoDelayCorr;
-			if correctedDelay < 0
-				warning('%s: correctedDelay < 0! Using 0 as min value', ...
-								mfilename);
-				correctedDelay = 0;
-			end
 			% update the Stimulus Delay
-			RPsettag(outdev, 'StimDelay', correctedDelay);
+			RPsettag(outdev, 'StimDelay', ms2bin(Stim.audio.Delay, outFs));
 			
 		otherwise
 			fprintf('unknown type %s\n', stimtype);
