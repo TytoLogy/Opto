@@ -7,11 +7,14 @@
 %-------------------------------------------------------------------------
 %----------------------------------------------------------
 % Presentation settings - ISI, # reps, randomize, etc.
+%	Note that Randomize in this context will mean a 
+%	blocked randomization, e.g., random sequence of each stimulus
+%	without repeats for 1 rep, then another, then .... etc.
 %----------------------------------------------------------
 test.Reps = 10;
-test.Randomize = 0;
-test.Block = 1;
-audio.ISI = 200;
+test.Randomize = 1;
+test.Block = 0;
+audio.ISI = 100;
 %------------------------------------
 % Experiment settings
 %------------------------------------
@@ -27,7 +30,7 @@ test.NoiseStim = 1;
 % acquisition/sweep settings
 % will have to be adjusted to deal with wav file durations
 %------------------------------------
-test.AcqDuration = 500;
+test.AcqDuration = 400;
 test.SweepPeriod = test.AcqDuration + 5;
 
 %-------------------------------------------------------------------------

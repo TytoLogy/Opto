@@ -95,11 +95,11 @@ caldata = handles.H.caldata;
 run('Scripts\MTwav_settings')
 
 if opto.Enable
-	disp 'running wav_optoOFF!'
-	curvetype = 'Wav+OptoOFF';
-else
 	disp 'running wav_optoON!'
 	curvetype = 'Wav+OptoON';	
+else
+	disp 'running wav_optoOFF!'
+	curvetype = 'Wav+OptoOFF';
 end
 
 %-------------------------------------------------------------------------
@@ -305,7 +305,7 @@ end
 % loop through stims
 %-------------------------------------------------------
 %-------------------------------------------------------
-% index to stimuli
+% while loop index for stimIndices (stimulus sequence)
 sindex = 0;
 % loop until done or cancel button is pressed
 while ~cancelFlag && (sindex < counts.nTotalTrials)
@@ -314,41 +314,50 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 	%--------------------------------------------------
 	sindex = sindex + 1;
 	%--------------------------------------------------
-	% psth and stimulus index
+	% index into stimList stored in (possibly) randomized stimulus sequence
 	%--------------------------------------------------
-	pIndx = stimIndices(sindex);
+	cIndx = stimIndices(sindex);
 	%--------------------------------------------------
 	% rep #s
 	%--------------------------------------------------
 	% get current rep;
 	rep = repList(sindex);
-	% increment current index
-	currentRep(pIndx) = currentRep(pIndx) + 1; %#ok<AGROW>
 	%--------------------------------------------------
 	% get current stimulus settings from stimList,using stimIndices to 
 	% index into stimList
 	%--------------------------------------------------
-	fprintf('sindex: %d (%d)\n', sindex, counts.nTotalTrials);
-	fprintf('stimIndices(%d): %d\n', sindex, pIndx);
-	Stim = stimList(pIndx);
+	Stim = stimList(cIndx);
 	stimtype = Stim.audio.signal.Type;
-	
-	fprintf('sindex: %d\t rep: %d(%d)\tType: %s\n', sindex, rep, ...
-						test.Reps, stimtype);
+	fprintf('sindex: %d(%d)\t rep: %d(%d)\tType: %s\n', ...
+		counts.nTotalTrials, sindex, rep, test.Reps, stimtype);
+	fprintf('stimIndices(%d): %d\n', sindex, cIndx);
 	fprintf('\taudio:\tDelay:%d\tLevel:%d', ...
 			Stim.audio.Delay, Stim.audio.Level)
 	if strcmpi(stimtype, 'wav')
 		fprintf('\t%s\n', Stim.audio.signal.WavFile);
 	else
-		fprintf('\n');
+		fprintf('\t%s\n', Stim.audio.signal.Type);
 	end
 	fprintf('\topto:\tEnable:%d\tDelay:%d\tDur:%d\tAmp:%d\n', ...
 			Stim.opto.Enable, Stim.opto.Delay, Stim.opto.Dur, Stim.opto.Amp)
 
 	%--------------------------------------------------
-	% set audio stimulus based on type
+	% set audio stimulus based on type and get index into 
+	% array of plots/psths
 	%--------------------------------------------------
 	switch(upper(stimtype))
+		
+		case 'NULL'
+			% no audio stimulus
+			Sn = syn_null(Stim.audio.Duration, outdev.Fs, 0);
+			% dummy rms val
+			rmsval = 0; %#ok<NASGU>
+			% max atten for null stim
+			atten = 120;
+			% null stimuli will be in psth after the wav psths
+			% see standalone_wav_settupplots.m script
+			pIndx = counts.nWavStim + 1;
+			
 		case 'NOISE'
 			% noise, bandwidth determined by signal.Fmin,Fmax
 			if ~Stim.audio.Frozen
@@ -368,14 +377,9 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 			end
 			% get the attenuator settings for the desired SPL
 			atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
-			
-		case 'NULL'
-			% no audio stimulus
-			Sn = syn_null(Stim.audio.Duration, outdev.Fs, 0);
-			% dummy rms val
-			rmsval = 0; %#ok<NASGU>
-			% max atten for null stim
-			atten = 120;
+			% noise stimuli will be 2 psth after the wav psths
+			% see standalone_wav_settupplots.m script
+			pIndx = counts.nWavStim + 2;
 
 		case 'WAV'
 			% wav file.  locate waveform in wavS0{} cell array by
@@ -393,6 +397,10 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 			% determine attenuation value by subtracting desired level from
 			% WavLevelAtScale
 			atten = wavInfo(wavindex).WavLevelAtScale - Stim.audio.Level;
+
+			% use wavindex for psth id
+			% see standalone_wav_settupplots.m script
+			pIndx = wavindex;
 			
 			% will need to apply a correction factor to OptoDelay
 			% due to variability in in the wav stimulus onset
@@ -418,7 +426,7 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 			fprintf('unknown type %s\n', stimtype);
 			keyboard
 	end
-	
+		
 	% need to add dummy channel to Sn since iofunction needs stereo signal
 	Sn = [Sn; zeros(size(Sn))]; %#ok<AGROW>
 	
@@ -462,10 +470,10 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 		% demultiplex the returned vector and store the response
 		% mcDeMux returns an array that is [nChannels, nPoints]
 		tmpD = mcFastDeMux(rawdata, channels.nInputChannels);
-		resp{pIndx} = tmpD;
+		resp{cIndx} = tmpD;
 		recdata = tmpD(:, channels.RecordChannelList);
 	else
-		resp{pIndx} =  rawdata;
+		resp{cIndx} =  rawdata;
 		recdata = rawdata;
 	end
 
@@ -517,8 +525,8 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 																	spikebins; %#ok<AGROW>
 %----
 % what is this for????
-% 	SpikeTimes{pIndx}{currentRep(pIndx)} = ...
-% 				[SpikeTimes{pIndx}{currentRep(pIndx)} 100*pIndx]; %#ok<AGROW>
+% 	SpikeTimes{cIndx}{currentRep(cIndx)} = ...
+% 				[SpikeTimes{cIndx}{currentRep(cIndx)} 100*cIndx]; %#ok<AGROW>
 %-----
 	% draw new hash marks on sweep plot
 	set(tH,	'XData', ...
@@ -527,7 +535,7 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 					zeros(size(SpikeTimes{pIndx}{currentRep(pIndx)})) + ...
  							handles.H.TDT.channels.MonitorChannel*yabsmax);
 	% update PSTH
-% 	PSTH.hvals{pIndx} = psth(	SpikeTimes{pIndx}, ...
+% 	PSTH.hvals{cIndx} = psth(	SpikeTimes{cIndx}, ...
 % 										binSize, ...
 % 										[0 handles.H.TDT.AcqDuration]);
 	PSTH.hvals{pIndx} = psth(	SpikeTimes{pIndx}, ...
@@ -535,13 +543,17 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 										[0 test.AcqDuration]);
 	bar(pstAxes(pIndx), PSTH.bins, PSTH.hvals{pIndx}, 1);
 % 	% update raster
-% 	rasterplot(		SpikeTimes{pIndx}, ...
+% 	rasterplot(		SpikeTimes{cIndx}, ...
 % 						[0 handles.H.TDT.AcqDuration], ...
 % 						'|', ...
 % 						12, ...
 % 						'k', ...
-% 						rstAxes(pIndx)	);
+% 						rstAxes(cIndx)	);
 	% check state of cancel button
+
+	% increment current index
+	currentRep(pIndx) = currentRep(pIndx) + 1; %#ok<AGROW>
+	
 	cancelFlag = read_ui_val(cancelButton);
 	% check state of pause button
 	pauseFlag = read_ui_val(pauseButton);
