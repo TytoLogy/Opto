@@ -19,7 +19,7 @@ test.Name = 'BBN';
 % OPTICAL settings
 %-------------------------------------------------------------------------
 test.opto.Enable = 0;
-test.opto.Delay = 75;
+test.opto.Delay = 50;
 test.opto.Dur = 100;
 test.opto.Amp = 3000;
 %-------------------------------------------------------------------------
