@@ -1,4 +1,4 @@
-function outdata = MTwav2(handles, datafile)
+function outdata = MTwav(handles, datafile)
 %--------------------------------------------------------------------------
 % outdata = wav_optoOFF(handles, datafile)
 %--------------------------------------------------------------------------
@@ -89,26 +89,19 @@ caldata = handles.H.caldata;
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Experiment settings
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% %%% EDIT THESE TO CHANGE EXPERIMENTAL PARAMETERS (reps, ISI, etc.) %%%%
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 %-------------------------------------------------------------------------
 %----------------------------------------------------------
 % Presentation settings - ISI, # reps, randomize, etc.
 %----------------------------------------------------------
 test.Reps = 10;
-test.Randomize = 0;
-test.Block = 1;
+test.Randomize = 1;
+test.Block = 0;
 audio.ISI = 200;
 %------------------------------------
 % Experiment settings
 %------------------------------------
 % save output stimuli? (0 = no, 1 = yes)
 test.saveStim = 0;
-% stimulus levels to test
-test.Level = [40 60 80];
-% use null stim?
-test.NullStim = 1;
 %------------------------------------
 % acquisition/sweep settings
 % will have to be adjusted to deal with wav file durations
@@ -158,7 +151,6 @@ audio.Delay = 100;
 % will be found in the audio.signal.WavInfo
 % For now, this will be a dummy value
 audio.Duration = 200;
-% Level(s) for wav output
 audio.Level = 80;
 audio.Ramp = 5;
 audio.Frozen = 0;
@@ -183,55 +175,115 @@ null.Level = 0;
 %------------------------------------
 % WAV
 %------------------------------------
-audio.signal.Type = 'wav';
-audio.signal.WavPath = 'C:\TytoLogy\Experiments\WAVs';
-% names of wav files to use as stimuli
-WavesToPlay = {	'1-stepUSVwithNLs_adj.wav', ...
-						'2-stepUSV_adj.wav', ...
-						'chevron_adj.wav', ...
-						'chevronwithNLs_adj.wav', ...
-						'flat_adj.wav', ...
-						'LFH_adj.wav', ...
-						'MFV_harmonic_normalized_adj.wav', ...
-						'MFV_NL_filtered_normalized_adj.wav', ...
-						'MFV_tonal_normalized_adj.wav', ...
-						'noisy_adj.wav', ...
+WavesToPlay = {	'MFV_NL_filtered_normalized.wav', ...
+						'MFV_harmonic_normalized.wav', ...
+						'MFV_tonal_normalized.wav', ...
+						'chevron_nl_USV.wav', ...
+						'matingcontext_LFHUSV_3.wav', ...
+						'matingcontext_LFHUSV_7.wav', ...
+						'matingcontext_LFHUSV_8.wav', ...
+						'matingcontext_USV_1.wav', ...
+						'matingcontext_USV_2.wav', ...
 					};
 nWavs = length(WavesToPlay);
-
 % and scaling factors (to achieve desired amplitude)
 % % % temporarily use 1 as scaling factor - fix after calibration!!!
 WavScaleFactors = ones(nWavs, 1);
+% orig from calibration
+% WavScaleFactors = [	2.5, ... 
+% 							1, ...
+% 							1, ...
+%  							2	...
+% 						];
+% WavScaleFactors = [	1.953, ...
+% 							2.173, ...
+% 							4.436, ...
+% 							1.872, ...
+% 							1.703, ...
+% 							1.292, ...
+% 							2.120, ...
+% 							2.553, ...
+% 							2.765 ...
+% 						];
 
-% max level achievable at given scale factor 
-% (determined using FlatWav program)
-WavLevelAtScale = [	90.4, ...
-							91.75, ...
-							90.74, ...
-							94.53, ...
-							90.04, ...
-							99.62, ...
-							102.2, ...
-							95.61, ...
-							102.64, ...
-							91.18, ...
-						];
-
-% construct wavInfo struct "database" for desired wav stimuli
-[wavInfo, audio.signal.WavFile] = opto_create_wav_stimulus_info( ...
-														audio.signal.WavPath, ...
-														WavesToPlay, ...
-														WavScaleFactors, ...
-														WavLevelAtScale);
+audio.signal.Type = 'wav';
+audio.signal.WavPath = 'C:\TytoLogy\Experiments\Wavs';
+%------------------------------------
+% wav properties
+%------------------------------------
+% select only waves in list
+% get information about stimuli
+AllwavInfo = getWavInfo(fullfile(audio.signal.WavPath, 'wavinfo.mat'));
+% create list of ALL filenames - need to do a bit of housekeeping
+% deal function will pull out all values of the Filename field from
+% the AllwavInfo struct array
+AllwavNames = {};
+[AllwavNames{1:length(AllwavInfo), 1}] = deal(AllwavInfo.Filename);
+% need to strip paths from filenames...
+for w = 1:length(AllwavNames)
+	[~, basename] = fileparts(AllwavNames{w});
+	AllwavNames{w} = [basename '.wav'];
+end
+% and, using filenames, select only wav files in list WavesToPlay
+wavInfo = repmat( AllwavInfo(1), length(WavesToPlay), 1);
+for w = 1:length(WavesToPlay)
+	wavInfo(w) = AllwavInfo(strcmp(WavesToPlay(w), AllwavNames));
+end
+%------------------------------------
+% create list of filenames - need to do a bit of housekeeping
+%------------------------------------
+audio.signal.WavFile = cell(nWavs, 1);
+tmp = {};
+[tmp{1:nWavs, 1}] = deal(wavInfo.Filename);
+% assign wav filenames to wavInfo (if they already have .wav attached, this
+% should not affect things due to use of fileparts function to extract
+% basename from file name in wavInfo)
+for n = 1:nWavs
+	[~, basename] = fileparts(tmp{n});
+	audio.signal.WavFile{n} = [basename '.wav'];
+	% make sure Filename in wavInfo matches
+	wavInfo(n).Filename = audio.signal.WavFile{n};
+	wavInfo(n).ScaleFactor = WavScaleFactors(n);
+end
+clear tmp;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % build list of unique stimuli
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-
-[stimList, counts] = opto_build_stimList(test, audio, opto, noise, null);
-
+% varied variables for opto and audio
+optovar = opto.Amp;
+audiowavvar = audio.signal.WavFile;
+% total # of varied variables (increase # of audio vars by 2
+% to account for additional noise and null stimuli)
+nCombinations = numel(optovar) * (numel(audiowavvar) + 2);
+% # of total trials;
+nTotalTrials = nCombinations * test.Reps;
+% create list to hold parameters for varied variables
+stimList = repmat(	...
+							struct(	'opto', opto, ...
+										'audio', audio ...
+									), ...
+							nCombinations, 1);
+% assign values - in this case, inner loop cycles through audio variables,  
+% outer loop cycles through optical variables
+sindex = 0;
+for oindex = 1:numel(optovar)
+	for aindex = 1:(numel(audiowavvar) + 2)
+		sindex = sindex + 1;
+		stimList(sindex).opto.Amp = optovar(oindex);
+		% assign audio stim 1 to null
+		if aindex == 1
+			stimList(sindex).audio = null;
+		% assign audio stim 2 to noise
+		elseif aindex == 2
+			stimList(sindex).audio = noise;
+		else
+			stimList(sindex).audio.signal.WavFile = audiowavvar{aindex-2};
+		end
+	end
+end
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % randomize in blocks (if necessary) by creating a randomized list of 
@@ -242,31 +294,27 @@ if test.Randomize
 	% assign random permutations to stimindices
 	disp('Randomizing stimulus order');
 	[stimIndices, repList] = ...
-					buildStimIndices(counts.nTotalTrials, ...
-											counts.nCombinations, test.Reps, ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
 											1, 0);
 elseif isfield(test, 'Block')
 	if test.Block == 1
 		disp('Blocked stimulus order')
 		[stimIndices, repList] = ...
-					buildStimIndices(counts.nTotalTrials, ...
-											counts.nCombinations, test.Reps, ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
 											0, 1);
 
 	else
 		% assign sequential indices to stimindices
 		disp('Sequential stimulus order');
 		[stimIndices, repList] = ...
-					buildStimIndices(counts.nTotalTrials, ...
-											counts.nCombinations, test.Reps, ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
 											0, 0);
 	end
 else
 	% assign sequential indices to stimindices
 	disp('Sequential stimulus order');
 		[stimIndices, repList] = ...
-					buildStimIndices(counts.nTotalTrials, ...
-											counts.nCombinations, test.Reps, ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
 											0, 0);
 end	% END if test.Randomize
 
@@ -331,7 +379,7 @@ acqpts = ms2samples(test.AcqDuration, indev.Fs);
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % resp = raw data traces
-resp = cell(counts.nTotalTrials, 1);
+resp = cell(nTotalTrials, 1);
 	
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -354,7 +402,7 @@ standalone_condition_wavs
 %-------------------------------------------------------------------------
 % add elements to test for storage
 test.stimIndices = stimIndices;
-test.nCombinations = counts.nCombinations;
+test.nCombinations = nCombinations;
 test.optovar_name = 'Amp';
 test.optovar = opto.Amp;
 test.audiovar_name = 'WavFile';
@@ -477,17 +525,11 @@ while ~cancelFlag && (sindex < nTotalTrials)
 				Sn = noise.signal.S0;
 				rmsval = noise.signal.rms;
 			end
-			% get the attenuator settings for the desired SPL
-			atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
-			
 		case 'NULL'
 			% no audio stimulus
 			Sn = syn_null(Stim.audio.Duration, outdev.Fs, 0);
 			% dummy rms val
 			rmsval = 0;
-			% max atten for null stim
-			atten = 120;
-
 		case 'WAV'
 			% wav file.  locate waveform in wavS0{} cell array by
 			% finding corresponding location of Stim.audio.signal.WavFile 
@@ -495,16 +537,8 @@ while ~cancelFlag && (sindex < nTotalTrials)
 			wavindex = find(strcmpi(Stim.audio.signal.WavFile, ...
 												audio.signal.WavFile));
 			Sn = wavS0{wavindex} * wavInfo(wavindex).ScaleFactor; %#ok<USENS>
-			%{ 
-			%%% OLD
 			% use peak rms value for figuring atten
 			rmsval = wavInfo(wavindex).PeakRMS;
-			%}
-			% NEW
-			% determine attenuation value by subtracting desired level from
-			% WavLevelAtScale
-			atten = wavInfo(wavindex).WavLevelAtScale - Stim.audio.Level;
-			
 			% will need to apply a correction factor to OptoDelay
 			% due to variability in in the wav stimulus onset
 % 			optoDelayCorr = ms2bin( bin2ms( wavInfo(wavindex).OnsetBin, ...
@@ -532,7 +566,8 @@ while ~cancelFlag && (sindex < nTotalTrials)
 	
 	% need to add dummy channel to Sn since iofunction needs stereo signal
 	Sn = [Sn; zeros(size(Sn))]; %#ok<AGROW>
-	
+	% get the attenuator settings for the desired SPL
+	atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
 	% set the attenuators
 	setattenfunc(outdev, [atten 120]);
 	
