@@ -183,6 +183,8 @@ null.Level = 0;
 %------------------------------------
 % WAV
 %------------------------------------
+audio.signal.Type = 'wav';
+audio.signal.WavPath = 'C:\TytoLogy\Experiments\WAVs';
 % names of wav files to use as stimuli
 WavesToPlay = {	'1-stepUSVwithNLs_adj.wav', ...
 						'2-stepUSV_adj.wav', ...
@@ -214,109 +216,22 @@ WavLevelAtScale = [	90.4, ...
 							102.64, ...
 							91.18, ...
 						];
-					
-% orig from calibration
-% WavScaleFactors = [	2.5, ... 
-% 							1, ...
-% 							1, ...
-%  							2	...
-% 						];
-% WavScaleFactors = [	1.953, ...
-% 							2.173, ...
-% 							4.436, ...
-% 							1.872, ...
-% 							1.703, ...
-% 							1.292, ...
-% 							2.120, ...
-% 							2.553, ...
-% 							2.765 ...
-% 						];
 
-audio.signal.Type = 'wav';
-audio.signal.WavPath = 'C:\TytoLogy\Experiments\WAVs';
-
-%------------------------------------
-% wav properties - use to build database of properties stored in wavInfo
-% struct
-%------------------------------------
-% select only waves in list
-% get information about stimuli
-AllwavInfo = getWavInfo(fullfile(audio.signal.WavPath, 'wavinfo.mat'));
-% create list of ALL filenames - need to do a bit of housekeeping
-% deal function will pull out all values of the Filename field from
-% the AllwavInfo struct array
-AllwavNames = {};
-[AllwavNames{1:length(AllwavInfo), 1}] = deal(AllwavInfo.Filename);
-% need to strip paths from filenames...
-for w = 1:length(AllwavNames)
-	[~, basename] = fileparts(AllwavNames{w});
-	AllwavNames{w} = [basename '.wav'];
-end
-% and, using filenames, select only wav files in list WavesToPlay
-wavInfo = repmat( AllwavInfo(1), length(WavesToPlay), 1);
-for w = 1:length(WavesToPlay)
-	wavInfo(w) = AllwavInfo(strcmp(WavesToPlay(w), AllwavNames));
-end
-%------------------------------------
-% create list of filenames - need to do a bit of housekeeping
-%------------------------------------
-audio.signal.WavFile = cell(nWavs, 1);
-tmp = {};
-[tmp{1:nWavs, 1}] = deal(wavInfo.Filename);
-% assign wav filenames to wavInfo (if they already have .wav attached, this
-% should not affect things due to use of fileparts function to extract
-% basename from file name in wavInfo)
-for n = 1:nWavs
-	[~, basename] = fileparts(tmp{n});
-	audio.signal.WavFile{n} = [basename '.wav'];
-	% make sure Filename in wavInfo matches
-	wavInfo(n).Filename = audio.signal.WavFile{n};
-	wavInfo(n).ScaleFactor = WavScaleFactors(n);
-	wavInfo(n).WavLevelAtScale = WavLevelAtScale(n);
-end
-clear tmp;
+% construct wavInfo struct "database" for desired wav stimuli
+[wavInfo, audio.signal.WavFile] = opto_create_wav_stimulus_info( ...
+														audio.signal.WavPath, ...
+														WavesToPlay, ...
+														WavScaleFactors, ...
+														WavLevelAtScale);
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % build list of unique stimuli
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% varied variables for opto and audio
-optovar = opto.Amp;
-audiowavvar = audio.signal.WavFile;
-% total # of varied variables (increase # of audio vars by 2
-% to account for additional noise and null stimuli)
-nOptoStim = numel(optovar);
-nAudioLevels = numel(test.Level);
-nAudioStim = numel(audiowavvar) + nNullStim;
 
-nCombinations = numel(optovar) * (numel(audiowavvar) + 2);
-% # of total trials;
-nTotalTrials = nCombinations * test.Reps;
-% create list to hold parameters for varied variables
-stimList = repmat(	...
-							struct(	'opto', opto, ...
-										'audio', audio ...
-									), ...
-							nCombinations, 1);
-% assign values - in this case, inner loop cycles through audio variables,  
-% outer loop cycles through optical variables
-sindex = 0;
-for oindex = 1:numel(optovar)
-	for aindex = 1:(numel(audiowavvar) + 2)
-		sindex = sindex + 1;
-		stimList(sindex).opto.Amp = optovar(oindex);
-		% assign audio stim 1 to null
-		if aindex == 1
-			stimList(sindex).audio = null;
-		% assign audio stim 2 to noise
-		elseif aindex == 2
-			stimList(sindex).audio = noise;
-		else
-			stimList(sindex).audio.signal.WavFile = audiowavvar{aindex-2};
-		end
-	end
-end
+[stimList, counts] = opto_build_stimList(test, audio, opto, noise, null);
+
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % randomize in blocks (if necessary) by creating a randomized list of 
@@ -327,27 +242,31 @@ if test.Randomize
 	% assign random permutations to stimindices
 	disp('Randomizing stimulus order');
 	[stimIndices, repList] = ...
-					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
+					buildStimIndices(counts.nTotalTrials, ...
+											counts.nCombinations, test.Reps, ...
 											1, 0);
 elseif isfield(test, 'Block')
 	if test.Block == 1
 		disp('Blocked stimulus order')
 		[stimIndices, repList] = ...
-					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
+					buildStimIndices(counts.nTotalTrials, ...
+											counts.nCombinations, test.Reps, ...
 											0, 1);
 
 	else
 		% assign sequential indices to stimindices
 		disp('Sequential stimulus order');
 		[stimIndices, repList] = ...
-					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
+					buildStimIndices(counts.nTotalTrials, ...
+											counts.nCombinations, test.Reps, ...
 											0, 0);
 	end
 else
 	% assign sequential indices to stimindices
 	disp('Sequential stimulus order');
 		[stimIndices, repList] = ...
-					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
+					buildStimIndices(counts.nTotalTrials, ...
+											counts.nCombinations, test.Reps, ...
 											0, 0);
 end	% END if test.Randomize
 
@@ -412,7 +331,7 @@ acqpts = ms2samples(test.AcqDuration, indev.Fs);
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % resp = raw data traces
-resp = cell(nTotalTrials, 1);
+resp = cell(counts.nTotalTrials, 1);
 	
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -435,7 +354,7 @@ standalone_condition_wavs
 %-------------------------------------------------------------------------
 % add elements to test for storage
 test.stimIndices = stimIndices;
-test.nCombinations = nCombinations;
+test.nCombinations = counts.nCombinations;
 test.optovar_name = 'Amp';
 test.optovar = opto.Amp;
 test.audiovar_name = 'WavFile';
