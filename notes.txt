@@ -1,0 +1,10 @@
+22Apr2019 (SJS):
+working on wav stimulation. 
+still need to do:
+work out attenuation
+figure out wav files - onset/offset
+	set to 50 ms uniformly?
+randomization,
+	how to handle multiple levels?
+	derandomize for analysis
+test!

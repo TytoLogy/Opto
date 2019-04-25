@@ -1,6 +1,6 @@
 function outdata = MTwav(handles, datafile)
 %--------------------------------------------------------------------------
-% outdata = MTwav(handles, datafile)
+% outdata = wav_optoOFF(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -39,9 +39,11 @@ function outdata = MTwav(handles, datafile)
 %	12 Jun 2017 (SJS): pulled off common elements into separate subscripts
 %	13 Jun 2017 (SJS): working on separate psths for each stimulus 
 %	28 Mar, 2019 (SJS): created for use with M. Tehrani's vocal stimuli
-%	24 Apr, 2019 (SJS): reworking and testing.
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
+
+disp 'running wav_optoOFF!'
+curvetype = 'Wav+OptoOFF';
 
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -83,53 +85,205 @@ iofunc = handles.H.TDT.config.ioFunc;
 % calibration data
 %------------------------------------
 caldata = handles.H.caldata;
-%------------------------------------
-% test settings from xxxx_standalone.m
-%------------------------------------
-% original type is 'STANDALONE' but analysis scripts and programs will want
-% something specific
-test.Type = 'WAVFILE';
-test.Name = handles.H.test.Name;
-% store original type as script type
-test.ScriptType = handles.H.test.Type;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Experiment settings
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% %%% EDIT MTwav_settings TO CHANGE EXPERIMENTAL 
-% PARAMETERS (reps, ISI, etc.) %%%%
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 %-------------------------------------------------------------------------
-run('Scripts\MTwav_settings')
+%----------------------------------------------------------
+% Presentation settings - ISI, # reps, randomize, etc.
+%----------------------------------------------------------
+test.Reps = 10;
+test.Randomize = 1;
+test.Block = 0;
+audio.ISI = 200;
+%------------------------------------
+% Experiment settings
+%------------------------------------
+% save output stimuli? (0 = no, 1 = yes)
+test.saveStim = 0;
+%------------------------------------
+% acquisition/sweep settings
+% will have to be adjusted to deal with wav file durations
+%------------------------------------
+test.AcqDuration = 500;
+test.SweepPeriod = test.AcqDuration + 5;
 
-if opto.Enable
-	disp 'running wav_optoON!'
-	curvetype = 'Wav+OptoON';	
-else
-	disp 'running wav_optoOFF!'
-	curvetype = 'Wav+OptoOFF';
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+%% define stimulus (optical, audio) structs
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+%------------------------------------
+% OPTICAL settings
+%	Enable	0 -> optical stim OFF, 1 -> optical stim ON
+%	Delay		onset of optical stim from start of sweep (ms)
+% 	Dur		duration (ms) of optical stimulus
+% 	Amp		amplitude (mV) of optical stim
+% 					*** IMPORTANT NOTE ***
+% 					This method of amplitude control will only work with the 
+% 					Thor Labs fiber-coupled LED driver.
+% 					For the Shanghai Dream Laser, output level can only be 
+% 					controlled using the rotary potentiometer on the Laser power
+% 					supply. If using the Shanghai Dream Laser for stimulation,
+% 					set Amp to 5000 millivolts (5 V)
+% 
+% 	To test a range of values (for Delay, Dur, Amp), use a vector of values
+% 	instead of a single number (e.g., [20 40 60] or 20:20:60)
+%------------------------------------
+% opto.Enable = 1;
+% opto.Delay = 100;
+% opto.Dur = 100;
+% opto.Amp = 250;
+opto.Enable = 0;
+opto.Delay = 0;
+opto.Dur = 200;
+opto.Amp = 0;
+%------------------------------------
+% AUDITORY stimulus settings
+%------------------------------------
+%------------------------------------
+% general audio properties
+%------------------------------------
+% Delay 
+audio.Delay = 100;
+% Duration is variable for WAV files - this information
+% will be found in the audio.signal.WavInfo
+% For now, this will be a dummy value
+audio.Duration = 200;
+audio.Level = 80;
+audio.Ramp = 5;
+audio.Frozen = 0;
+%------------------------------------
+% noise signal
+%------------------------------------
+noise.signal.Type = 'noise';
+noise.signal.Fmin = 4000;
+noise.signal.Fmax = 80000;
+noise.Delay = audio.Delay;
+noise.Duration = 100;
+noise.Level = 80;
+noise.Ramp = 5;
+noise.Frozen = 0;
+%------------------------------------
+% null signal
+%------------------------------------
+null.signal.Type = 'null';
+null.Delay = audio.Delay;
+null.Duration = noise.Duration;
+null.Level = 0;
+%------------------------------------
+% WAV
+%------------------------------------
+WavesToPlay = {	'MFV_NL_filtered_normalized.wav', ...
+						'MFV_harmonic_normalized.wav', ...
+						'MFV_tonal_normalized.wav', ...
+						'chevron_nl_USV.wav', ...
+						'matingcontext_LFHUSV_3.wav', ...
+						'matingcontext_LFHUSV_7.wav', ...
+						'matingcontext_LFHUSV_8.wav', ...
+						'matingcontext_USV_1.wav', ...
+						'matingcontext_USV_2.wav', ...
+					};
+nWavs = length(WavesToPlay);
+% and scaling factors (to achieve desired amplitude)
+% % % temporarily use 1 as scaling factor - fix after calibration!!!
+WavScaleFactors = ones(nWavs, 1);
+% orig from calibration
+% WavScaleFactors = [	2.5, ... 
+% 							1, ...
+% 							1, ...
+%  							2	...
+% 						];
+% WavScaleFactors = [	1.953, ...
+% 							2.173, ...
+% 							4.436, ...
+% 							1.872, ...
+% 							1.703, ...
+% 							1.292, ...
+% 							2.120, ...
+% 							2.553, ...
+% 							2.765 ...
+% 						];
+
+audio.signal.Type = 'wav';
+audio.signal.WavPath = 'C:\TytoLogy\Experiments\Wavs';
+%------------------------------------
+% wav properties
+%------------------------------------
+% select only waves in list
+% get information about stimuli
+AllwavInfo = getWavInfo(fullfile(audio.signal.WavPath, 'wavinfo.mat'));
+% create list of ALL filenames - need to do a bit of housekeeping
+% deal function will pull out all values of the Filename field from
+% the AllwavInfo struct array
+AllwavNames = {};
+[AllwavNames{1:length(AllwavInfo), 1}] = deal(AllwavInfo.Filename);
+% need to strip paths from filenames...
+for w = 1:length(AllwavNames)
+	[~, basename] = fileparts(AllwavNames{w});
+	AllwavNames{w} = [basename '.wav'];
 end
-
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-% construct wavInfo struct "database" for desired wav stimuli
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-[wavInfo, audio.signal.WavFile] = opto_create_wav_stimulus_info( ...
-														audio.signal.WavPath, ...
-														WavesToPlay, ...
-														WavScaleFactors, ...
-														WavLevelAtScale); %#ok<NODEF>
+% and, using filenames, select only wav files in list WavesToPlay
+wavInfo = repmat( AllwavInfo(1), length(WavesToPlay), 1);
+for w = 1:length(WavesToPlay)
+	wavInfo(w) = AllwavInfo(strcmp(WavesToPlay(w), AllwavNames));
+end
+%------------------------------------
+% create list of filenames - need to do a bit of housekeeping
+%------------------------------------
+audio.signal.WavFile = cell(nWavs, 1);
+tmp = {};
+[tmp{1:nWavs, 1}] = deal(wavInfo.Filename);
+% assign wav filenames to wavInfo (if they already have .wav attached, this
+% should not affect things due to use of fileparts function to extract
+% basename from file name in wavInfo)
+for n = 1:nWavs
+	[~, basename] = fileparts(tmp{n});
+	audio.signal.WavFile{n} = [basename '.wav'];
+	% make sure Filename in wavInfo matches
+	wavInfo(n).Filename = audio.signal.WavFile{n};
+	wavInfo(n).ScaleFactor = WavScaleFactors(n);
+end
+clear tmp;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % build list of unique stimuli
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-
-[stimList, counts] = opto_build_stimList(test, audio, opto, noise, nullstim); %#ok<NODEF>
-
+% varied variables for opto and audio
+optovar = opto.Amp;
+audiowavvar = audio.signal.WavFile;
+% total # of varied variables (increase # of audio vars by 2
+% to account for additional noise and null stimuli)
+nCombinations = numel(optovar) * (numel(audiowavvar) + 2);
+% # of total trials;
+nTotalTrials = nCombinations * test.Reps;
+% create list to hold parameters for varied variables
+stimList = repmat(	...
+							struct(	'opto', opto, ...
+										'audio', audio ...
+									), ...
+							nCombinations, 1);
+% assign values - in this case, inner loop cycles through audio variables,  
+% outer loop cycles through optical variables
+sindex = 0;
+for oindex = 1:numel(optovar)
+	for aindex = 1:(numel(audiowavvar) + 2)
+		sindex = sindex + 1;
+		stimList(sindex).opto.Amp = optovar(oindex);
+		% assign audio stim 1 to null
+		if aindex == 1
+			stimList(sindex).audio = null;
+		% assign audio stim 2 to noise
+		elseif aindex == 2
+			stimList(sindex).audio = noise;
+		else
+			stimList(sindex).audio.signal.WavFile = audiowavvar{aindex-2};
+		end
+	end
+end
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % randomize in blocks (if necessary) by creating a randomized list of 
@@ -140,31 +294,27 @@ if test.Randomize
 	% assign random permutations to stimindices
 	disp('Randomizing stimulus order');
 	[stimIndices, repList] = ...
-					buildStimIndices(counts.nTotalTrials, ...
-											counts.nCombinations, test.Reps, ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
 											1, 0);
 elseif isfield(test, 'Block')
 	if test.Block == 1
 		disp('Blocked stimulus order')
 		[stimIndices, repList] = ...
-					buildStimIndices(counts.nTotalTrials, ...
-											counts.nCombinations, test.Reps, ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
 											0, 1);
 
 	else
 		% assign sequential indices to stimindices
 		disp('Sequential stimulus order');
 		[stimIndices, repList] = ...
-					buildStimIndices(counts.nTotalTrials, ...
-											counts.nCombinations, test.Reps, ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
 											0, 0);
 	end
 else
 	% assign sequential indices to stimindices
 	disp('Sequential stimulus order');
 		[stimIndices, repList] = ...
-					buildStimIndices(counts.nTotalTrials, ...
-											counts.nCombinations, test.Reps, ...
+					buildStimIndices(nTotalTrials, nCombinations, test.Reps, ...
 											0, 0);
 end	% END if test.Randomize
 
@@ -175,7 +325,7 @@ end	% END if test.Randomize
 %-------------------------------------------------------------------------
 % check durations of wav stimuli
 % first, create a vector stimulus durations
-[tmp{1:numel(audio.signal.WavFile)}] = deal(wavInfo.Duration);
+[tmp{1:numel(audiowavvar)}] = deal(wavInfo.Duration);
 durations = cell2mat(tmp);
 clear tmp;
 maxDur = max(1000*durations);
@@ -229,7 +379,7 @@ acqpts = ms2samples(test.AcqDuration, indev.Fs);
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % resp = raw data traces
-resp = cell(counts.nTotalTrials, 1);
+resp = cell(nTotalTrials, 1);
 	
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -252,7 +402,7 @@ standalone_condition_wavs
 %-------------------------------------------------------------------------
 % add elements to test for storage
 test.stimIndices = stimIndices;
-test.nCombinations = counts.nCombinations;
+test.nCombinations = nCombinations;
 test.optovar_name = 'Amp';
 test.optovar = opto.Amp;
 test.audiovar_name = 'WavFile';
@@ -274,7 +424,7 @@ standalone_write_wavinfomatfile;
 % Set up figure for plotting incoming data
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-standalone_wav_setupplots;
+standalone_setupplots;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -314,59 +464,50 @@ end
 % loop through stims
 %-------------------------------------------------------
 %-------------------------------------------------------
-% while loop index for stimIndices (stimulus sequence)
+% index to stimuli
 sindex = 0;
 % loop until done or cancel button is pressed
-while ~cancelFlag && (sindex < counts.nTotalTrials)
+while ~cancelFlag && (sindex < nTotalTrials)
 	%--------------------------------------------------
 	% increment counter (was initialized to 0)
 	%--------------------------------------------------
 	sindex = sindex + 1;
 	%--------------------------------------------------
-	% index into stimList stored in (possibly) randomized stimulus sequence
+	% psth and stimulus index
 	%--------------------------------------------------
-	cIndx = stimIndices(sindex);
+	pIndx = stimIndices(sindex);
 	%--------------------------------------------------
 	% rep #s
 	%--------------------------------------------------
 	% get current rep;
 	rep = repList(sindex);
+	% increment current index
+	currentRep(pIndx) = currentRep(pIndx) + 1; %#ok<AGROW>
 	%--------------------------------------------------
 	% get current stimulus settings from stimList,using stimIndices to 
 	% index into stimList
 	%--------------------------------------------------
-	Stim = stimList(cIndx);
+	fprintf('sindex: %d (%d)\n', sindex, nTotalTrials);
+	fprintf('stimIndices(%d): %d\n', sindex, pIndx);
+	Stim = stimList(pIndx);
 	stimtype = Stim.audio.signal.Type;
-	fprintf('sindex: %d(%d)\t rep: %d(%d)\tType: %s\n', ...
-		counts.nTotalTrials, sindex, rep, test.Reps, stimtype);
-	fprintf('stimIndices(%d): %d\n', sindex, cIndx);
+	
+	fprintf('sindex: %d\t rep: %d(%d)\tType: %s\n', sindex, rep, ...
+						test.Reps, stimtype);
 	fprintf('\taudio:\tDelay:%d\tLevel:%d', ...
 			Stim.audio.Delay, Stim.audio.Level)
 	if strcmpi(stimtype, 'wav')
 		fprintf('\t%s\n', Stim.audio.signal.WavFile);
 	else
-		fprintf('\t%s\n', Stim.audio.signal.Type);
+		fprintf('\n');
 	end
 	fprintf('\topto:\tEnable:%d\tDelay:%d\tDur:%d\tAmp:%d\n', ...
 			Stim.opto.Enable, Stim.opto.Delay, Stim.opto.Dur, Stim.opto.Amp)
 
 	%--------------------------------------------------
-	% set audio stimulus based on type and get index into 
-	% array of plots/psths
+	% set audio stimulus based on type
 	%--------------------------------------------------
 	switch(upper(stimtype))
-		
-		case 'NULL'
-			% no audio stimulus
-			Sn = syn_null(Stim.audio.Duration, outdev.Fs, 0);
-			% dummy rms val
-			rmsval = 0; %#ok<NASGU>
-			% max atten for null stim
-			atten = 120;
-			% null stimuli will be in psth after the wav psths
-			% see standalone_wav_settupplots.m script
-			pIndx = counts.nWavStim + 1;
-			
 		case 'NOISE'
 			% noise, bandwidth determined by signal.Fmin,Fmax
 			if ~Stim.audio.Frozen
@@ -384,12 +525,11 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 				Sn = noise.signal.S0;
 				rmsval = noise.signal.rms;
 			end
-			% get the attenuator settings for the desired SPL
-			atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
-			% noise stimuli will be 2 psth after the wav psths
-			% see standalone_wav_settupplots.m script
-			pIndx = counts.nWavStim + 2;
-
+		case 'NULL'
+			% no audio stimulus
+			Sn = syn_null(Stim.audio.Duration, outdev.Fs, 0);
+			% dummy rms val
+			rmsval = 0;
 		case 'WAV'
 			% wav file.  locate waveform in wavS0{} cell array by
 			% finding corresponding location of Stim.audio.signal.WavFile 
@@ -397,59 +537,37 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 			wavindex = find(strcmpi(Stim.audio.signal.WavFile, ...
 												audio.signal.WavFile));
 			Sn = wavS0{wavindex} * wavInfo(wavindex).ScaleFactor; %#ok<USENS>
-			%{ 
-			%%% OLD
 			% use peak rms value for figuring atten
 			rmsval = wavInfo(wavindex).PeakRMS;
-			%}
-			% NEW
-			% determine attenuation value by subtracting desired level from
-			% WavLevelAtScale
-			atten = wavInfo(wavindex).WavLevelAtScale - Stim.audio.Level;
-
-			% use wavindex for psth id
-			% see standalone_wav_settupplots.m script
-			pIndx = wavindex;
-
-%-----------------------------------------------------------
-% 4/24/2019 (SJS):
-%-----------------------------------------------------------
-% removing this correction to delay now that wav files
-% have uniform onset delay
-%-----------------------------------------------------------
-% 			% will need to apply a correction factor to OptoDelay
-% 			% due to variability in in the wav stimulus onset
+			% will need to apply a correction factor to OptoDelay
+			% due to variability in in the wav stimulus onset
 % 			optoDelayCorr = ms2bin( bin2ms( wavInfo(wavindex).OnsetBin, ...
 % 								                 outdev.Fs ), ...
 % 										   indev.Fs);
 %  			optoDelayCorr = 0;
-% 
-% 			% will need to apply a correction factor to OptoDelay
-% 			% due to variability in in the wav stimulus onset
-% 			% compute correction based on outdev.Fs
-% 			optoDelayCorr = wavInfo(wavindex).OnsetBin;
-% 			correctedDelay = ms2bin(Stim.audio.Delay, outFs) - optoDelayCorr;
-% 			if correctedDelay < 0
-% 				warning('%s: correctedDelay < 0! Using 0 as min value', ...
-% 								mfilename);
-% 				correctedDelay = 0;
-% 			end
-% 			correctedDelay = ms2bin(Stim.audio.Delay, outFs) - optoDelayCorr;
-% 			% update the Stimulus Delay
-% 			RPsettag(outdev, 'StimDelay', correctedDelay);
-%-----------------------------------------------------------
 
+			% will need to apply a correction factor to OptoDelay
+			% due to variability in in the wav stimulus onset
+			% compute correction based on outdev.Fs
+			optoDelayCorr = wavInfo(wavindex).OnsetBin;
+			correctedDelay = ms2bin(Stim.audio.Delay, outFs) - optoDelayCorr;
+			if correctedDelay < 0
+				warning('%s: correctedDelay < 0! Using 0 as min value', ...
+								mfilename);
+				correctedDelay = 0;
+			end
 			% update the Stimulus Delay
-			RPsettag(outdev, 'StimDelay', ms2bin(Stim.audio.Delay, outFs));
+			RPsettag(outdev, 'StimDelay', correctedDelay);
 			
 		otherwise
 			fprintf('unknown type %s\n', stimtype);
 			keyboard
 	end
-		
+	
 	% need to add dummy channel to Sn since iofunction needs stereo signal
 	Sn = [Sn; zeros(size(Sn))]; %#ok<AGROW>
-	
+	% get the attenuator settings for the desired SPL
+	atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
 	% set the attenuators
 	setattenfunc(outdev, [atten 120]);
 	
@@ -479,7 +597,6 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 		% get the spike response
 		[spikes, nspikes] = opto_getspikes(indev); %#ok<ASGLU>
 	catch
-		disp('%s: trapped error in stimulus IO', mfilename);
 		keyboard
 	end
 	
@@ -490,10 +607,10 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 		% demultiplex the returned vector and store the response
 		% mcDeMux returns an array that is [nChannels, nPoints]
 		tmpD = mcFastDeMux(rawdata, channels.nInputChannels);
-		resp{cIndx} = tmpD;
+		resp{pIndx} = tmpD;
 		recdata = tmpD(:, channels.RecordChannelList);
 	else
-		resp{cIndx} =  rawdata;
+		resp{pIndx} =  rawdata;
 		recdata = rawdata;
 	end
 
@@ -545,8 +662,8 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 																	spikebins; %#ok<AGROW>
 %----
 % what is this for????
-% 	SpikeTimes{cIndx}{currentRep(cIndx)} = ...
-% 				[SpikeTimes{cIndx}{currentRep(cIndx)} 100*cIndx]; %#ok<AGROW>
+% 	SpikeTimes{pIndx}{currentRep(pIndx)} = ...
+% 				[SpikeTimes{pIndx}{currentRep(pIndx)} 100*pIndx]; %#ok<AGROW>
 %-----
 	% draw new hash marks on sweep plot
 	set(tH,	'XData', ...
@@ -555,7 +672,7 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 					zeros(size(SpikeTimes{pIndx}{currentRep(pIndx)})) + ...
  							handles.H.TDT.channels.MonitorChannel*yabsmax);
 	% update PSTH
-% 	PSTH.hvals{cIndx} = psth(	SpikeTimes{cIndx}, ...
+% 	PSTH.hvals{pIndx} = psth(	SpikeTimes{pIndx}, ...
 % 										binSize, ...
 % 										[0 handles.H.TDT.AcqDuration]);
 	PSTH.hvals{pIndx} = psth(	SpikeTimes{pIndx}, ...
@@ -563,17 +680,13 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 										[0 test.AcqDuration]);
 	bar(pstAxes(pIndx), PSTH.bins, PSTH.hvals{pIndx}, 1);
 % 	% update raster
-% 	rasterplot(		SpikeTimes{cIndx}, ...
+% 	rasterplot(		SpikeTimes{pIndx}, ...
 % 						[0 handles.H.TDT.AcqDuration], ...
 % 						'|', ...
 % 						12, ...
 % 						'k', ...
-% 						rstAxes(cIndx)	);
+% 						rstAxes(pIndx)	);
 	% check state of cancel button
-
-	% increment current index
-	currentRep(pIndx) = currentRep(pIndx) + 1; %#ok<AGROW>
-	
 	cancelFlag = read_ui_val(cancelButton);
 	% check state of pause button
 	pauseFlag = read_ui_val(pauseButton);
