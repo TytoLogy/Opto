@@ -43,6 +43,16 @@ for n = 1:nWavs
 		wavInfo(n).OnsetBin = ms2bin(1000*onsettime, outFs);
 		wavInfo(n).OffsetBin = ms2bin(1000*offsettime, outFs);
 	end
-	% apply *short* 1 ms duration ramp to ensure wav start and end is 0
-	wavS0{n} = sin2array(wavS0{n}, 1, outFs);
+	if exist('WavRamp', 'var')
+		if WavRamp > 0
+			% apply specified ramp
+			wavS0{n} = sin2array(wavS0{n}, WavRamp, outFs);
+		else
+			% apply *short* 1 ms duration ramp to ensure wav start and end is 0
+			wavS0{n} = sin2array(wavS0{n}, 1, outFs);
+		end
+	else
+		% apply *short* 1 ms duration ramp to ensure wav start and end is 0
+		wavS0{n} = sin2array(wavS0{n}, 1, outFs);
+	end
 end
