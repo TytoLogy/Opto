@@ -46,9 +46,9 @@ if ispc
 %   datafile = '1058_20160623_0_02_1500_FREQ.dat';
 %   datapath = 'E:\Data\SJS\1012\20160727';
 %   datafile = '1012_20160727_5_3_1_OPTO.dat';
-  datapath = 'E:\Data\SJS';
+	datapath = 'E:\Data\EphysData';
 %     datapath = 'C:\Users\cgrimsley\Desktop\1116\20170618';
-    datafile = '';
+	datafile = '';
 else
 %   datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1012/20160727';
 %   datafile = '1012_20160727_5_3_1_OPTO.dat';

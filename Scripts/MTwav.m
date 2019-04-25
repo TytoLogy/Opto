@@ -83,6 +83,15 @@ iofunc = handles.H.TDT.config.ioFunc;
 % calibration data
 %------------------------------------
 caldata = handles.H.caldata;
+%------------------------------------
+% test settings from xxxx_standalone.m
+%------------------------------------
+% original type is 'STANDALONE' but analysis scripts and programs will want
+% something specific
+test.Type = 'WAVFILE';
+test.Name = handles.H.test.Name;
+% store original type as script type
+test.ScriptType = handles.H.test.Type;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
