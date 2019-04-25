@@ -61,10 +61,10 @@ test.SweepPeriod = test.AcqDuration + 5;
 % opto.Delay = 100;
 % opto.Dur = 100;
 % opto.Amp = 250;
-opto.Enable = 1;
+opto.Enable = 0;
 opto.Delay = 0;
 opto.Dur = 200;
-opto.Amp = 100;
+opto.Amp = 0;
 %------------------------------------
 % AUDITORY stimulus settings
 %------------------------------------

@@ -257,6 +257,7 @@ test.optovar_name = 'Amp';
 test.optovar = opto.Amp;
 test.audiovar_name = 'WavFile';
 test.audiovar = audio.signal.WavFile;
+test.curvetype = curvetype;
 animal = handles.H.animal;
 % and write header to data file
 writeOptoDataFileHeader(datafile, test, animal, ...
