@@ -27,9 +27,6 @@
 datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/TestData/MT_wavtesting/20190425';
 datafile = '000_20190425_0_0_0_WAV.dat';
 
-viewOptoData(fullfile(datapath, datafile));
-
-
 %---------------------------------------------------------------------
 % settings for processing data (passed to optoproc function)
 %---------------------------------------------------------------------
@@ -61,24 +58,5 @@ end
 % name structure!
 % <animal id #>_<date>_<penetration #>_<unit #>_<other info>.dat
 %---------------------------------------------------------------------
-% break up file name into <fname>.<ext> (~ means don't save ext info)
-[~, fname] = fileparts(datafile);
-% locate underscores in fname
-usc = find(fname == '_');
-% location of start and end underscore indices
-%    abcde_edcba
-%        ^ ^
-%        | |
-%        | ---- endusc index
-%        ---startusc index
-endusc = usc - 1;
-startusc = usc + 1;
-animal = fname(1:endusc(1));
-datecode = fname(startusc(1):endusc(2));
-penetration = fname(startusc(2):endusc(3)); %#ok<NASGU>
-unit = fname(startusc(3):endusc(4)); %#ok<NASGU>
-other = fname(startusc(end):end); %#ok<NASGU>
+[animal, datecode, penetration, unit, other] = opto_name_deconstruct(datafile);
 
-if isempty(plotFileName)
-	plotFileName = fname;
-end

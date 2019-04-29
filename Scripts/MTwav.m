@@ -503,9 +503,16 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 	end
 
 	% Save Data
+	%	write:
+	%		- recorded data
+	%		- info about stimulus:
+	%				audio level, opto amplitude index_into_stimList
+	%		- trial #
+	%		- rep #
+	%
 	writeOptoTrialData(datafile, ...
 								recdata, ...
-								[Stim.audio.Level Stim.opto.Amp], ...
+								[Stim.audio.Level Stim.opto.Amp cIndex], ...
 								sindex, rep);
 
 	% This is code for letting the user know what in
