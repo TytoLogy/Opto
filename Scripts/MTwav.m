@@ -7,6 +7,9 @@ function outdata = MTwav(handles, datafile)
 % Standalone experiment script (relies on hardware setup in handles)
 % Demonstrates playback of .WAV format files (assume 16 bit, uncompressed)
 %
+% To Run: select (usually) <this_functions_name)_standalone.m in the 
+%			script load portion of opto
+% Note: 
 % Designed for versions of Matlab that have the audioread() function
 % (v. 2015 and higher ????)
 %
@@ -40,6 +43,7 @@ function outdata = MTwav(handles, datafile)
 %	13 Jun 2017 (SJS): working on separate psths for each stimulus 
 %	28 Mar, 2019 (SJS): created for use with M. Tehrani's vocal stimuli
 %	24 Apr, 2019 (SJS): reworking and testing.
+%	29 Apr 2019 (SJS): adding informative things to output testdata struct
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
