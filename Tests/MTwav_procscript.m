@@ -24,8 +24,10 @@
 %---------------------------------------------------------------------
 % path and name of data file
 %---------------------------------------------------------------------
-datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/TestData/MT_wavtesting/20190425';
-datafile = '000_20190425_0_0_0_WAV.dat';
+% datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/TestData/MT_wavtesting/000/20190425';
+% datafile = '000_20190425_0_0_0_WAV.dat';
+datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/TestData/MT_wavtesting/1298/20190429';
+datafile = '1298_20190429_01_03_372_WAV.dat';
 
 %---------------------------------------------------------------------
 % settings for processing data (passed to optoproc function)
@@ -41,8 +43,17 @@ channelNumber = 8;
 % binSize for PSTH (milliseconds)
 binSize = 5;
 
+if ~exist('optoproc', 'file')
+	if ispc
+		addpath('C:\TytoLogy\Experiments\OptoAnalysis');
+	else
+		addpath(['/Users/sshanbhag/Work/Code/Matlab/dev/' ...
+						'TytoLogy/Experiments/OptoAnalysis']);
+	end
+end
+
 %---------------------------------------------------------------------
-% Read Data (same as optoproc)
+%% Read Data (same as optoproc)
 %---------------------------------------------------------------------
 [D, Dinf, tracesByStim] = getFilteredOptoData( ...
 											fullfile(datapath, datafile), ...
@@ -60,7 +71,8 @@ Fs = Dinf.indev.Fs;
 % name structure!
 % <animal id #>_<date>_<penetration #>_<unit #>_<other info>.dat
 %---------------------------------------------------------------------
-[fname, animal, datecode, penetration, unit, other] = opto_name_deconstruct(datafile);
+[fname, animal, datecode, penetration, unit, other] = ...
+											opto_name_deconstruct(datafile);
 
 %---------------------------------------------------------------------
 % determine global RMS and max - used for thresholding
@@ -134,3 +146,5 @@ switch upper(Dinf.test.Type)
 																				1, Fs, 'ms');
 		end
 end
+
+
