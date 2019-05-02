@@ -1,4 +1,19 @@
+---------------------------
+2 May 2019 (SJS):
+---------------------------
+fixed:
+	attenuation
+	wav onset fixed in files to 50ms from beginning of file
+	randomization fixed
+Work to do:
+	- need to add gain/filtering information to Dinf (written to header of datafile)?
+   - noise stim needs 50 ms additional delay in order to match onset of wav file?
+   - derandomize still needs attention
+	- currently working on analysis of MTwav data script
+
+---------------------------
 22Apr2019 (SJS):
+---------------------------
 working on wav stimulation. 
 still need to do:
 work out attenuation

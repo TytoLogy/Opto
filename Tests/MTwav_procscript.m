@@ -75,7 +75,7 @@ Fs = Dinf.indev.Fs;
 											opto_name_deconstruct(datafile);
 
 %---------------------------------------------------------------------
-% determine global RMS and max - used for thresholding
+%% determine global RMS and max - used for thresholding
 %---------------------------------------------------------------------
 % first, get  # of stimuli (called ntrials by opto) as well as # of reps
 nstim = Dinf.test.nCombinations;
@@ -83,22 +83,29 @@ nreps = Dinf.test.Reps;
 
 % allocate matrices
 netrmsvals = zeros(nstim, nreps);
+bgrmsvals = zeros(nstim, nreps);
 maxvals = zeros(nstim, nreps);
 % find rms, max vals for each stim
 for s = 1:nstim
+	% rms across entire trace
 	netrmsvals(s, :) = rms(tracesByStim{s});
+	% rms for bg only
+	bgwin = [1 ms2bin(Dinf.stimList(s).audio.Delay, Dinf.outdev.Fs)];
+	bgrmsvals(s, :) = rms(tracesByStim{s}(bgwin(1):bgwin(2), :));
 	maxvals(s, :) = max(abs(tracesByStim{s}));
 end
 % compute overall mean rms for threshold
 fprintf('Calculating mean and max RMS for data...\n');
 mean_rms = mean(reshape(netrmsvals, numel(netrmsvals), 1));
+mean_bgrms = mean(reshape(bgrmsvals, numel(bgrmsvals), 1));
 fprintf('\tMean rms: %.4f\n', mean_rms);
+fprintf('\tMean rms for background window: %.4f\n', mean_bgrms);
 % find global max value (will be used for plotting)
 global_max = max(max(maxvals));
 fprintf('\tGlobal max abs value: %.4f\n', global_max);
 
 %---------------------------------------------------------------------
-% Some test-specific things... (removed unneeded types from original 
+%% Some test-specific things... (removed unneeded types from original 
 % code in optoproc
 %---------------------------------------------------------------------
 switch upper(Dinf.test.Type)
