@@ -99,7 +99,7 @@ fprintf('Calculating mean and max RMS for data...\n');
 mean_rms = mean(reshape(netrmsvals, numel(netrmsvals), 1));
 mean_bgrms = mean(reshape(bgrmsvals, numel(bgrmsvals), 1));
 fprintf('\tMean rms: %.4f\n', mean_rms);
-fprintf('\tMean rms for background window: %.4f\n', mean_bgrms);
+fprintf('\tMean rms for background window: %.4f\n', mean_rms);
 % find global max value (will be used for plotting)
 global_max = max(max(maxvals));
 fprintf('\tGlobal max abs value: %.4f\n', global_max);
@@ -112,13 +112,21 @@ switch upper(Dinf.test.Type)
 	case 'WAVFILE'
 		% get list of stimuli (wav file names)
 		varlist = Dinf.test.wavlist;
-		nvars = length(varlist);
+		% if multiple stim levels, need to get # of them
+		if length(Dinf.test.Level) > 1
+			nvars = [length(varlist) length(Dinf.test.Level)];
+		else
+			nvars = length(varlist);
+		end
+		% build titles for plots
 		titleString = cell(nvars, 1);
 		for v = 1:nvars
 			if v == 1 
-				titleString{v} = {fname, sprintf('wav name: %s', varlist{v})};
+				titleString{v} = {fname, sprintf('wav: %s ', varlist{v})};
 			else
-				titleString{v} = sprintf('wav name: %s', varlist{v});
+				titleString{v} = {fname, ...
+										sprintf('wav: %s level: %d db SPL', ...
+														varlist{v}, Dinf);
 			end
 		end
 	otherwise
