@@ -11,7 +11,7 @@
 %	blocked randomization, e.g., random sequence of each stimulus
 %	without repeats for 1 rep, then another, then .... etc.
 %----------------------------------------------------------
-test.Reps = 5;
+test.Reps = 10;
 test.Randomize = 1;
 test.Block = 0;
 audio.ISI = 100;
@@ -23,7 +23,7 @@ test.saveStim = 0;
 % stimulus levels to test
 % !!! note that levels for individual stimulus types set below are
 % overridden by these values
-test.Level = [40 60 80];
+test.Level = [40 50 60 70];
 % use null stim?
 test.NullStim = 1;
 % use Noist stim?
@@ -59,8 +59,8 @@ test.SweepPeriod = test.AcqDuration + 5;
 %------------------------------------
 % opto.Enable = 1;
 % opto.Delay = 100;
-% opto.Dur = 100;
-% opto.Amp = 250;
+% opto.Dur = 50;
+% opto.Amp = 200;
 opto.Enable = 0;
 opto.Delay = 0;
 opto.Dur = 200;
@@ -72,7 +72,7 @@ opto.Amp = 0;
 % general audio properties
 %------------------------------------
 % Delay 
-audio.Delay = 100;
+audio.Delay = 50;
 % Duration is variable for WAV files - this information
 % will be found in the audio.signal.WavInfo
 % For now, this will be a dummy value
