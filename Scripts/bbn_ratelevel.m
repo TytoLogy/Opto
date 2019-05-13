@@ -19,7 +19,7 @@ test.Name = 'BBN';
 % OPTICAL settings
 %-------------------------------------------------------------------------
 test.opto.Enable = 0;
-test.opto.Delay = 50;
+test.opto.Delay = 75;
 test.opto.Dur = 100;
 test.opto.Amp = 3000;
 %-------------------------------------------------------------------------
@@ -29,20 +29,16 @@ test.opto.Amp = 3000;
 
 % signal
 test.audio.signal.Type = 'noise';
-test.audio.signal.Fmin = 10000;
+test.audio.signal.Fmin = 4000;
 % test.audio.signal.Fmin = 40000;
-test.audio.signal.Fmax = 30000;
-test.audio.Delay = 100;
-test.audio.Duration = 50;
+test.audio.signal.Fmax = 80000;
+test.audio.Delay = 50;
+test.audio.Duration = 100;
 % test.audio.Level = [0 40 60 80];
 test.audio.Level = 0:10:80;
-% test.audio.Level = [0 15:5:40];
-% test.audio.Level = 25:5:55;
-% test.audio.Level = [0 0];
-% test.audio.Level = [0 40:5:75];
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
-test.audio.ISI = 250;
+test.audio.ISI = 150;
 
 test.Reps = 10;
 % test.Reps = 5;
@@ -55,7 +51,7 @@ test.saveStim = 0;
 % TDT
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-test.AcqDuration =300;
+test.AcqDuration = 200;
 test.SweepPeriod = test.AcqDuration + 5;
 
  if test.opto.Enable
