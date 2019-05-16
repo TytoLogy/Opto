@@ -64,7 +64,7 @@ if isempty(D)
 	return
 end
 % local copy of sample rate
-Fs = Dinf.indev.Fs;
+Fs = Dinf.indev.Fs; %#ok<NASGU>
 
 %---------------------------------------------------------------------
 % get info from filename - this makes some assumptions about file
@@ -126,7 +126,8 @@ switch upper(Dinf.test.Type)
 			else
 				titleString{v} = {fname, ...
 										sprintf('wav: %s level: %d db SPL', ...
-														varlist{v}, Dinf);
+														varlist{v}, Dinf) };
+			
 			end
 		end
 	otherwise
