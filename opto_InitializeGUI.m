@@ -46,7 +46,7 @@ guidata(hObject, handles);
 % calfile = 'Optorig_20170601_TDT3981_4k90k_5V_cal.mat';
 % calfile = 'Optorig_20171022_TDT3981_4k-91k_5V_cal.mat';
 calpath = 'C:\TytoLogy\Experiments\WAVs';
-calfile = 'LCY-C-4K-100K-1V-20dBatten_25Apr19.cal';
+calfile = 'LCY-C-4K-100K-1V-20dBatten_29May19.cal';
 if ~exist(fullfile(calpath, calfile), 'file')
 	error('%s: Calibration file %s not found!', mfilename, ...
 						fullfile(calpath, calfile));
