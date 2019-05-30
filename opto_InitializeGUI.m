@@ -50,10 +50,10 @@ calfile = 'LCY-C-4K-100K-1V-20dBatten_29May19.cal';
 if ~exist(fullfile(calpath, calfile), 'file')
 	error('%s: Calibration file %s not found!', mfilename, ...
 						fullfile(calpath, calfile));
-	tmpcal = [];
+	tmpcal = []; %#ok<UNRCH>
 else
 	% load the calibration data
-	tmpcal = load_cal(fullfile(calpath, calfile));
+	tmpcal = load_cal_and_smooth(fullfile(calpath, calfile), 10);
 end
 % if tmpcal is a structure, load of calibration file was
 % hopefully successful, so save it in the handles info

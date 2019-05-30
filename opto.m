@@ -1006,14 +1006,16 @@ function editComments_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function buttonLoadCal_Callback(hObject, eventdata, handles)
 	% open a dialog box to get calibration data file name and path
-	[filenm, pathnm] = uigetfile({'*.mat'; '*.*'}, ...
+	[filenm, pathnm] = uigetfile({'*.cal'; '*.mat'; '*.*'}, ...
 											'Load cal data...', ...
 											[pwd filesep]);
 	% load the speaker calibration data if user doesn't hit cancel
 	if filenm
 		% try to load the calibration data
 		try
-			tmpcal = load_cal(fullfile(pathnm, filenm));
+			% %%%%% KLUDGE %%%%%%%%%%%%%%%%%
+
+			tmpcal = load_cal_and_smooth(fullfile(pathnm, filenm), 10);
 			optomsg(handles, ['Loaded cal from ' ...
 											fullfile(pathnm, filenm)], ...
 											'echo', 'off');
@@ -1025,7 +1027,7 @@ function buttonLoadCal_Callback(hObject, eventdata, handles)
 		% if tmpcal is a structure, load of calibration file was
 		% hopefully successful, so save it in the handles info
 		if isstruct(tmpcal)
-			handles.H.caldata = tmpcal;
+			handles.H.caldata = tmpcal;			
 			% update UI control limits based on calibration data
 			handles.H.Lim.F = [handles.H.caldata.Freqs(1) ...
 											handles.H.caldata.Freqs(end)];
