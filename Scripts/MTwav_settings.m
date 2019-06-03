@@ -76,7 +76,7 @@ audio.Delay = 25;
 % Duration is variable for WAV files - this information
 % will be found in the audio.signal.WavInfo
 % For now, this will be a dummy value
-audio.Duration = 200;
+audio.Duration = 100;
 % Level(s) for wav output (has no effect in this experiment)
 audio.Level = 80;
 audio.Ramp = 5;
@@ -89,8 +89,8 @@ noise.signal.Fmin = 4000;
 noise.signal.Fmax = 80000;
 noise.Delay = audio.Delay;
 noise.Duration = 100;
-noise.Level = 80;
-noise.Ramp = 10;
+noise.Level = 60;
+noise.Ramp = 5;
 noise.Frozen = 0;
 %------------------------------------
 % null signal
