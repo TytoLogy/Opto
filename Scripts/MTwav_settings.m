@@ -90,7 +90,7 @@ noise.signal.Fmax = 80000;
 noise.Delay = audio.Delay;
 noise.Duration = 100;
 noise.Level = 80;
-noise.Ramp = 5;
+noise.Ramp = 10;
 noise.Frozen = 0;
 %------------------------------------
 % null signal
