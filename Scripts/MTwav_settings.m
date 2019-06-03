@@ -72,7 +72,7 @@ opto.Amp = 0;
 % general audio properties
 %------------------------------------
 % Delay 
-audio.Delay = 50;
+audio.Delay = 25;
 % Duration is variable for WAV files - this information
 % will be found in the audio.signal.WavInfo
 % For now, this will be a dummy value
