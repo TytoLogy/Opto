@@ -23,7 +23,7 @@ test.saveStim = 0;
 % stimulus levels to test
 % !!! note that levels for individual stimulus types set below are
 % overridden by these values
-test.Level = [40 50 60 70];
+test.Level = [20 40 60 70];
 % use null stim?
 test.NullStim = 1;
 % use Noist stim?
