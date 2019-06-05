@@ -43,7 +43,7 @@ test.opto.Amp = 3000;
 %-------------------------------------------------------------------------
 % signal
 test.audio.signal.Type = 'tone';
-test.audio.signal.Frequency = 15000;
+test.audio.signal.Frequency = 4100;
 test.audio.signal.RadVary = 1;
 test.audio.Delay = 25;
 test.audio.Duration = 100;
