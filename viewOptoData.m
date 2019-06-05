@@ -240,6 +240,7 @@ if strcmpi(Dinf.test.Type, 'WavFile')
         ylabel('Trial')
     end
 end
+drawnow
 
 %% assign outputs
 varargout{1} = D;
@@ -260,7 +261,15 @@ else
     spikesByStim = testdata.SpikeTimes;
     PSTHByStim = testdata.PSTH;
     if length(spikesByStim) ~= nwavs
-        error('%s: mismatch in # of stimuli in testdata and # of wavs', mfilename)
+		fprintf('Detected mismatch:\n');
+		fprintf('length(spikesByStim) = %d\n', length(spikesByStim));
+		fprintf('nwavs = %d\n', length(nwavs));
+		if length(Dinf.test.Level) > 1
+			fprintf(['%d audio levels tested - ' ...
+						'this might be cause of mismatch\n'], ...
+						length(Dinf.test.Level));
+		end
+		error('%s: mismatch in # of stimuli in testdata and # of wavs', mfilename)
     end
 end
 % Plot data

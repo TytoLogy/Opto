@@ -7,6 +7,9 @@ function outdata = MTwav(handles, datafile)
 % Standalone experiment script (relies on hardware setup in handles)
 % Demonstrates playback of .WAV format files (assume 16 bit, uncompressed)
 %
+% To Run: select (usually) <this_functions_name)_standalone.m in the 
+%			script load portion of opto
+% Note: 
 % Designed for versions of Matlab that have the audioread() function
 % (v. 2015 and higher ????)
 %
@@ -40,6 +43,8 @@ function outdata = MTwav(handles, datafile)
 %	13 Jun 2017 (SJS): working on separate psths for each stimulus 
 %	28 Mar, 2019 (SJS): created for use with M. Tehrani's vocal stimuli
 %	24 Apr, 2019 (SJS): reworking and testing.
+%	29 Apr 2019 (SJS): adding informative things to output testdata struct
+%   29 May 2019 (SJS): updating with new wav files
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
@@ -257,6 +262,7 @@ test.optovar_name = 'Amp';
 test.optovar = opto.Amp;
 test.audiovar_name = 'WavFile';
 test.audiovar = audio.signal.WavFile;
+test.curvetype = curvetype;
 animal = handles.H.animal;
 % and write header to data file
 writeOptoDataFileHeader(datafile, test, animal, ...
@@ -498,9 +504,16 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 	end
 
 	% Save Data
+	%	write:
+	%		- recorded data
+	%		- info about stimulus:
+	%				audio level, opto amplitude index_into_stimList
+	%		- trial #
+	%		- rep #
+	%
 	writeOptoTrialData(datafile, ...
 								recdata, ...
-								[Stim.audio.Level Stim.opto.Amp], ...
+								[Stim.audio.Level Stim.opto.Amp cIndx], ...
 								sindex, rep);
 
 	% This is code for letting the user know what in
