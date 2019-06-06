@@ -232,7 +232,8 @@ fprintf('\t\tresp rms: %.4f dbSPL: %.4f\n', pmag, dbspl(test.VtoPa(1)*pmag));
 dbAx = subplot(313);
 [~, ~, test.rVals] = plotSignalAnddB(resp{1}, 10, test.Fs, ...
 													'dBSPL', test.VtoPa(1), ...
-													'signalname', 'noise');
+													'signalname', 'noise', ...
+													'axes', dbAx);
 	
 
 %------------------------------------------------------------------
