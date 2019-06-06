@@ -134,12 +134,12 @@ iodev.Fs = TDT.RPsamplefreqFunc(iodev);
 test.Fs = iodev.Fs;
 
 %------------------------------------------------------------------
-%% Set up TDT parameters
+% Set up TDT parameters
 %------------------------------------------------------------------
 TDT.TDTsetFunc(iodev, test); 
 
 %------------------------------------------------------------------
-%% Set up filtering
+% Set up filtering
 %------------------------------------------------------------------
 % update bandpass filter for processing the data
 % Nyquist frequency
@@ -151,8 +151,11 @@ fband = [test.HPFreq test.LPFreq] ./ fnyq;
 
 %------------------------------------------------------------------
 % set the start and end bins for the calibration
+% ignore onset/offset ramps for calculation of rms and db SPL
 %------------------------------------------------------------------
-start_bin = ms2bin(test.Delay + test.Ramp, iodev.Fs);
+% io function overrides Delay setting to 0 so this is no longer correct
+% start_bin = ms2bin(test.Delay + test.Ramp, iodev.Fs);
+start_bin = ms2bin(test.Ramp, iodev.Fs);
 if start_bin < 1
 	start_bin = 1;
 end
@@ -160,11 +163,6 @@ end_bin = start_bin + ms2bin(test.Duration - 2*test.Ramp, iodev.Fs);
 zerostim = syn_null(test.Duration, iodev.Fs, 1);  % make zeros for both channels
 outpts = length(zerostim);
 acqpts = ms2bin(test.AcqDuration, iodev.Fs);
-stim_start_bin = ms2bin(test.Ramp, iodev.Fs);
-if stim_start_bin < 1
-	stim_start_bin = 1;
-end
-stim_end_bin = start_bin + ms2bin(test.Duration - 2*test.Ramp, iodev.Fs);
 
 %------------------------------------------------------------------
 %------------------------------------------------------------------
@@ -201,7 +199,7 @@ duration_samples = ms2bin(test.Duration, test.Fs);
 % 						S(1, :);
 % updated
 stimvecP(1:duration_samples) = S(1, :);
-subplot(211);
+subplot(311);
 plot(tvec, stimvecP);
 % figure out attenuation value 
 stim_rms = rms(stim);
@@ -211,15 +209,15 @@ fprintf('rms: %.4f max: %.4f, atten: %.2f\n', ...
 					stim_rms, max(stim), atten_val(1));
 
 
-%% play noise
+%% set attenuation 
 TDT.setattenFunc(iodev, atten_val);
 
-%% play the sound;
+% play the sound;
 [resp, rate] = TDT.ioFunc(iodev, S, acqpts);
 % filter raw data
 resp{1} = filtfilt(fcoeffb, fcoeffa, sin2array(resp{1}, 1, iodev.Fs));
 % plot the response
-subplot(212)
+subplot(312)
 plot(tvec, resp{1}, 'g');
 % determine the magnitude of the response/leak
 pmag = rms(resp{1}(start_bin:end_bin));
@@ -229,11 +227,13 @@ pmag = pmag / test.MicGain(1);
 % store the data in arrays
 noisemags = dbspl( test.VtoPa * pmag );
 % show calculated values
-fprintf('R%.4f', 1000*pmag);
-fprintf('%.2f', dbspl(test.VtoPa*pmag));
-fprintf('\t\tresp rms: %.4f dbSPL: %.4f\n', pmag, dbspl(test.VtoPa*pmag));
+fprintf('\t\tresp rms: %.4f dbSPL: %.4f\n', pmag, dbspl(test.VtoPa(1)*pmag));
 
-
+dbAx = subplot(313);
+[~, ~, test.rVals] = plotSignalAnddB(resp{1}, 10, test.Fs, ...
+													'dBSPL', test.VtoPa(1), ...
+													'signalname', 'noise');
+	
 
 %------------------------------------------------------------------
 %------------------------------------------------------------------
