@@ -241,8 +241,15 @@ dbAx = subplot(313);
 %% Shut down hardware
 %------------------------------------------------------------------
 %------------------------------------------------------------------
+fprintf('%s: closing TDT hardware\n', mfilename)
 if strcmpi(TDT.AttenMode, 'PA5')
 	TDT.PA5closeFunc(PA5L);
 	TDT.PA5closeFunc(PA5R);
 end
-TDT.RPcloseFunc(iodev);
+try
+	errVal = TDT.RPcloseFunc(iodev);
+catch errME
+	warning('%s: error closing TDT system', mfilename);
+	rethrow(errME);
+end
+
