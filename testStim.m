@@ -10,7 +10,10 @@
 %------------------------------------------------------------------
 %------------------------------------------------------------------
 
-MAX_ATTEN = 120;
+%------------------------------------------------------------------
+% some constants/definitions
+%------------------------------------------------------------------
+MAX_ATTEN = 120;	% maximum attenuation in RZ6
 L = 1;
 R = 2;
 
@@ -33,50 +36,71 @@ end
 % Calibration Test Settings
 %------------------------------------------------------------------
 fprintf('Test settings\n');
-% use defaults from Calibrate as a start
-test = Calibrate_init('INIT_ULTRA');
+% % use defaults from Calibrate as a start
+% test = Calibrate_init('INIT_ULTRA');
 
-% modify as needed
-test.Fmin = 4000;
-test.Fmax = 95000;
-test.Fstep = 200;
+%--------------------------------------------
+% modify as needed !!!
+%--------------------------------------------
+
+%--------------------------------------------
+% broadband noise parameters
+%--------------------------------------------
+test.noise.Fmin = 4000;
+test.noise.Fmax = 95000;
+test.noise.Duration = 150;
+test.noise.Delay = 10;
+test.noise.Ramp = 5;
+%--------------------------------------------
+% tone parameters
+%--------------------------------------------
+test.tone.Frequency = 5000;
+test.tone.Duration = 150;
+test.tone.Delay = 10;
+test.tone.Ramp = 5;
+
+%--------------------------------------------
+% Common settings for stimuli
+%		this could be set for noise and tones individually, but for now use
+%		common value for both.
+%--------------------------------------------
+% # of times to repeat stimuli
 test.Reps = 3;
+% target dB SPL level for stimuli
+test.Level = 50;
+% output voltage level for stimuli
+test.DAlevel = 1;
 
-test.AttenType = 'VARIED';
-test.MinLevel = 45;
-test.MaxLevel = 50;
-test.AttenStep = 2;
-test.AttenFixed = 60;
-test.AttenStart = 90; 
+% % Microphone Settings
+% test.MicGainL_dB = 0;
+% test.MicGainR_dB = 0;
+% test.MicSenseL = 1;
+% test.MicSenseR = 1;
+% test.frfileL = [];
+% test.frfileR = [];
+% test.UseFR = 1;
 
-test.MicGainL_dB = 40;
-test.MicGainR_dB = 40;
-test.MicSenseL = 1;
-test.MicSenseR = 1;
-test.frfileL = [];
-test.frfileR = [];
-test.UseFR = 1;
-
+%--------------------------------------------
+% Sweep & DAQ settings
+%--------------------------------------------
+% time (ms) to pause between each presentation
 test.ISI = 100; 
-test.Duration = 150;
-test.Delay = 10;
-test.Ramp = 5;
-test.DAlevel = 5;
-
+% time to acquire data
 test.AcqDuration = 200;
+% this is needed by TDT circuit
 test.SweepPeriod = test.AcqDuration + 10;
+% trigger output pulse duration in ms (usually can leave this alone)
 test.TTLPulseDur = 1;
+% Filter settings - frequency in Hz
 test.HPFreq = 3800;
 test.LPFreq = 97000;
 
-
+%--------------------------------------------
 % Microphone and conversion to dB settings
 %	Note that cal.Fs will need to be reset once TDT hardware is initialized
-test.MicGainL_dB = 0;
-test.MicGainR_dB = 0;
-% reshape
-test.RefMicSens = [test.MicSenseL test.MicSenseR];
-test.MicGain_dB = [test.MicGainL_dB test.MicGainR_dB];
+%--------------------------------------------
+test.RefMicSens = 1;
+test.MicGain_dB = 0;
 % pre-compute some conversion factors:
 % Volts to Pascal factor
 test.VtoPa = test.RefMicSens.^-1;
@@ -84,10 +108,44 @@ test.VtoPa = test.RefMicSens.^-1;
 test.MicGain = 10.^(test.MicGain_dB./20);
 
 %------------------------------------------------------------------
-% Use MTwav_settings for now
+% Copy wav info from MTwav_settings (6/7/2019)
 %------------------------------------------------------------------
-run C:\TytoLogy\Experiments\Opto\Scripts\MTwav_settings;
-
+% run C:\TytoLogy\Experiments\Opto\Scripts\MTwav_settings;
+test.wav.WavPath = 'C:\TytoLogy\Experiments\WAVs';
+% names of wav files to use as stimuli
+test.wav.WavesToPlay = {	
+'1StepUSVMating_adj.wav', ...
+'2StepUSVMating_adj.wav', ...
+'ChevronMating_adj.wav', ...
+'ChevronwNLsMating_adj.wav', ...
+'FlatMating_adj.wav', ...
+'LFHMating_adj.wav', ...
+'MFVtonalRestraint_adj.wav', ...
+'MFVwHarmonicsRestraint_adj.wav', ...
+'MFVwNLsRestraint_adj.wav', ...
+'Noisy_adj.wav' ...
+};
+% # of wavs to play
+test.wav.nWavs = length(test.wav.WavesToPlay);
+% and scaling factors (to achieve desired amplitude)
+% % % temporarily use 1 as scaling factor - fix after calibration!!!
+test.wav.WavScaleFactors = ones(test.wav.nWavs, 1);
+% max level achievable at given scale factor 
+% (determined using FlatWav program)
+test.wav.WavLevelAtScale = [	
+	90.24, ...
+	91.14, ...
+	88.18, ...
+	85.41, ...
+	90.12, ...
+	106.32, ...
+	97.46, ...
+	108.16, ...
+	92.6, ...
+	99.96 ...
+];
+% onset, offset wav ramp duration (aka tapers)
+test.wav.Ramp = 10;
 
 %------------------------------------------------------------------
 % Hardware Settings
