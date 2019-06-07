@@ -20,8 +20,10 @@ R = 2;
 %------------------------------------------------------------------
 % Load Calibration Data
 %------------------------------------------------------------------
-test.calpath = 'C:\TytoLogy\Experiments\WAVs';
-test.calfile = 'LCY-C-4K-100K-1V-20dBatten_29May19.cal';
+% test.calpath = 'C:\TytoLogy\Experiments\WAVs';
+% test.calfile = 'LCY-C-4K-100K-1V-20dBatten_29May19.cal';
+test.calpath = 'C:\TytoLogy\Experiments\Opto\Tests';
+test.calfile = '7Jun2019_KrohnHite70kHzLP_Fake.mat';
 cfile = fullfile(test.calpath, test.calfile);
 if ~exist(cfile, 'file')
 	error('%s: Calibration file %s not found!', mfilename, ...
@@ -31,6 +33,11 @@ else
 	fprintf('Loading calibration data from %s\n', cfile);
 	caldata = load_cal_and_smooth(cfile, 10);
 end
+% Plot Calibration Data
+figure
+plot(caldata.freq, caldata.mag(1, :), 'k', caldata.freq, db(caldata.maginv(1, :)), 'b');
+grid on
+legend('mag', 'corr mag');
 
 %------------------------------------------------------------------
 % Calibration Test Settings
@@ -48,22 +55,19 @@ fprintf('Test settings\n');
 %--------------------------------------------
 test.noise.Fmin = 4000;
 test.noise.Fmax = 95000;
-test.noise.Duration = 150;
-test.noise.Delay = 10;
-test.noise.Ramp = 5;
 %--------------------------------------------
 % tone parameters
 %--------------------------------------------
 test.tone.Frequency = 5000;
-test.tone.Duration = 150;
-test.tone.Delay = 10;
-test.tone.Ramp = 5;
 
 %--------------------------------------------
 % Common settings for stimuli
 %		this could be set for noise and tones individually, but for now use
 %		common value for both.
 %--------------------------------------------
+test.Duration = 150;
+test.Delay = 10;
+test.Ramp = 5;
 % # of times to repeat stimuli
 test.Reps = 3;
 % target dB SPL level for stimuli
@@ -229,8 +233,6 @@ acqpts = ms2bin(test.AcqDuration, iodev.Fs);
 %------------------------------------------------------------------
 figure
 
-test.Level = 50;
-
 %------------------------------------------------------------------
 %% test noise using example from Calibrate_test
 %------------------------------------------------------------------
@@ -238,8 +240,8 @@ test.Level = 50;
 % stim = synmonosine(cal.Duration, iodev.Fs, freq, caldata.DAscale, caldata);
 stim = synmononoise_fft(	test.Duration, ...
 											iodev.Fs, ...
-											test.Fmin, ...
-											test.Fmax, ...
+											test.noise.Fmin, ...
+											test.noise.Fmax, ...
 											1, ...
 											caldata);
 stim = caldata.DAscale * normalize(stim);
@@ -261,8 +263,10 @@ subplot(311);
 plot(tvec, stimvecP);
 % figure out attenuation value 
 stim_rms = rms(stim);
-atten_val(1) = figure_mono_atten_noise(test.Level, stim_rms, caldata);
-atten_val(2) = MAX_ATTEN;
+% atten_val = [figure_mono_atten_noise(test.Level, stim_rms, caldata) ...
+% 					MAX_ATTEN];
+atten_val = [caldata.mindbspl(1) - test.Level ...
+					MAX_ATTEN];
 fprintf('rms: %.4f max: %.4f, atten: %.2f\n', ...
 					stim_rms, max(stim), atten_val(1));
 
@@ -281,15 +285,15 @@ plot(tvec, resp{1}, 'g');
 pmag = rms(resp{1}(start_bin:end_bin));
 % adjust for the gain of the preamp (for non-calibration mics, this is
 % inaccurate!!!!!)
-pmag = pmag / test.MicGain(1);
+pmag = pmag / test.MicGain;
 % store the data in arrays
 noisemags = dbspl( test.VtoPa * pmag );
 % show calculated values
-fprintf('\t\tresp rms: %.4f dbSPL: %.4f\n', pmag, dbspl(test.VtoPa(1)*pmag));
+fprintf('\t\tresp rms: %.4f dbSPL: %.4f\n', pmag, dbspl(test.VtoPa*pmag));
 
 dbAx = subplot(313);
 [~, ~, test.rVals] = plotSignalAnddB(resp{1}, 10, test.Fs, ...
-													'dBSPL', test.VtoPa(1), ...
+													'dBSPL', test.VtoPa, ...
 													'signalname', 'noise', ...
 													'axes', dbAx);
 	
