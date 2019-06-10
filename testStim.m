@@ -23,7 +23,9 @@ R = 2;
 % test.calpath = 'C:\TytoLogy\Experiments\WAVs';
 % test.calfile = 'LCY-C-4K-100K-1V-20dBatten_29May19.cal';
 test.calpath = 'C:\TytoLogy\Experiments\Opto\Tests';
-test.calfile = '7Jun2019_KrohnHite70kHzLP_Fake.mat';
+% test.calfile = '7Jun2019_KrohnHite70kHzLP_Fake.mat';
+% test.calfile = '10Jun2019_LCY-C_LowFreqTest_cal.mat';
+test.calfile = '10Jun2019_LCY-C_Test_cal.mat';
 cfile = fullfile(test.calpath, test.calfile);
 if ~exist(cfile, 'file')
 	error('%s: Calibration file %s not found!', mfilename, ...
@@ -31,11 +33,12 @@ if ~exist(cfile, 'file')
 else
 	% load the calibration data
 	fprintf('Loading calibration data from %s\n', cfile);
-	caldata = load_cal_and_smooth(cfile, 10);
+	caldata = load_cal_and_smooth(cfile, 5);
 end
 % Plot Calibration Data
 figure
-plot(caldata.freq, caldata.mag(1, :), 'k', caldata.freq, db(caldata.maginv(1, :)), 'b');
+plot(caldata.freq, caldata.mag(1, :), 'k.-', ...
+	caldata.freq, db(caldata.maginv(1, :)), 'b.-');
 grid on
 legend('mag', 'corr mag');
 
@@ -99,14 +102,17 @@ test.TTLPulseDur = 1;
 test.HPFreq = 3800;
 test.LPFreq = 97000;
 
+
 %--------------------------------------------
 % Microphone and conversion to dB settings
 %	Note that cal.Fs will need to be reset once TDT hardware is initialized
 %--------------------------------------------
-test.RefMicSens = 1;
+% microphone sensitivity (Volts/Pascal)
+test.RefMicSens = 0.316;
+% gain on mic amp
 test.MicGain_dB = 0;
 % pre-compute some conversion factors:
-% Volts to Pascal factor
+% Volts to Pascal converstion factor = 1/RefMicSense
 test.VtoPa = test.RefMicSens.^-1;
 % mic gain factor
 test.MicGain = 10.^(test.MicGain_dB./20);
@@ -231,24 +237,28 @@ acqpts = ms2bin(test.AcqDuration, iodev.Fs);
 %% Do things
 %------------------------------------------------------------------
 %------------------------------------------------------------------
-figure
 
 %------------------------------------------------------------------
 %% test noise using example from Calibrate_test
 %------------------------------------------------------------------
 % synthesize noise
 % stim = synmonosine(cal.Duration, iodev.Fs, freq, caldata.DAscale, caldata);
-stim = synmononoise_fft(	test.Duration, ...
-											iodev.Fs, ...
-											test.noise.Fmin, ...
-											test.noise.Fmax, ...
-											1, ...
-											caldata);
+% stim = synmononoise_fft(	test.Duration, ...
+% 									iodev.Fs, ...
+% 									test.noise.Fmin, ...
+% 									test.noise.Fmax, ...
+% 									1, ...
+% 									caldata);
+
+test.Level = 70;
+stim = synmononoise_fft(test.Duration, iodev.Fs, 20000, 30000, 1, caldata);
+% normalize and scale data
 stim = caldata.DAscale * normalize(stim);
+% stim = caldata.DAscale * (stim);
 S = zeros(2, length(stim));
 S(1, :) = stim;
-S(2, :) = zeros(size(stim));
 S = sin2array(S, test.Ramp, iodev.Fs);
+fftdbmagplot(S(1, :), iodev.Fs, figure(11));
 % plot the stim array
 tvec = (1000/iodev.Fs).*(0:(acqpts-1));
 stimvecP = 0 * tvec;
@@ -259,19 +269,33 @@ duration_samples = ms2bin(test.Duration, test.Fs);
 % 						S(1, :);
 % updated
 stimvecP(1:duration_samples) = S(1, :);
+figure(10);
 subplot(311);
 plot(tvec, stimvecP);
+ylabel('stim');
 % figure out attenuation value 
 stim_rms = rms(stim);
+% current figure_mono_atten_noise algorithm
 % atten_val = [figure_mono_atten_noise(test.Level, stim_rms, caldata) ...
 % 					MAX_ATTEN];
-atten_val = [caldata.mindbspl(1) - test.Level ...
-					MAX_ATTEN];
-fprintf('rms: %.4f max: %.4f, atten: %.2f\n', ...
-					stim_rms, max(stim), atten_val(1));
+% other
+% atten_val = [caldata.mindbspl(1) + db(caldata.cal.VtoPa(1)*stim_rms) - test.Level ...
+% 							MAX_ATTEN];
+% atten_val = [caldata.mindbspl(1) + dbspl(caldata.cal.VtoPa(1)*stim_rms) - test.Level ...
+% 	MAX_ATTEN];
+% atten_val = [ (dbspl(caldata.cal.VtoPa(1)*stim_rms) - test.Level) ...
+% 	MAX_ATTEN];
+atten_val = [ (dbspl(caldata.VtoPa(1)*stim_rms) - test.Level) ...
+	MAX_ATTEN];
+
+% simple
+% atten_val = [caldata.mindbspl(1) - test.Level ...
+% 					MAX_ATTEN];
+fprintf('rms: %.4f\tmax: %.4f\tpred max output: %.2f\tatten: %.2f\n', ...
+					stim_rms, max(stim), dbspl(caldata.VtoPa(1)*stim_rms), atten_val(1));
 
 
-%% set attenuation 
+% set attenuation 
 TDT.setattenFunc(iodev, atten_val);
 
 % play the sound;
@@ -281,6 +305,7 @@ resp{1} = filtfilt(fcoeffb, fcoeffa, sin2array(resp{1}, 1, iodev.Fs));
 % plot the response
 subplot(312)
 plot(tvec, resp{1}, 'g');
+ylabel('resp (V)');
 % determine the magnitude of the response/leak
 pmag = rms(resp{1}(start_bin:end_bin));
 % adjust for the gain of the preamp (for non-calibration mics, this is
@@ -289,15 +314,17 @@ pmag = pmag / test.MicGain;
 % store the data in arrays
 noisemags = dbspl( test.VtoPa * pmag );
 % show calculated values
-fprintf('\t\tresp rms: %.4f dbSPL: %.4f\n', pmag, dbspl(test.VtoPa*pmag));
-
+fprintf('resp rms: %.4f dbSPL: %.4f\n', pmag, dbspl(test.VtoPa*pmag));
+% plot signal and dB - use stimulus duration as rms window
 dbAx = subplot(313);
-[~, ~, test.rVals] = plotSignalAnddB(resp{1}, 10, test.Fs, ...
+[~, ~, test.rVals] = plotSignalAnddB(resp{1}, test.Duration, test.Fs, ...
 													'dBSPL', test.VtoPa, ...
 													'signalname', 'noise', ...
 													'axes', dbAx);
-	
 
+fftdbmagplot(	sin2array(resp{1}(1:ms2bin(test.Duration, iodev.Fs)), ...
+																		1, iodev.Fs), ...
+				iodev.Fs, figure(12));
 %------------------------------------------------------------------
 %------------------------------------------------------------------
 %% Shut down hardware
