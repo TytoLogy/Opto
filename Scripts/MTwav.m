@@ -391,7 +391,8 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 				rmsval = noise.signal.rms;
 			end
 			% get the attenuator settings for the desired SPL
-			atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
+% 			atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
+			atten = figure_mono_atten_noise(Stim.audio.Level, rmsval, caldata);
 			% noise stimuli will be 2 psth after the wav psths
 			% see standalone_wav_settupplots.m script
 			pIndx = counts.nWavStim + 2;

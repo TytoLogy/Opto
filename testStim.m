@@ -61,7 +61,7 @@ test.noise.Fmax = 95000;
 %--------------------------------------------
 % tone parameters
 %--------------------------------------------
-test.tone.Frequency = 5000;
+test.tone.Frequency = 1000*[5 10 30 50 90];
 
 %--------------------------------------------
 % Common settings for stimuli
@@ -155,7 +155,13 @@ test.wav.WavLevelAtScale = [
 	99.96 ...
 ];
 % onset, offset wav ramp duration (aka tapers)
-test.wav.Ramp = 10;
+test.wav.WavRamp = 10;
+% construct wavInfo struct "database" for desired wav stimuli
+[test.wav.wavInfo, tmpWavFile] = opto_create_wav_stimulus_info( ...
+														test.wav.WavPath, ...
+														test.wav.WavesToPlay, ...
+														test.wav.WavScaleFactors, ...
+														test.wav.WavLevelAtScale);
 
 %------------------------------------------------------------------
 % Hardware Settings
@@ -250,8 +256,8 @@ acqpts = ms2bin(test.AcqDuration, iodev.Fs);
 % 									1, ...
 % 									caldata);
 
-test.Level = 70;
-stim = synmononoise_fft(test.Duration, iodev.Fs, 20000, 30000, 1, caldata);
+test.Level = 80;
+stim = synmononoise_fft(test.Duration, iodev.Fs, 4000, 90000, 1, caldata);
 % normalize and scale data
 stim = caldata.DAscale * normalize(stim);
 % stim = caldata.DAscale * (stim);
@@ -276,8 +282,8 @@ ylabel('stim');
 % figure out attenuation value 
 stim_rms = rms(stim);
 % current figure_mono_atten_noise algorithm
-% atten_val = [figure_mono_atten_noise(test.Level, stim_rms, caldata) ...
-% 					MAX_ATTEN];
+atten_val = [figure_mono_atten_noise(test.Level, stim_rms, caldata) ...
+					MAX_ATTEN];
 % other
 % atten_val = [caldata.mindbspl(1) + db(caldata.cal.VtoPa(1)*stim_rms) - test.Level ...
 % 							MAX_ATTEN];
@@ -285,8 +291,8 @@ stim_rms = rms(stim);
 % 	MAX_ATTEN];
 % atten_val = [ (dbspl(caldata.cal.VtoPa(1)*stim_rms) - test.Level) ...
 % 	MAX_ATTEN];
-atten_val = [ (dbspl(caldata.VtoPa(1)*stim_rms) - test.Level) ...
-	MAX_ATTEN];
+% atten_val = [ (dbspl(caldata.VtoPa(1)*stim_rms) - test.Level) ...
+% 	MAX_ATTEN];
 
 % simple
 % atten_val = [caldata.mindbspl(1) - test.Level ...
@@ -325,6 +331,161 @@ dbAx = subplot(313);
 fftdbmagplot(	sin2array(resp{1}(1:ms2bin(test.Duration, iodev.Fs)), ...
 																		1, iodev.Fs), ...
 				iodev.Fs, figure(12));
+			
+
+						
+%------------------------------------------------------------------
+%% test tones using example from Calibrate_test
+%------------------------------------------------------------------
+test.Level = 70;
+ntones = length(test.tone.Frequency);
+tonemags = zeros(ntones, 1);
+% loop through frequencies
+for fIndx = 1:ntones
+	Frequency = test.tone.Frequency(fIndx);
+	% synthesize tone
+	stim = synmonosine(test.Duration, iodev.Fs, Frequency, caldata.DAscale, caldata, 0);
+	S = zeros(2, length(stim));
+	S(1, :) = stim;
+	S = sin2array(S, test.Ramp, iodev.Fs);
+	fftdbmagplot(S(1, :), iodev.Fs, figure(11));
+	% plot the stim array
+	tvec = (1000/iodev.Fs).*(0:(acqpts-1));
+	stimvecP = 0 * tvec;
+	delay_samples = ms2bin(test.Delay, test.Fs);
+	duration_samples = ms2bin(test.Duration, test.Fs);
+	% this was original code, but RZ6calibration_io sets delay to 0...
+	% stimvecP( (delay_samples + 1) : (delay_samples + duration_samples) ) = ...
+	% 						S(1, :);
+	% updated
+	stimvecP(1:duration_samples) = S(1, :);
+	figure(10);
+	subplot(311);
+	plot(tvec, stimvecP);
+	ylabel('stim');
+	% figure out attenuation value 
+	stim_rms = rms(stim);
+	atten_val = [figure_mono_atten_tone(test.Level, stim_rms, caldata) ...
+						MAX_ATTEN];
+	fprintf('rms: %.4f\tmax: %.4f\tpred max output: %.2f\tatten: %.2f\n', ...
+						stim_rms, max(stim), dbspl(caldata.VtoPa(1)*stim_rms), atten_val(1));
+
+
+	% set attenuation 
+	TDT.setattenFunc(iodev, atten_val);
+
+	% play the sound;
+	[resp, rate] = TDT.ioFunc(iodev, S, acqpts);
+	% filter raw data
+	resp{1} = filtfilt(fcoeffb, fcoeffa, sin2array(resp{1}, 1, iodev.Fs));
+	% plot the response
+	subplot(312)
+	plot(tvec, resp{1}, 'g');
+	ylabel('resp (V)');
+	% determine the magnitude of the response/leak
+	pmag = rms(resp{1}(start_bin:end_bin));
+	% adjust for the gain of the preamp (for non-calibration mics, this is
+	% inaccurate!!!!!)
+	pmag = pmag / test.MicGain;
+	% store the data in arrays
+	tonemags(fIndx) = dbspl( test.VtoPa * pmag );
+	% show calculated values
+	fprintf('resp rms: %.4f dbSPL: %.4f\n', pmag, dbspl(test.VtoPa*pmag));
+	% plot signal and dB - use stimulus duration as rms window
+	dbAx = subplot(313);
+	[~, ~, test.rVals] = plotSignalAnddB(resp{1}, test.Duration, test.Fs, ...
+									'dBSPL', test.VtoPa, ...
+									'signalname', sprintf('%dkHz', 0.001*Frequency), ...
+									'axes', dbAx);
+
+	fftdbmagplot(	sin2array(resp{1}(1:ms2bin(test.Duration, iodev.Fs)), ...
+																			1, iodev.Fs), ...
+					iodev.Fs, figure(12));
+	pause(test.ISI * 0.001);
+end
+
+%------------------------------------------------------------------
+%% test WAVS
+%------------------------------------------------------------------
+% process wavs
+if ~isfield(test.wav, 'wavS0')
+	test.wav = condition_wavs(test.wav, iodev.Fs);
+end
+%%
+test.Level = 50;
+wavresps = cell(test.wav.nWavs, 1);
+wavmags = zeros(test.wav.nWavs, 1);
+
+
+% loop through wavs
+for wIndx = 1:test.wav.nWavs
+	% synthesize tone
+	stim = test.wav.wavS0{wIndx};
+	S = zeros(2, length(stim));
+	S(1, :) = stim;
+	fftdbmagplot(S(1, :), iodev.Fs, figure(11));
+	% get acq duration
+	acqdur = ceil(bin2ms(length(stim), iodev.Fs)/50)*50;
+	acqpts = ms2bin(acqdur, iodev.Fs);
+
+	% plot the stim array
+	tvec = (1000/iodev.Fs).*(0:(acqpts-1));
+	stimvecP = 0 * tvec;
+	delay_samples = ms2bin(test.Delay, test.Fs);
+	duration_samples = length(stim);
+	% this was original code, but RZ6calibration_io sets delay to 0...
+	% stimvecP( (delay_samples + 1) : (delay_samples + duration_samples) ) = ...
+	% 						S(1, :);
+	% updated
+	stimvecP(1:duration_samples) = S(1, :);
+	figure(10);
+	subplot(311);
+	plot(tvec, stimvecP);
+	ylabel('stim');
+	% figure out attenuation value 
+	stim_rms = rms(stim);
+	atten_val = [test.wav.WavLevelAtScale(wIndx) - test.Level ...
+						MAX_ATTEN];
+	fprintf('rms: %.4f\tmax: %.4f\tpred max output: %.2f\tatten: %.2f\n', ...
+						stim_rms, max(stim), dbspl(caldata.VtoPa(1)*stim_rms), atten_val(1));
+	
+	% set attenuation 
+	TDT.setattenFunc(iodev, atten_val);
+
+	% play the sound;
+	[resp, rate] = TDT.ioFunc(iodev, S, acqpts);
+	% filter raw data
+	resp{1} = filtfilt(fcoeffb, fcoeffa, sin2array(resp{1}, 1, iodev.Fs));
+	% plot the response
+	subplot(312)
+	plot(tvec, resp{1}, 'g');
+	ylabel('resp (V)');
+	% determine the magnitude of the response/leak
+	pmag = rms(resp{1});
+	% adjust for the gain of the preamp (for non-calibration mics, this is
+	% inaccurate!!!!!)
+	pmag = pmag / test.MicGain;
+	% store the data in arrays
+	wavmags(wIndx) = dbspl( test.VtoPa * pmag );
+	% show calculated values
+	fprintf('resp rms: %.4f dbSPL: %.4f\n', pmag, dbspl(test.VtoPa*pmag));
+	% plot signal and dB - use stimulus duration as rms window
+	dbAx = subplot(313);
+	[~, ~, test.wav.rVals(wIndx)] = plotSignalAnddB(resp{1}, 5, test.Fs, ...
+									'dBSPL', test.VtoPa, ...
+									'signalname', test.wav.WavesToPlay{wIndx}, ...
+									'axes', dbAx);
+
+	fftdbmagplot(	sin2array(resp{1}, 1, iodev.Fs), ...
+					iodev.Fs, figure(12));
+	wavresps{wIndx} = resp{1};
+	pause(test.ISI * 0.001);
+end
+
+[test.wav.rVals.dB_max]
+
+
+
 %------------------------------------------------------------------
 %------------------------------------------------------------------
 %% Shut down hardware

@@ -1,3 +1,4 @@
+function varargout = condition_wavs(W, outFs)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Load and condition wav stimuli
@@ -17,42 +18,52 @@
 % Revisions:
 % 22 Apr 2019 (SJS): added comments
 %-------------------------------------------------------------------------
-% wav data
-wavS0 = cell(nWavs, 1);
+if nargin ~= 2
+	error('%s: need wav struct and output Fs', mfilename);
+end
+
+% allocate wav data
+% wavforms
+W.wavS0 = cell(W.nWavs, 1);
 % original sampling rate
-tmpFs = zeros(nWavs, 1);
+tmpFs = zeros(W.nWavs, 1);
+
 % loop through wavs
-for n = 1:nWavs
-	tmpfile = fullfile(audio.signal.WavPath, wavInfo(n).Filename);
-	[wavS0{n}, tmpFs(n)] = audioread(tmpfile);
+for n = 1:W.nWavs
+	tmpfile = fullfile(W.WavPath, W.wavInfo(n).Filename);
+	[W.wavS0{n}, tmpFs(n)] = audioread(tmpfile);
 	% need to make sure wav data is in row vector form
-	if ~isrow(wavS0{n})
-		wavS0{n} = wavS0{n}';
+	if ~isrow(W.wavS0{n})
+		W.wavS0{n} = W.wavS0{n}';
 	end
 	% check to make sure sample rate of signal matches
 	% hardware output sample rate
 	if outFs ~= tmpFs(n)
 		% if not, resample...
-		fprintf('Resampling %s\n', wavInfo(n).Filename);
-		wavS0{n} = correctFs(wavS0{n}, tmpFs(n), outFs);
+		fprintf('Resampling %s\n', W.wavInfo(n).Filename);
+		W.wavS0{n} = correctFs(W.wavS0{n}, tmpFs(n), outFs);
 		% and adjust other information
-		wavInfo(n).SampleRate = outFs; %#ok<*SAGROW>
-		wavInfo(n).TotalSamples = length(wavS0{n});
-		onsettime = wavInfo(n).OnsetBin / tmpFs(n);
-		offsettime = wavInfo(n).OffsetBin / tmpFs(n);
-		wavInfo(n).OnsetBin = ms2bin(1000*onsettime, outFs);
-		wavInfo(n).OffsetBin = ms2bin(1000*offsettime, outFs);
+		W.wavInfo(n).SampleRate = outFs; %#ok<*SAGROW>
+		W.wavInfo(n).TotalSamples = length(W.wavS0{n});
+		onsettime = W.wavInfo(n).OnsetBin / tmpFs(n);
+		offsettime = W.wavInfo(n).OffsetBin / tmpFs(n);
+		W.wavInfo(n).OnsetBin = ms2bin(1000*onsettime, outFs);
+		W.wavInfo(n).OffsetBin = ms2bin(1000*offsettime, outFs);
 	end
-	if exist('WavRamp', 'var')
-		if WavRamp > 0
+	if isfield(W, 'WavRamp')
+		if W.WavRamp > 0
 			% apply specified ramp
-			wavS0{n} = sin2array(wavS0{n}, WavRamp, outFs);
+			W.wavS0{n} = sin2array(W.wavS0{n}, W.WavRamp, outFs);
 		else
 			% apply *short* 1 ms duration ramp to ensure wav start and end is 0
-			wavS0{n} = sin2array(wavS0{n}, 1, outFs);
+			W.WavRamp = 1;
+			W.wavS0{n} = sin2array(W.wavS0{n}, 1, outFs);
 		end
 	else
 		% apply *short* 1 ms duration ramp to ensure wav start and end is 0
-		wavS0{n} = sin2array(wavS0{n}, 1, outFs);
+		W.WavRamp = 1;
+		W.wavS0{n} = sin2array(W.wavS0{n}, 1, outFs);
 	end
 end
+
+varargout{1} = W;
