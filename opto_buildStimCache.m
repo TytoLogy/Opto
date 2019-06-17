@@ -74,11 +74,11 @@ else
 	nOptoAmp = 0;
 end
 % # of trials == # of stim values (ITDs, ILDs, # freqs, etc.)
-if strfind(test.Type, 'LEVEL') && strcmpi(signal.Type, 'tone')
+if ~isempty(strfind(test.Type, 'LEVEL')) && strcmpi(signal.Type, 'tone')
 	% test is frequency level, so ntrials will be # of levels plus # opto
 	% amps
 	c.ntrials = nLevels + nOptoAmp;
-elseif strfind(test.Type, 'FREQ+LEVEL')
+elseif ~isempty(strfind(test.Type, 'FREQ+LEVEL'))
 	% test is FRA (vary both frequency and level)
 	c.ntrials = nLevels * nFreqs;
 elseif isempty(strfind(test.Type, 'FREQ+LEVEL'))
