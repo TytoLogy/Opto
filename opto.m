@@ -862,7 +862,6 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 		save(fullfile(pname, [basename '_testdata.mat']), ...
 									'testdata', 'respdata', '-MAT');
 		guidata(hObject, handles);
-		
 	else
 		% not standalone, so build cache
 		[stimcache, stimseq] = opto_buildStimCache(test, handles.H.TDT, ...
@@ -880,6 +879,14 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 		save(fullfile(pname, [basename '_testdata.mat']), ...
 									'testdata', '-MAT');
 	end
+	
+%------------------------------------------------
+% plot data using optoproc
+%------------------------------------------------
+
+
+
+
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 function buttonEditTestScript_Callback(hObject, eventdata, handles)

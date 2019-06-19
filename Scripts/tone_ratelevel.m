@@ -43,12 +43,12 @@ test.opto.Amp = 3000;
 %-------------------------------------------------------------------------
 % signal
 test.audio.signal.Type = 'tone';
-test.audio.signal.Frequency = 17000;
+test.audio.signal.Frequency = 9500;
 test.audio.signal.RadVary = 1;
 test.audio.Delay = 100;
 test.audio.Duration = 100;
 % test.audio.Level = [20 40 60 70];
-test.audio.Level = [10 20 40 60];
+test.audio.Level = 0:10:60;
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
 test.audio.ISI = 100;
@@ -65,7 +65,7 @@ test.saveStim = 0;
 %-------------------------------------------------------------------------
 % TDT
 %-------------------------------------------------------------------------
-test.AcqDuration = 200;
+test.AcqDuration = 250;
 test.SweepPeriod = test.AcqDuration + 5;
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
