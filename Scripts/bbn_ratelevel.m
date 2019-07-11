@@ -51,7 +51,7 @@ test.saveStim = 0;
 % TDT
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-test.AcqDuration = 200;
+test.AcqDuration = 250;
 test.SweepPeriod = test.AcqDuration + 5;
 
  if test.opto.Enable

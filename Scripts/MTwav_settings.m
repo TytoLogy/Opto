@@ -12,9 +12,9 @@
 %	without repeats for 1 rep, then another, then .... etc.
 %----------------------------------------------------------
 test.Reps = 10;
-test.Randomize = 1;
+test.Randomize = 0;
 test.Block = 0;
-audio.ISI = 100;
+audio.ISI = 2000;
 %------------------------------------
 % Experiment settings
 %------------------------------------
@@ -23,7 +23,7 @@ test.saveStim = 0;
 % stimulus levels to test
 % !!! note that levels for individual stimulus types set below are
 % overridden by these values
-test.Level = [20 40 60 70];
+test.Level = [70];
 % use null stim?
 test.NullStim = 1;
 % use Noist stim?
