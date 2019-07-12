@@ -62,7 +62,7 @@ outdata = {};
 % # of plots for PSTH and rasters - the product of PLOT_ROWs and PLOT_COLS
 % must be greater than or equal to the number of wav files + 2 (need to
 % account for "null" stimulus and noise stimulus)
-PLOT_ROWS = 4; %#ok<NASGU>
+PLOT_ROWS = 5; %#ok<NASGU>
 PLOT_COLS = 3; %#ok<NASGU>
 
 %-------------------------------------------------------------------------
