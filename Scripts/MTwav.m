@@ -44,7 +44,7 @@ function outdata = MTwav(handles, datafile)
 %	28 Mar, 2019 (SJS): created for use with M. Tehrani's vocal stimuli
 %	24 Apr, 2019 (SJS): reworking and testing.
 %	29 Apr 2019 (SJS): adding informative things to output testdata struct
-%  29 May 2019 (SJS): updating with new wav files
+%   29 May 2019 (SJS): updating with new wav files
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
