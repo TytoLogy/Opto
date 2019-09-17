@@ -18,6 +18,7 @@
 %	22 Oct 2017 (SJS): changed attenuation calc for noise vs. tones
 %	24 Oct 2017 (SJS): last change broke search and blocksearch stim
 %							output - fix!
+%	17 Sep 2019 (SJS): remapping plot for multi-site probe/multielectrode
 %--------------------------------------------------------------------------
 
 % kludge until this is put into UI
@@ -98,14 +99,26 @@ else
 	figure(fH);
 	ax = handles.H.ax;
 	% set up plot
+	% dummy xdata
 	xv = linspace(0, handles.H.TDT.AcqDuration, inpts);
 	xlim([0, inpts]);
+	% dummy ydata
 	yabsmax = 5;
 	tmpData = zeros(inpts, handles.H.TDT.channels.nInputChannels);
 	for n = 1:handles.H.TDT.channels.nInputChannels
 		tmpData(:, n) = n*(yabsmax) + 2*(2*rand(inpts, 1)-1);
 	end
+	% plot the dummy data into the specified plot axes, store the plot
+	% handles in pH
 	pH = plot(ax, xv, tmpData);
+	% pH holds the handles for the nInputChannels plots.
+	% if a multisite (e.g., NeuroNexus) probe is used and the user has
+	% seleced the "Remap Plots" checkbox, the plots can be reordered by
+	% depth by simply re-ordering the plot handles using the channel map
+	% data
+	if handles.H.TDT.channels.Remap
+		pH = pH(handles.H.TDT.channels.ChannelMap);
+	end
 	yticks_yvals = yabsmax*(1:handles.H.TDT.channels.nInputChannels);
 	yticks_txt = cell(handles.H.TDT.channels.nInputChannels, 1);
 	for n = 1:handles.H.TDT.channels.nInputChannels

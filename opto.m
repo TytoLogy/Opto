@@ -684,6 +684,20 @@ function buttonSelectNoneChannels_Callback(hObject, eventdata, handles)
 	optomsg(handles, 'Selecting NO Channels to Record...', 'echo', 'off');
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
+function checkRemapChannels_Callback(hObject, eventdata, handles)
+% remap multisite electrode channels in plots?
+	val = read_ui_val(hObject);
+	if val
+		optomsg(handles, 'Remap Channels ON', 'echo', 'off');
+		handles.H.TDT.channels.Remap = true;
+		handles.H.TDT.channels.ChannelMap = TDTmultimap('A1X16');
+	else
+		optomsg(handles, 'Remap Channels OFF', 'echo', 'off');
+		handles.H.TDT.channels.Remap = false;
+		handles.H.TDT.channels.ChannelMap = 1:handles.H.TDT.nInputChannels;
+	end
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
 function editTLo_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	% maker sure value is in bounds

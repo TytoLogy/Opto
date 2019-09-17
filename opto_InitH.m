@@ -50,6 +50,7 @@ function H = opto_InitH
 %	13 Jun 2017 (SJS): more psth, raster things
 %	18 Apr 2019 (SJS): changed wav file dir, default wav to LFH_adj, default
 %							output directory to E:\Data\EphysData
+%	17 Sep 2019 (SJS): added remap to TDT for multisite probes
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -183,6 +184,8 @@ PA5R = [];
 % OpticalChannel				D/A output channel on RZ5d for opto trigger
 % MonitorChannel				neural channel to monitor from RZ5D
 % MonitorOutputChannel		D/A output channel on RZ5D for monitored neural data
+% ChannelMap					Map for electrode->A/D channels (use for
+%									multisite probe remapping)
 channels.OutputChannelL = 1;
 channels.OutputChannelR = 2;
 channels.nInputChannels = 16;
@@ -190,14 +193,18 @@ channels.InputChannels = 1:channels.nInputChannels;
 channels.OpticalChannel = 10;
 channels.MonitorChannel = 8;
 channels.MonitorOutputChannel = 9; 
-% This is for all channels are "on"
+% This is for all channels are by default "on"
 % channels.RecordChannels = num2cell(true(channels.nInputChannels, 1));
-% This is for all channels "off"
+% This is for all channels are by default "off"
 channels.RecordChannels = num2cell(false(channels.nInputChannels, 1));
 % This sets monitored channel to be recorded to "on"
 channels.RecordChannels{channels.MonitorChannel} = true;
 channels.nRecordChannels = sum(cell2mat(channels.RecordChannels));
 channels.RecordChannelList = find(cell2mat(channels.RecordChannels));
+% remap channels?
+channels.Remap = false;
+% default channel map does nothing - preserves order of channels
+channels.ChannelMap = 1:channels.nInputChannels;
 
 %------------------------------------------------------------------------
 % configuration
