@@ -45,6 +45,7 @@ function outdata = MTwav(handles, datafile)
 %	24 Apr, 2019 (SJS): reworking and testing.
 %	29 Apr 2019 (SJS): adding informative things to output testdata struct
 %   29 May 2019 (SJS): updating with new wav files
+%   13 Sep 2019 (SJS): modifying for neuronexus/multielectrode probe
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
