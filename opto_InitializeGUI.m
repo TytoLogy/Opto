@@ -29,7 +29,8 @@ function handles = opto_InitializeGUI(hObject, eventdata, ...
 %------------------------------------------------------------------------
 % Revisions
 %	22 Oct 2017 (SJS): new cal file
-%	24 Arp 2019 (SJS): new cal file for wav stimuli in opto rig
+%	24 Apr 2019 (SJS): new cal file for wav stimuli in opto rig
+%	17 Sep 2019 (SJS): channel remapping for multisite probes
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
@@ -37,6 +38,7 @@ function handles = opto_InitializeGUI(hObject, eventdata, ...
 % initialize H struct (contains all internal application data)
 %----------------------------------------------------------------
 handles.H = opto_InitH;
+% store handles
 guidata(hObject, handles);
 
 %----------------------------------------------------------------
@@ -90,6 +92,7 @@ update_ui_val(handles.popupAudioSignal, 1);
 set(handles.tableChannelSelect, 'Data', ...
 										handles.H.TDT.channels.RecordChannels);
 set(handles.tableChannelSelect, 'ColumnName', 'Record');
+update_ui_val(handles.checkRemapChannels, handles.H.TDT.channels.RemapChannels);
 guidata(hObject, handles);
 
 % update Level slider limits and values
