@@ -202,7 +202,7 @@ channels.RecordChannels{channels.MonitorChannel} = true;
 channels.nRecordChannels = sum(cell2mat(channels.RecordChannels));
 channels.RecordChannelList = find(cell2mat(channels.RecordChannels));
 % remap channels?
-channels.Remap = false;
+channels.RemapChannels = false;
 % default channel map does nothing - preserves order of channels
 channels.ChannelMap = 1:channels.nInputChannels;
 

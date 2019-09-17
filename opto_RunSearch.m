@@ -116,14 +116,11 @@ else
 	% seleced the "Remap Plots" checkbox, the plots can be reordered by
 	% depth by simply re-ordering the plot handles using the channel map
 	% data
-	if handles.H.TDT.channels.Remap
+	if handles.H.TDT.channels.RemapChannels
 		pH = pH(handles.H.TDT.channels.ChannelMap);
 	end
 	yticks_yvals = yabsmax*(1:handles.H.TDT.channels.nInputChannels);
-	yticks_txt = cell(handles.H.TDT.channels.nInputChannels, 1);
-	for n = 1:handles.H.TDT.channels.nInputChannels
-		yticks_txt{n} = num2str(n);
-	end
+	yticks_txt = sprintfc('%d', handles.H.TDT.channels.ChannelMap);
 	ylim(yabsmax*[0 handles.H.TDT.channels.nInputChannels+1]);
 	set(ax, 'YTick', yticks_yvals);
 	set(ax, 'YTickLabel', yticks_txt);
@@ -251,9 +248,13 @@ else
 		end
 		% show detected spikes
 		% draw new ones
+% 		set(tH,	'XData', spiketimes, ...
+% 					'YData', zeros(size(spiketimes)) + ...
+% 											TDT.channels.MonitorChannel*yabsmax);
 		set(tH,	'XData', spiketimes, ...
 					'YData', zeros(size(spiketimes)) + ...
-											TDT.channels.MonitorChannel*yabsmax);
+                find(TDT.channels.ChannelMap == ...
+                            TDT.channels.MonitorChannel)*yabsmax);
 		% set title string
 		title(ax, tstr, 'Interpreter', 'none');
 		% force drawing

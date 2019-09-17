@@ -76,7 +76,7 @@ function opto_OpeningFcn(hObject, eventdata, handles, varargin)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % --- Outputs from this function are returned to the command line.
-function varargout = opto_OutputFcn(hObject, eventdata, handles) 
+function varargout = opto_OutputFcn(hObject, eventdata, handles)  %#ok<*INUSL>
 	% varargout  cell array for returning output args (see VARARGOUT);
 	% hObject    handle to figure
 	% eventdata  reserved - to be defined in a future version of MATLAB
@@ -96,7 +96,7 @@ function varargout = opto_OutputFcn(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % --- Executes on selection change in popupAudioSignal.
-function popupAudioSignal_Callback(hObject, eventdata, handles)
+function popupAudioSignal_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
 	% get the Audio Signal String (cell array)
 	stimTypes = read_ui_str(hObject);
 	% retrieve the search stim  type string that is selected
@@ -689,13 +689,15 @@ function checkRemapChannels_Callback(hObject, eventdata, handles)
 	val = read_ui_val(hObject);
 	if val
 		optomsg(handles, 'Remap Channels ON', 'echo', 'off');
-		handles.H.TDT.channels.Remap = true;
+		handles.H.TDT.channels.RemapChannels = true;
 		handles.H.TDT.channels.ChannelMap = TDTmultimap('A1X16');
 	else
 		optomsg(handles, 'Remap Channels OFF', 'echo', 'off');
-		handles.H.TDT.channels.Remap = false;
-		handles.H.TDT.channels.ChannelMap = 1:handles.H.TDT.nInputChannels;
-	end
+		handles.H.TDT.channels.RemapChannels = false;
+		handles.H.TDT.channels.ChannelMap = ...
+                               1:handles.H.TDT.channels.nInputChannels;
+    end
+	guidata(hObject, handles);    
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 function editTLo_Callback(hObject, eventdata, handles)
@@ -703,13 +705,13 @@ function editTLo_Callback(hObject, eventdata, handles)
 	% maker sure value is in bounds
 	if ~between(val, 1, handles.H.TDT.THi)
 		optomsg(handles, ...
-					sprintf('Spike Threshold must be between 1 and %d!', ...
-									handles.H.TDT.THi));
+				sprintf('Spike Threshold must be between 1 and %d!', ...
+                    					handles.H.TDT.THi));
 		update_ui_str(hObject, handles.H.TDT.THi);
 		return
 	end
 	optomsg(handles, sprintf('Spike Threshold to %d', val), ...
-																	'echo', 'off');
+														'echo', 'off');
 	% if TDT HW is enabled, set the tag in the circuit
 	% note that since this is addressing the circuit directly, it will
 	% take affect immediately and without need for action in running
@@ -1076,7 +1078,7 @@ function buttonLoadCal_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 % --- Executes on button press in buttonDebug.
 %-------------------------------------------------------------------------
-function buttonDebug_Callback(hObject, eventdata, handles)
+function buttonDebug_Callback(hObject, eventdata, handles) %#ok<*INUSD>
 	keyboard
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
