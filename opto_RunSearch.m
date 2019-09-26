@@ -234,6 +234,7 @@ else
 		% plot returned values
 		% first, demux input data matrices
 		[resp, ~] = mcFastDeMux(mcresp, TDT.channels.nInputChannels);
+		% pdata will be used for plotting
 		[pdata, ~] = mcFastDeMux(monresp, TDT.channels.nInputChannels);
         
 		% then assign values to plot
@@ -245,6 +246,9 @@ else
 				tmpY = -1e6*ones(size(pdata(:, c)'));
 			end
 			set(pH(c), 'YData', tmpY + c*yabsmax);
+			
+			% debugging - set channel
+			
 		end
 		% show detected spikes
 		% draw new ones
