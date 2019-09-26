@@ -153,8 +153,9 @@ datainfo.nread = nread;
 datainfo.dpos = dpos;
 
 %--------------------------------------------------------------------------
-% now, demultiplex the data if there is more than 1 channel in the data
-% traces
+% now, demultiplex the data if (1) there is more than 1 channel in the data
+% traces and (2) caller specified DEMUX option. 
+% note that this may not be necessary....
 %--------------------------------------------------------------------------
 if (datainfo.channels.nInputChannels > 1) 
 	if DEMUX
@@ -182,6 +183,7 @@ else
 	datainfo.stimList = [];
 end
 
+% convert datainfo character strings 
 % assign to output
 if nargout == 2
 	varargout{1} = datainfo;

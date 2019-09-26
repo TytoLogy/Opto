@@ -1,6 +1,6 @@
 function varargout = getFilteredOptoData(varargin)
 %------------------------------------------------------------------------
-% [data, datainfo, tracesByStim] = viewOptoData(varargin)
+% [data, datainfo, tracesByStim] = getFilteredOptoData(varargin)
 %------------------------------------------------------------------------
 % % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -122,7 +122,7 @@ if exist(fullfile(datapath, wavinfofile), 'file')
 	load(fullfile(datapath, wavinfofile));
 end
 
-% Get test info
+% Fix test info
 Dinf = correctTestType(Dinf);
 fprintf('Test type: %s\n', Dinf.test.Type);
 
@@ -261,7 +261,6 @@ else
 	fprintf('%d ', channelList);
 	fprintf('\n');
 end
-
 
 %----------------------------------------------------------------------
 %% Pull out trials, apply filter, store in matrix
