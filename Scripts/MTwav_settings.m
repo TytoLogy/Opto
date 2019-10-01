@@ -71,8 +71,9 @@ opto.Amp = 0;
 %------------------------------------
 % general audio properties
 %------------------------------------
-% Delay 
-audio.Delay = 100;
+% Delay - set this to 55 so that onset of WAV stimuli (with intrinsic
+% 45 ms delay) will come on at 100 ms.
+audio.Delay = 55;
 % Duration is variable for WAV files - this information
 % will be found in the audio.signal.WavInfo
 % For now, this will be a dummy value
@@ -87,7 +88,8 @@ audio.Frozen = 0;
 noise.signal.Type = 'noise';
 noise.signal.Fmin = 4000;
 noise.signal.Fmax = 80000;
-noise.Delay = audio.Delay;
+% set this to 100 ms
+noise.Delay = 100;
 noise.Duration = 100;
 noise.Level = 60;
 noise.Ramp = 5;
