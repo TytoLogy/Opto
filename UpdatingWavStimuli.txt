@@ -1,0 +1,33 @@
+Updating Wav stimuli in opto program:
+
+Revisions:
+	1 Oct 2019 (SJS)
+
+Assumptions:
+	- peak dB SPL levels of the WAV stimuli are known
+	- MTwav and associated scripts are used
+			MTwav_settings.m, MTwav_standalone.m, others...?
+	- all wav stimuli are in a single directory on experimental machine
+
+Steps:
+
+A. Use NICal to measure audio system frequency response, then use
+	FlatWav to compensate and/or measure the peak amplitude (in dB SPL) of each
+	stimulus.
+
+B. Run buildWavInfo function to determine onset and offset of each stimulus
+		buildWavInfo will create a mat file, wavinfo.mat, that holds a struct with
+		information about each wav file
+
+C. edit MTwav_settings.m:
+	1. update audio.signal.WavPath with proper directory with wav files 
+	2. update cell WavesToPlay with list of wav file names
+	3. update vector WavLevelAtScale with peak dB SPL values for each wav stimulus
+	   this is usually measured with FlatWav during signal compensation for 
+		speaker frequency response
+	4. update WavRamp value with desired onset/offset ramp or taper duration
+			this is in milliseconds, and will be applied to the first and last 
+			portions of the wav file
+	5. If # of wav stimuli has changed, modify PLOT_ROWS and PLOT_COLS to 
+		standalone_wav_setupplots.m
+		* depending on # of plots, more drastic changes may be needed....

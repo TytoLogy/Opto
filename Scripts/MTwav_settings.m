@@ -143,6 +143,9 @@ WavLevelAtScale = [
 101.37	...
 ];
 
-% onset, offset wav ramp duration (aka tapers)
+% onset, offset wav ramp duration in milliseconds (aka tapers)
+% this will be applied to the entire wav file - not the syllable or
+% sequence elements within the wav file (assuming the onset of the syllable
+% is not at the onset or offset of the wav file!)
 WavRamp = 10;
 

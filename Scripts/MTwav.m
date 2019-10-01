@@ -122,6 +122,9 @@ end
 % construct wavInfo struct "database" for desired wav stimuli
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
+% opto_create_wav_stimulus_info builds the information stored in wavInfo 
+% audio.signal.WavPath, WavesToPlay, WavScaleFactors, WavLevelAtScale are 
+% all defined in MTwav_settings!
 [wavInfo, audio.signal.WavFile] = opto_create_wav_stimulus_info( ...
 														audio.signal.WavPath, ...
 														WavesToPlay, ...
@@ -405,12 +408,7 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 			wavindex = find(strcmpi(Stim.audio.signal.WavFile, ...
 												audio.signal.WavFile));
 			Sn = wavS0{wavindex} * wavInfo(wavindex).ScaleFactor; %#ok<USENS>
-			%{ 
-			%%% OLD
-			% use peak rms value for figuring atten
-			rmsval = wavInfo(wavindex).PeakRMS;
-			%}
-			% NEW
+
 			% determine attenuation value by subtracting desired level from
 			% WavLevelAtScale
 			atten = wavInfo(wavindex).WavLevelAtScale - Stim.audio.Level;
@@ -419,39 +417,13 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 			% see standalone_wav_settupplots.m script
 			pIndx = wavindex;
 
-%-----------------------------------------------------------
-% 4/24/2019 (SJS):
-%-----------------------------------------------------------
-% removing this correction to delay now that wav files
-% have uniform onset delay
-%-----------------------------------------------------------
-% 			% will need to apply a correction factor to OptoDelay
-% 			% due to variability in in the wav stimulus onset
-% 			optoDelayCorr = ms2bin( bin2ms( wavInfo(wavindex).OnsetBin, ...
-% 								                 outdev.Fs ), ...
-% 										   indev.Fs);
-%  			optoDelayCorr = 0;
-% 
-% 			% will need to apply a correction factor to OptoDelay
-% 			% due to variability in in the wav stimulus onset
-% 			% compute correction based on outdev.Fs
-% 			optoDelayCorr = wavInfo(wavindex).OnsetBin;
-% 			correctedDelay = ms2bin(Stim.audio.Delay, outFs) - optoDelayCorr;
-% 			if correctedDelay < 0
-% 				warning('%s: correctedDelay < 0! Using 0 as min value', ...
-% 								mfilename);
-% 				correctedDelay = 0;
-% 			end
-% 			correctedDelay = ms2bin(Stim.audio.Delay, outFs) - optoDelayCorr;
-% 			% update the Stimulus Delay
-% 			RPsettag(outdev, 'StimDelay', correctedDelay);
-%-----------------------------------------------------------
-
 			% update the Stimulus Delay
 			RPsettag(outdev, 'StimDelay', ms2bin(Stim.audio.Delay, outFs));
 			
 		otherwise
 			fprintf('unknown type %s\n', stimtype);
+			% jump back to user in debug mode
+			errordlg({sprintf('unknown type %s\n', stimtype), 'Entering Debug Mode'})
 			keyboard
 	end
 		

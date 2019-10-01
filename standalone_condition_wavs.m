@@ -15,7 +15,8 @@
 %		0 and smooth onset and offset
 %-------------------------------------------------------------------------
 % Revisions:
-% 22 Apr 2019 (SJS): added comments
+%	22 Apr 2019 (SJS): added comments
+%	1 Oct 2019 (SJS): added comments
 %-------------------------------------------------------------------------
 % wav data
 wavS0 = cell(nWavs, 1);
@@ -34,16 +35,21 @@ for n = 1:nWavs
 	if outFs ~= tmpFs(n)
 		% if not, resample...
 		fprintf('Resampling %s\n', wavInfo(n).Filename);
+		fprintf('\t%.2f (original) -> %.2f (TDT output)\n', tmpFs(n), outFs);
 		wavS0{n} = correctFs(wavS0{n}, tmpFs(n), outFs);
 		% and adjust other information
+		% store new sample rate
 		wavInfo(n).SampleRate = outFs; %#ok<*SAGROW>
+		% duration (# samples)
 		wavInfo(n).TotalSamples = length(wavS0{n});
+		% recalculate onset/offset time and sample (bin)
 		onsettime = wavInfo(n).OnsetBin / tmpFs(n);
 		offsettime = wavInfo(n).OffsetBin / tmpFs(n);
 		wavInfo(n).OnsetBin = ms2bin(1000*onsettime, outFs);
 		wavInfo(n).OffsetBin = ms2bin(1000*offsettime, outFs);
 	end
 	if exist('WavRamp', 'var')
+		% if WavRamp was specified, apply it...
 		if WavRamp > 0
 			% apply specified ramp
 			wavS0{n} = sin2array(wavS0{n}, WavRamp, outFs);
