@@ -19,7 +19,7 @@ B. Run buildWavInfo function to determine onset and offset of each stimulus
 		buildWavInfo will create a mat file, wavinfo.mat, that holds a struct with
 		information about each wav file
 
-C. edit MTwav_settings.m:
+C. edit Scripts\MTwav_settings.m:
 	1. update audio.signal.WavPath with proper directory with wav files 
 	2. update cell WavesToPlay with list of wav file names
 	3. update vector WavLevelAtScale with peak dB SPL values for each wav stimulus
@@ -31,3 +31,13 @@ C. edit MTwav_settings.m:
 	5. If # of wav stimuli has changed, modify PLOT_ROWS and PLOT_COLS to 
 		standalone_wav_setupplots.m
 		* depending on # of plots, more drastic changes may be needed....
+		* be sure to factor in 2 more stimuli - null and BBN
+
+D. edit opto_InitH.m:
+	1. if needed:
+			- change path to wave files in the wav = struct(....) statement
+			- change default wav file
+
+E. edit opto_InitializeGui.m:
+	1. update calpath with path to calibration data file
+	2. update calfile with name of calibration data file

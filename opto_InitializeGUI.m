@@ -29,7 +29,8 @@ function handles = opto_InitializeGUI(hObject, eventdata, ...
 %------------------------------------------------------------------------
 % Revisions
 %	22 Oct 2017 (SJS): new cal file
-%	24 Arp 2019 (SJS): new cal file for wav stimuli in opto rig
+%	24 Apr 2019 (SJS): new cal file for wav stimuli in opto rig
+%	1 Oct 2019 (SJS): new cal file for wav stimuli in opto rig
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
@@ -46,8 +47,9 @@ guidata(hObject, handles);
 % calfile = 'Optorig_20170601_TDT3981_4k90k_5V_cal.mat';
 % calfile = 'Optorig_20171022_TDT3981_4k-91k_5V_cal.mat';
 % calfile = 'LCY-C-4K-100K-1V-20dBatten_29May19.cal';
+% calfile = 'LCY-C-4K-100K-1V-20dBatten_11Jul19.cal';
 calpath = 'C:\TytoLogy\Experiments\WAVs';
-calfile = 'LCY-C-4K-100K-1V-20dBatten_11Jul19.cal';
+calfile = 'LCY-C-3000-103K-1V-20dBatten_30Sep19.cal';
 if ~exist(fullfile(calpath, calfile), 'file')
 	error('%s: Calibration file %s not found!', mfilename, ...
 						fullfile(calpath, calfile));
