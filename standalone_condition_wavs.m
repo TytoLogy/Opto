@@ -52,13 +52,21 @@ for n = 1:nWavs
 		% if WavRamp was specified, apply it...
 		if WavRamp > 0
 			% apply specified ramp
+			fprintf('Applying %d ms ramp to stimulus %s\n', ...
+									WavRamp, wavInfo(n).Filename);
 			wavS0{n} = sin2array(wavS0{n}, WavRamp, outFs);
 		else
 			% apply *short* 1 ms duration ramp to ensure wav start and end is 0
+			fprintf('Applying 1ms ramp to stimulus %s\n', wavInfo(n).Filename);
 			wavS0{n} = sin2array(wavS0{n}, 1, outFs);
 		end
 	else
 		% apply *short* 1 ms duration ramp to ensure wav start and end is 0
+		fprintf('Applying 1ms ramp to stimulus %s\n', wavInfo(n).Filename);
 		wavS0{n} = sin2array(wavS0{n}, 1, outFs);
 	end
+% 	figure
+% 	plot(wavS0{n});
+% 	title(wavInfo(n).Filename, 'Interpreter', 'none');
+% 	grid on
 end

@@ -400,6 +400,8 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 			% noise stimuli will be 2 psth after the wav psths
 			% see standalone_wav_settupplots.m script
 			pIndx = counts.nWavStim + 2;
+			% update the Stimulus Delay
+ 			RPsettag(outdev, 'StimDelay', ms2bin(Stim.audio.Delay, outFs));
 
 		case 'WAV'
 			% wav file.  locate waveform in wavS0{} cell array by
