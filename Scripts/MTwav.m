@@ -433,7 +433,7 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 	Sn = [Sn; zeros(size(Sn))]; %#ok<AGROW>
 	
 	% set the attenuators
-	setattenfunc(outdev, [atten 120]);
+ 	setattenfunc(outdev, [atten 120]);
 	
 	% set opto stim
 	if Stim.opto.Enable
