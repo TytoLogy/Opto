@@ -291,11 +291,13 @@ switch c.curvetype
 		end
 	
 	case 'OPTO-DUR'
+		error('%s: unsupported curve %s', mfilename, c.curvetype);
 		
 	case {'OPTO', 'OPTO-DELAY', 'OPTO-AMP'}
-	
+		error('%s: unsupported curve %s', mfilename, c.curvetype);
+		
 	otherwise
-		error([mfilename ': unsupported curvetype ' c.curvetype])
+		error([mfilename ': unkown curvetype ' c.curvetype])
 end		
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
