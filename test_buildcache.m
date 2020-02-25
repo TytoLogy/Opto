@@ -20,6 +20,21 @@ printDinfTestInfo(bbnD);
 printDinfTestInfo(fraD);
 printDinfTestInfo(wavD);
 
+%% FRA: assign to test and tdt structs
+test = freqD.test;
+test.audio = freqD.audio;
+test.opto = freqD.opto;
+tdt.outdev = freqD.outdev;
+test.audio.signal.Type = char(freqD.audio.signal.Type);
+
+[sco, sqo] = opto_buildStimCache_orig(test, tdt, freqD.caldata);
+fprintf('OLD: FREQ\n');
+sco
+
+%% new
+[sc, sq] = opto_buildStimCache(test, tdt, freqD.caldata);
+fprintf('NEW: FREQ\n');
+sc
 
 %% FRA: assign to test and tdt structs
 test = fraD.test;
@@ -28,4 +43,10 @@ test.opto = fraD.opto;
 tdt.outdev = fraD.outdev;
 test.audio.signal.Type = char(fraD.audio.signal.Type);
 
-[stimcache, stimseq] = opto_buildStimCache(test, tdt, fraD.caldata);
+[sco, sqo] = opto_buildStimCache_orig(test, tdt, fraD.caldata);
+fprintf('OLD: FRA\n');
+sco
+%% new
+[sc, sq] = opto_buildStimCache(test, tdt, fraD.caldata);
+fprintf('NEW: FRA\n');
+sc

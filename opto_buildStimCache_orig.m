@@ -1,4 +1,4 @@
-function [c, stimseq] = opto_buildStimCache(test, tdt, caldata)
+function [c, stimseq] = opto_buildStimCache_orig(test, tdt, caldata)
 %--------------------------------------------------------------------------
 % [c, stimseq] = opto_buildStimCache(test, stim, tdt, caldata)
 %--------------------------------------------------------------------------
@@ -118,74 +118,6 @@ end
 % stimuli/stimulus combinations to play
 % # of trials == total # of stim values (ITDs, ILDs, # freqs, etc.)
 
-
-%if ~isempty(strfind(test.Type, 'LEVEL')) && strcmpi(signal.Type, 'tone')
-
-% Level curve (either BBN or FREQ)?
-if strcmpi(test.Type, 'LEVEL')
-	% alter behaviour depending on signal type (tone, noise, wav)
-	if strcmpi(signal.Type, 'tone')
-		% test is tone + level, so ntrials will be 
-		% # of levels plus # opto amps
-		c.ntrials = nLevels + nOptoAmp;
-		fprintf('tone + level curve\n');
-	elseif strcmpi(signal.Type, 'noise')
-		% test is noise + level, so ntrials will be 
-		% # of levels plus # opto amps
-		c.ntrials = nLevels + nOptoAmp;
-		fprintf('noise + level curve\n');
-	elseif strcmpi(signal.Type, 'wav')
-		% test is wav (single) + level, so ntrials will be 
-		% # of levels plus # opto amps
-		c.ntrials = nLevels + nOptoAmp;
-		fprintf('wav + level curve\n');
-	else
-		error('%s: Unsupported signal type %s', mfilename, signal.Type);
-	end
-	fprintf('\t %d levels\n', nLevels); 
-	fprintf('\t %d OptoAmp values\n', nOptoAmp);
-
-% FREQ (freq tuning) curve
-elseif strcmpi(test.Type, 'FREQ')
-	if strcmpi(signal.Type, 'tone')
-		% test is frequency tuning curve
-		% for simple (non-FRA, freq level) tests, ntrials will be 
-		% sum of different levels
-		c.ntrials = nLevels + nOptoAmp + nFreqs;
-		fprintf('frequency tuning curve\n');
-	else
-		error('%s: Unsupported signal %s for test.TYPE = FREQ', ...
-											mfilename, signal.Type)
-	end
-	fprintf('\t %d levels\n', nLevels); 
-	fprintf('\t %d OptoAmp values\n', nOptoAmp);
-	fprintf('\t %d Freqs values\n', nFreqs);
-
-% FREQ+LEVEL = FRA test
-elseif strcmpi(test.Type, 'FREQ+LEVEL')
-	if strcmpi(signal.Type, 'tone')
-		% test is FRA (vary both frequency and level)
-		c.ntrials = nLevels * nFreqs;
-		fprintf('FRA (FREQ+LEVEL) test\n');
-	else
-		error('%s: unsupported signal %s for FRA', mfilename. signal.Type);
-	end
-	fprintf('\t %d levels\n', nLevels); 
-	fprintf('\t %d OptoAmp values\n', nOptoAmp);
-	fprintf('\t %d Freqs values\n', nFreqs);
-	
-% wavfile unsupported
-elseif strcmpi(test.Type, 'WAVFILE')
-	error('%s: unsupported test type %s', mfilename, test.Type);
-
-% Unknown test type
-else
-	error('%s: setting ntrials, unknown test Type %s', ...
-													mfilename, test.Type);
-end
-
-
-%{ 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%PRE 25Feb2020
 if ~isempty(strfind(test.Type, 'LEVEL')) && strcmpi(signal.Type, 'tone')
 	% test is frequency level, so ntrials will be # of levels plus # opto
@@ -201,8 +133,6 @@ else
 	error('%s: setting ntrials, unknown test Type %s', ...
 													mfilename, test.Type);
 end
-%}
-
 
 % # total stimuli will be # of reps (per stimulus) * total # of trials
 c.nstims = c.nreps * c.ntrials;
