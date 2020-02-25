@@ -31,7 +31,24 @@ function [c, stimseq] = opto_buildStimCache(test, tdt, caldata)
 %	8 Jun, 2017 (SJS): fixed issue with incorrect rep, trial in block 
 %								sequence mode
 %	8 Jan 2017 (SJS): working on FRA
+%	25 Feb 2020 (SJS): FRA cache not working properly! only using lowest
+%	frequency!!!
 %--------------------------------------------------------------------------
+
+%{
+test.audio.signal.Type values:
+	'tone'
+
+test.Type values:
+	'FREQ'
+	'LEVEL'
+	'FREQ+LEVEL'
+
+test.Name values:
+	'FREQ_TUNING'
+	'BBN'
+	'FRA'
+%}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % some setup and initialization
@@ -42,7 +59,7 @@ opto = test.opto;
 signal = test.audio.signal;
 outdev = tdt.outdev;
 
-% get string for type of auditory stimulus
+% get string for type of auditory stimulus (tone, BBN
 c.stimtype = lower(signal.Type);
 % get string for type of test
 c.curvetype = upper(test.Type);
@@ -53,13 +70,18 @@ c.nreps = test.Reps;
 % save stimulus?
 c.saveStim = test.saveStim;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % figure out number of different audio stimulus levels
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if ~isempty(strfind(test.Type, 'LEVEL'))
 	nLevels = length(audio.Level);
 else
 	nLevels = 0;
 end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % # of frequencies for FREQ type
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if ~isempty(strfind(test.Type, 'FREQ'))
 	nFreqs = length(signal.Frequency);
 elseif strcmp(signal.Type, 'tone')
@@ -67,13 +89,17 @@ elseif strcmp(signal.Type, 'tone')
 else
 	nFreqs = 0;
 end
+
 % check for OPTO tag
 if ~isempty(strfind(test.Type, 'OPTO'))
 	nOptoAmp = length(opto.Amp);
 else
 	nOptoAmp = 0;
 end
-% # of trials == # of stim values (ITDs, ILDs, # freqs, etc.)
+
+% # of trials == total # of stim values (ITDs, ILDs, # freqs, etc.)
+
+%if ~isempty(strfind(test.Type, 'LEVEL')) && strcmpi(signal.Type, 'tone')
 if ~isempty(strfind(test.Type, 'LEVEL')) && strcmpi(signal.Type, 'tone')
 	% test is frequency level, so ntrials will be # of levels plus # opto
 	% amps
