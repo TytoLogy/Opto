@@ -7,6 +7,7 @@ function [c, stimseq] = opto_buildStimCache(test, tdt, caldata)
 % 
 % Generates stimulus cache 
 % 
+% note that no implementation for wav tests exists....
 %--------------------------------------------------------------------------
 % Input Arguments:
 % 	test				test specification structure
@@ -33,21 +34,26 @@ function [c, stimseq] = opto_buildStimCache(test, tdt, caldata)
 %	8 Jan 2017 (SJS): working on FRA
 %	25 Feb 2020 (SJS): FRA cache not working properly! only using lowest
 %	frequency!!!
+%
 %--------------------------------------------------------------------------
 
 %{
 test.audio.signal.Type values:
 	'tone'
+	'noise'
+	'wav'
 
 test.Type values:
 	'FREQ'
 	'LEVEL'
 	'FREQ+LEVEL'
+	'WAVFILE'
 
 test.Name values:
 	'FREQ_TUNING'
 	'BBN'
 	'FRA'
+	'WAV'
 %}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -59,7 +65,7 @@ opto = test.opto;
 signal = test.audio.signal;
 outdev = tdt.outdev;
 
-% get string for type of auditory stimulus (tone, BBN
+% get string for type of auditory stimulus (tone, noise, wav)
 c.stimtype = lower(signal.Type);
 % get string for type of test
 c.curvetype = upper(test.Type);
