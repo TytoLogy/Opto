@@ -82,8 +82,18 @@ end
 % close file
 fclose(fp);
 
+% convert test.Type into characters
+if ~ischar(datainfo.test.Type)
+	datainfo.test.Type = char(datainfo.test.Type);
+end
 % convert test.Name into characters
-datainfo.test.Name = char(datainfo.test.Name);
+if ~ischar(datainfo.test.Name)
+	datainfo.test.Name = char(datainfo.test.Name);
+end
+% convert audio.signal.Type into characters
+if ~ischar(datainfo.audio.signal.Type)
+	datainfo.audio.signal.Type = char(datainfo.audio.signal.Type);
+end
 
 %--------------------------------------------------------------------------
 % get stimulus information

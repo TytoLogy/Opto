@@ -1,21 +1,17 @@
 rawPath = '~/Work/Data/TestData/MT';
 
+rawFiles = {	'1382_20191212_02_02_3200_FREQ_TUNING.dat', ...
+					'1382_20191212_02_02_3200_BBN.dat', ...
+					'1382_20191212_02_02_3200_FRA.dat', ...
+					'1382_20191212_02_02_3200_WAV.dat'	};
+
 % 
-%%
-% S object file
-Sfile = '~/Work/Data/TestData/MT/1382_20191212_02_02_3200_Sobj.mat';
+%% read in data info from files
 
-% load data
-load(Sfile)
-
-
-
-%% create stimcache uaing FRA
-% get Dinf struct
-
-freqD = S.Info.FileData(1).Dinf;
-bbnD = S.Info.FileData(2).Dinf;
-fraD = S.Info.FileData(3).Dinf;
+freqD = readOptoDataInfo(fullfile(rawPath, rawFiles{1}));
+bbnD = readOptoDataInfo(fullfile(rawPath, rawFiles{2}));
+fraD = readOptoDataInfo(fullfile(rawPath, rawFiles{3}));
+wavD = readOptoDataInfo(fullfile(rawPath, rawFiles{4}));
 
 %% FRA: assign to test and tdt structs
 test = fraD.test;
