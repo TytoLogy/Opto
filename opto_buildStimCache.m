@@ -183,28 +183,11 @@ else
 	error('%s: setting ntrials, unknown test Type %s', ...
 													mfilename, test.Type);
 end
+fprintf('\t %d trials\n', c.ntrials);
 
-
-%{ 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%PRE 25Feb2020
-if ~isempty(strfind(test.Type, 'LEVEL')) && strcmpi(signal.Type, 'tone')
-	% test is frequency level, so ntrials will be # of levels plus # opto
-	% amps
-	c.ntrials = nLevels + nOptoAmp;
-elseif ~isempty(strfind(test.Type, 'FREQ+LEVEL'))
-	% test is FRA (vary both frequency and level)
-	c.ntrials = nLevels * nFreqs;
-elseif isempty(strfind(test.Type, 'FREQ+LEVEL'))
-	% for simple (non-FRA, freq level) tests, ntrials will be sum of different levels
-	c.ntrials = nLevels + nOptoAmp + nFreqs;
-else
-	error('%s: setting ntrials, unknown test Type %s', ...
-													mfilename, test.Type);
-end
-%}
-
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % # total stimuli will be # of reps (per stimulus) * total # of trials
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c.nstims = c.nreps * c.ntrials;
 % assign rep and trial numbers (trial corresponds to 
 % stimulus type or parameter)
@@ -282,6 +265,7 @@ switch c.curvetype
 				
 			case 'wav'
 				% NOT YET IMPLEMENTED
+				error('%s: unsupported stimulus %s', mfilename, c.stimtype);
 				
 			otherwise
 				warning([mfilename ': unsupported stimtype ' c.stimtype ...
