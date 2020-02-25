@@ -40,7 +40,7 @@ test.audio.Ramp = 5;
 test.audio.Frozen = 0;
 test.audio.ISI = 100;
 
-test.Reps = 10;
+test.Reps = 20;
 % test.Reps = 5;
 test.Randomize = 1;
 test.Block = 0;

@@ -11,7 +11,7 @@
 %	blocked randomization, e.g., random sequence of each stimulus
 %	without repeats for 1 rep, then another, then .... etc.
 %----------------------------------------------------------
-test.Reps = 10;
+test.Reps = 20;
 test.Randomize = 1;
 test.Block = 0;
 audio.ISI = 100;
