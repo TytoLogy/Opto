@@ -29,12 +29,12 @@ test.opto.Amp = 2000; % mV
 %-------------------------------------------------------------------------
 % signal
 test.audio.signal.Type = 'tone';
-test.audio.signal.Frequency = 5000:5000:15000;
+test.audio.signal.Frequency = [4000 4500 5000];
 % test.audio.signal.Frequency = 7500:2500:40000;
 test.audio.signal.RadVary = 1;
 test.audio.Delay = 100;
 test.audio.Duration = 100;
-test.audio.Level = 20:20:40;
+test.audio.Level = [40 45 50];
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
 test.audio.ISI = 100;
