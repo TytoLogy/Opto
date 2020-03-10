@@ -358,6 +358,3 @@ elseif ~isfield(testdata, 'SpikeTimes')
 else
 	varargout{4} = testdata;
 end
-
-
- 
