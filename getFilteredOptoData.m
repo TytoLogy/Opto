@@ -79,6 +79,9 @@ if nargin
 				
 				case {'CHANNEL', 'CHAN'}
 					channelNumber = varargin{argIndx+1};
+					if numel(channelNumber) ~= 1
+						error('%s: Channel must be a single value', mfilename);
+					end
 					argIndx = argIndx + 2;
 				
 				otherwise
