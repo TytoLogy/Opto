@@ -2,7 +2,7 @@ function [data, varargout] = readOptoData(varargin)
 %------------------------------------------------------------------------
 % [data, datainfo] = readOptoData(varargin)
 %------------------------------------------------------------------------
-% % TytoLogy:Experiments:opto Application
+% TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
 % Reads binary data file created by the opto program
 %
@@ -20,7 +20,7 @@ function [data, varargout] = readOptoData(varargin)
 % datainfo		has the file header information.
 % 
 %------------------------------------------------------------------------
-% See Also:
+% See Also: optoproc, getFilteredOptoData
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -31,7 +31,8 @@ function [data, varargout] = readOptoData(varargin)
 %			- adapted from readHPData.m
 % 
 % Revisions:
-%	24 June 2016 (SJS): added data position, status and # read
+% 24 June 2016 (SJS): added data position, status and # read
+% 12 Jun 2020 (SJS): updated comments, docs
 %------------------------------------------------------------------------
 % TO DO:
 %	*Documentation!

@@ -2,7 +2,7 @@ function varargout = getFilteredOptoData(varargin)
 %------------------------------------------------------------------------
 % [data, datainfo, tracesByStim] = viewOptoData(varargin)
 %------------------------------------------------------------------------
-% % TytoLogy:Experiments:opto Application
+% TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
 % Reads binary data file created by the opto program, plots traces
 %
