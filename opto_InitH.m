@@ -254,7 +254,7 @@ animal.comments = '';
 % test script and data destination
 %------------------------------------------------------------------------
 TestScript = fullfile(pwd, 'defaultscript.m');
-DefaultOutputDir = 'E:\Data\EphysData';
+DefaultOutputDir = 'F:\Data2\EphysData';
 
 %------------------------------------------------------------------------
 % build overall H struct

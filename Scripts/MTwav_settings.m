@@ -32,7 +32,7 @@ test.NoiseStim = 1;
 % acquisition/sweep settings
 % will have to be adjusted to deal with wav file durations
 %------------------------------------
-test.AcqDuration = 450;
+test.AcqDuration = 400;
 test.SweepPeriod = test.AcqDuration + 5;
 
 %-------------------------------------------------------------------------
