@@ -50,6 +50,8 @@ function H = opto_InitH
 %	13 Jun 2017 (SJS): more psth, raster things
 %	18 Apr 2019 (SJS): changed wav file dir, default wav to LFH_adj, default
 %							output directory to E:\Data\EphysData
+%	1 Jul 2020 (SJS): changed default output to F:\Data2\EphysData (new hard
+%	drive)
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -254,7 +256,8 @@ animal.comments = '';
 % test script and data destination
 %------------------------------------------------------------------------
 TestScript = fullfile(pwd, 'defaultscript.m');
-DefaultOutputDir = 'E:\Data\EphysData';
+% DefaultOutputDir = 'E:\Data\EphysData';
+DefaultOutputDir = 'F:\Data2\EphysData';
 
 %------------------------------------------------------------------------
 % build overall H struct

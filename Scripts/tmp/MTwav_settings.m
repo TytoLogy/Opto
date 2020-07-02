@@ -5,8 +5,6 @@
 % %%% EDIT THESE TO CHANGE EXPERIMENTAL PARAMETERS (reps, ISI, etc.) %%%%
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 %-------------------------------------------------------------------------
-% 1 Jul 2020 (SJS)
-% changed test.AcqDuration to 400 to match old versions
 %----------------------------------------------------------
 % Presentation settings - ISI, # reps, randomize, etc.
 %	Note that Randomize in this context will mean a 
@@ -34,7 +32,7 @@ test.NoiseStim = 1;
 % acquisition/sweep settings
 % will have to be adjusted to deal with wav file durations
 %------------------------------------
-test.AcqDuration = 400;
+test.AcqDuration = 450;
 test.SweepPeriod = test.AcqDuration + 5;
 
 %-------------------------------------------------------------------------
