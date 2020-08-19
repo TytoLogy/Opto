@@ -297,36 +297,9 @@ switch c.curvetype
 				c = [];
 				return
         end
-	
-    case 'OPTO-AMP'
-        % 19 Aug 2020: assigning these values, but will not have any effect
-        % since stimulus is set to NULL later on... needed to move this out
-        % of the unsupported curve case...
-        switch c.stimtype
-			case 'noise'
-				% low freq for bandwidth of noise (Hz)
-				FREQ(1) = signal.Fmin;
-				% high freq. for BB noise (Hz)
-				FREQ(2) = signal.Fmax;
-			case 'tone'
-				FREQ = signal.Frequency;	% freq. for tone (Hz)'
-				% vary phase randomly from stim to stim 1 = yes, 0 = no
-				% (consistent phase each time)
-				c.radvary = signal.RadVary;
-				
-			case 'wav'
-				% NOT YET IMPLEMENTED
-				error('%s: unsupported stimulus %s', mfilename, c.stimtype);
-				
-			otherwise
-				warning([mfilename ': unsupported stimtype ' c.stimtype ...
-													' for curvetype ' c.curvetype])
-				c = [];
-				return
-        end
   		
-	case {'OPTO', 'OPTO-DELAY', 'OPTO-DUR'}
-		error('%s: unsupported curve %s', mfilename, c.curvetype);
+	case {'OPTO', 'OPTO-DELAY', 'OPTO-DUR', 'OPTO-AMP'}
+		fprintf('%s: curvetype is %s\n', mfilename, c.curvetype);
 		
 	otherwise
 		error([mfilename ': unkown curvetype ' c.curvetype])

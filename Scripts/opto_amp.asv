@@ -6,9 +6,9 @@
 %	'FRA'				frequency-response area (tones)
 % 	'OPTO'			simple optical stimulation (nothing varies)
 % 	'OPTO-xxx'		optical stim, with 'xxx' as variable, where 'xxx' is
-% 		'DELAY'			opto stim delay  (set values in test.opto.Delay)
-% 		'DUR'          opto stim duration (set values in test.opto.Dur)
-% 		'AMP'          opto stim amplitude (set values in test.opto.Amp)
+% 		'DELAY'			opto stim delay 
+% 		'DUR'          opto stim duration
+% 		'AMP'          opto stim amplitude
 %-------------------------------------------------------------------------
 test.Type = 'OPTO-AMP';
 
@@ -19,23 +19,21 @@ test.Type = 'OPTO-AMP';
 % test.opto.Delay    delay of opto onset from start of sweep (ms)
 % test.opto.Dur      duration of opto stimulus (ms)
 % test.opto.Amp      output level of opto command/trigger sent to LED
-%                    controller or laser trigger* (mV)
-%                    !!! BE SURE TO CHECK THAT VALUE DOES NOT EXCEED
-%                    SPECIFIED MAX OF LED !!!!!!!!!!!!!!!!!!!!!!!!!!!
-% *for laser, this should be set to 1000 mV (1V) and power is controlled by
-% dial on laser controller
+%                    controller or laser triggvalue or array of values
+
 %-------------------------------------------------------------------------
 test.opto.Enable = 1;
 test.opto.Delay = 50;
 test.opto.Dur = 50;
 test.opto.Amp = [0:100:1000 1500 2000 3000];
+% test.opto.Amp = [0 500 1000 2000 3000 4000];
+%test.opto.Amp = [0 100 1000];
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Auditory stimulus settings
 %-------------------------------------------------------------------------
 % *** these are mostly ignored for OPTO stimuli!!!!
-%-------------------------------------------------------------------------
 % signal
 test.audio.signal.Type = 'noise';
 test.audio.signal.Fmin = 4000;
@@ -49,15 +47,17 @@ test.audio.ISI = 300;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% Reps, randomization, save stimuli?
+% Reps
 %-------------------------------------------------------------------------
+
 test.Reps = 20;
 test.Randomize = 1;
+
 test.saveStim = 0;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% TDT circuit settings
+% TDT
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 test.AcqDuration = 300;
