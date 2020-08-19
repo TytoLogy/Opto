@@ -34,7 +34,7 @@ function [c, stimseq] = opto_buildStimCache(test, tdt, caldata)
 %	8 Jan 2017 (SJS): working on FRA
 %	25 Feb 2020 (SJS): FRA cache not working properly! only using lowest
 %	frequency!!!
-%
+%   19 Aug 2020 (SJS): dealing with opto-amp test
 %--------------------------------------------------------------------------
 
 %{
@@ -48,6 +48,7 @@ test.Type values:
 	'LEVEL'
 	'FREQ+LEVEL'
 	'WAVFILE'
+    'OPTO-AMP'
 
 test.Name values:
 	'FREQ_TUNING'
@@ -117,6 +118,7 @@ end
 % compute total number of trials = total number of different
 % stimuli/stimulus combinations to play
 % # of trials == total # of stim values (ITDs, ILDs, # freqs, etc.)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 %if ~isempty(strfind(test.Type, 'LEVEL')) && strcmpi(signal.Type, 'tone')
@@ -173,10 +175,16 @@ elseif strcmpi(test.Type, 'FREQ+LEVEL')
 	fprintf('\t %d levels\n', nLevels); 
 	fprintf('\t %d OptoAmp values\n', nOptoAmp);
 	fprintf('\t %d Freqs values\n', nFreqs);
-	
+
 % wavfile unsupported
 elseif strcmpi(test.Type, 'WAVFILE')
 	error('%s: unsupported test type %s', mfilename, test.Type);
+
+% OPTO-AMP: vary optogenetic output level (for use with ThorLabs LED
+% controller)
+elseif strcmpi(test.Type, 'OPTO-AMP')
+    c.ntrials = nOptoAmp;
+    fprintf('OPTO-AMP test\n');
 
 % Unknown test type
 else
@@ -276,7 +284,7 @@ switch c.curvetype
 		
 	% freq tuning is tones-only
 	case {'FREQ'}
-		switch c.stimtype
+        switch c.stimtype
 			case 'tone'
 				% freq. for tone (Hz) (will be a vector)
 				FREQ = signal.Frequency;
@@ -288,12 +296,36 @@ switch c.curvetype
 														' for curvetype ' c.curvetype])
 				c = [];
 				return
-		end
+        end
 	
-	case 'OPTO-DUR'
-		error('%s: unsupported curve %s', mfilename, c.curvetype);
-		
-	case {'OPTO', 'OPTO-DELAY', 'OPTO-AMP'}
+    case 'OPTO-AMP'
+        % 19 Aug 2020: assigning these values, but will not have any effect
+        % since stimulus is set to NULL later on... needed to move this out
+        % of the unsupported curve case...
+        switch c.stimtype
+			case 'noise'
+				% low freq for bandwidth of noise (Hz)
+				FREQ(1) = signal.Fmin;
+				% high freq. for BB noise (Hz)
+				FREQ(2) = signal.Fmax;
+			case 'tone'
+				FREQ = signal.Frequency;	% freq. for tone (Hz)'
+				% vary phase randomly from stim to stim 1 = yes, 0 = no
+				% (consistent phase each time)
+				c.radvary = signal.RadVary;
+				
+			case 'wav'
+				% NOT YET IMPLEMENTED
+				error('%s: unsupported stimulus %s', mfilename, c.stimtype);
+				
+			otherwise
+				warning([mfilename ': unsupported stimtype ' c.stimtype ...
+													' for curvetype ' c.curvetype])
+				c = [];
+				return
+        end
+  		
+	case {'OPTO', 'OPTO-DELAY', 'OPTO-DUR'}
 		error('%s: unsupported curve %s', mfilename, c.curvetype);
 		
 	otherwise
