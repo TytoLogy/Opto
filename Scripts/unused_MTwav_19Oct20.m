@@ -1,4 +1,4 @@
-function outdata = MTwav(handles, datafile)
+function outdata = MTwav_19Oct20(handles, datafile)
 %--------------------------------------------------------------------------
 % outdata = MTwav(handles, datafile)
 %--------------------------------------------------------------------------
@@ -146,7 +146,7 @@ end
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 
-% exist('noise', 'var')
+exist('noise', 'var')
 
 
 [stimList, counts] = opto_build_stimList(test, audio, opto, noise, nullstim); %#ok<NODEF>
