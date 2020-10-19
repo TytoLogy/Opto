@@ -5,8 +5,10 @@
 % %%% EDIT THESE TO CHANGE EXPERIMENTAL PARAMETERS (reps, ISI, etc.) %%%%
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 %-------------------------------------------------------------------------
-% 1 Jul 2020 (SJS)
-% changed test.AcqDuration to 400 to match old versions
+% 1 Jul 2020 (SJS): changed test.AcqDuration to 400 to match old versions
+% 19 Oct 2020 (SJS): not sure why pulling remote reverts changes ...
+% redoing this all over again.
+%   test.AcqDuration is ok.
 %----------------------------------------------------------
 % Presentation settings - ISI, # reps, randomize, etc.
 %	Note that Randomize in this context will mean a 
