@@ -1,43 +1,43 @@
-function [stimList, varargout] = opto_build_stimList(test, audio, opto, ...
-																			noise, nullstim)
+function [stimList, varargout] = opto_build_clickstimList(test, audio, ...
+	                                                       opto, nullstim)
 %--------------------------------------------------------------------------
-% [stimList, counts] = opto_build_stimList(test, audio, 
-%                                              opto, noise, nullstim)
+% [stimList, counts] = opto_build_clickstimList(test, audio, opto, nullstim)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
-%  build list of unique stimuli
+%  build list of unique stimuli for click test 
 %---------------------------------------------------------------------
 % calculate Ncombinations:
 %		total # of varied variables 
 %---------------------------------------------------------------------
 % how to calculate:
-% 	- each auditory stimulus (wav and noise) will (or won't be) 
+% 	- each auditory stimulus will (or won't be) 
 % 		combined with opto stimuli
-% 	- an additional possible stimulus will be "null" stimulus
 % 	- each auditory stimulus will be presented at different stimulus levels
-% 		(doesn't apply to null stimulus!)
 % 		
 % 	nOptoStim	# of opto variables (e.g., intensity, delay or duration)
 % 	nAudioLevels	# of levels to present auditory stimuli
-% 	nWavStim	# of auditory stimuli (e.g., # wav files)
-% 	nNoiseStim	1 if noise to be presented, 0 if not
 % 	nNullStim	1 if null presented, 0 if not
 % 		
 % 	since audio levels don't apply to the null stimulus, the total number
 % 	of stimulus combinations are:
 % 	
-% 	nOptoStim * { (nAudioLevels * (nWavStim + nNoiseStim)) + nNullStim}
+% 	nOptoStim * (nAudioLevels + nNullStim)
 %
-% for ease, nAudioStim = nAudioLevels * (nWavStim + nNoiseStim)
-% 											+ nNullStim
+% for ease, nAudioStim = nAudioLevels + nNullStim
 %---------------------------------------------------------------------
 %--------------------------------------------------------------------------
 % Input Arguments:
+%  test
+%  audio
+%  opto
+%  nullstim
 % 								
 % Output Arguments:
+%  stimList
+%  counts
 %--------------------------------------------------------------------------
-% See Also: getWavInfo, buildWavInfo, opto
+% See Also: opto_build_stimList, opto
 %--------------------------------------------------------------------------
 
 %--------------------------------------------------------------------------
@@ -45,38 +45,32 @@ function [stimList, varargout] = opto_build_stimList(test, audio, opto, ...
 % Sharad J. Shanbhag
 % sshanbhag@neomed.edu
 %--------------------------------------------------------------------------
-% Created:	24 April, 2019 (SJS)
-%	split off from MTwav standalone function
+% Created:	28 October, 2020 (SJS)
+%	modification of opto_build_stimList for new click stimulus test
 % 
 % Revision History:
-%  28 Oct 2020 (SJS): fixed some comments. this should eventually be
-%  generalized to allow for all stimulus types (not just WAV).
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
 % varied variables for opto and audio
 optovar = opto.Amp;
-audiowavvar = audio.signal.WavFile;
 
 % different elements -> get counts
 nOptoStim = numel(optovar);
 nAudioLevels = numel(test.Level);
-nWavStim = numel(audiowavvar);
-nNoiseStim = test.NoiseStim;
 nNullStim = test.NullStim;
+
 % # of audio stimuli
-nAudioStim = (nAudioLevels * (nWavStim + nNoiseStim)) + nNullStim;
-% # combinations
+nAudioStim = nAudioLevels + nNullStim;
+% # combinations of opto and audio stimuli
 nCombinations = nOptoStim * nAudioStim;
 % # of total trials will be nCombinations * number of stimulus reps
 nTotalTrials = nCombinations * test.Reps;
 
 % user feedback
-fprintf('%s:\nBuilding stimList with parameters:\n', mfilename);
+fprintf('%s:\nBuilding Click stimList with parameters:\n', mfilename);
 fprintf('\tnOptoStim: %d\n',	nOptoStim);
 fprintf('\tnAudioLevels: %d\n',	nAudioLevels);
-fprintf('\tnWavStim: %d\n',	nWavStim);
-fprintf('\tnNoiseStim: %d\n',	nNoiseStim);
 fprintf('\tnNullStim: %d\n',	nNullStim);
 fprintf('\tnAudioStim: %d\n',	nAudioStim);
 fprintf('\tnCombinations: %d\n',	nCombinations);
@@ -100,39 +94,27 @@ sindex = 0;
 % first assign null stimuli (if needed)
 %		these will be at the different opto levels, not audio levels
 if nNullStim
+	% loop through the # of opto stim.
 	for oindex = 1:nOptoStim
 		sindex = sindex + 1;
+		% get opto amplitude
 		stimList(sindex).opto.Amp = optovar(oindex);
 		% assign null to audio stim
 		stimList(sindex).audio = nullstim;
 	end
 end
 
-% then assign noise stimuli (if needed)
-if nNoiseStim
-	for oindex = 1:nOptoStim
-		for lindex = 1:nAudioLevels
-			sindex = sindex + 1;
-			stimList(sindex).opto.Amp = optovar(oindex);
-			% assign noise to audio stim
-			stimList(sindex).audio = noise;
-			% assign stimulus level
-			stimList(sindex).audio.Level = test.Level(lindex);
-		end
-	end
-end
-
 % then assign wav stimuli
+% loop through opto levels
 for oindex = 1:nOptoStim
-	for windex = 1:nWavStim
-		for lindex = 1:nAudioLevels
-			sindex = sindex + 1;
-			stimList(sindex).opto.Amp = optovar(oindex);
-			% assign wav filename
-			stimList(sindex).audio.signal.WavFile = audiowavvar{windex};
-			% assign stimulus level
-			stimList(sindex).audio.Level = test.Level(lindex);
-		end
+	% loop through audio levels
+	for lindex = 1:nAudioLevels
+		% increment stimIndex
+		sindex = sindex + 1;
+		% get opto amplitude
+		stimList(sindex).opto.Amp = optovar(oindex);
+		% assign stimulus level
+		stimList(sindex).audio.Level = test.Level(lindex);
 	end	
 end
 
@@ -141,7 +123,6 @@ if nargout > 1
 	varargout{1} = ...
 				struct(	'nOptoStim',	nOptoStim, ...
 							'nAudioLevels',	nAudioLevels, ...
-							'nWavStim',	nWavStim, ...
 							'nNoiseStim',	nNoiseStim, ...
 							'nNullStim',	nNullStim, ...
 							'nAudioStim',	nAudioStim, ...

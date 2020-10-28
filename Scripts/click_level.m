@@ -1,17 +1,15 @@
-function outdata = MTwav(handles, datafile)
+function outdata = click_level(handles, datafile)
 %--------------------------------------------------------------------------
-% outdata = MTwav(handles, datafile)
+% outdata = click_level(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
 % Standalone experiment script (relies on hardware setup in handles)
-% Demonstrates playback of .WAV format files (assume 16 bit, uncompressed)
+% Delivers click stimuli at different levels (needs to be calibrated
+% separately)
 %
-% To Run: select (usually) <this_functions_name)_standalone.m in the 
+% To Run: select click_standalone.m in the 
 %			script load portion of opto
-% Note: 
-% Designed for versions of Matlab that have the audioread() function
-% (v. 2015 and higher ????)
 %
 %--------------------------------------------------------------------------
 % Input Arguments:
@@ -25,7 +23,7 @@ function outdata = MTwav(handles, datafile)
 %	outdata{3}	handles
 %
 %--------------------------------------------------------------------------
-% See Also: noise_opto, opto, opto_playCache
+% See Also: MTwav, noise_opto, opto, opto_playCache
 %--------------------------------------------------------------------------
 
 %--------------------------------------------------------------------------
@@ -36,21 +34,9 @@ function outdata = MTwav(handles, datafile)
 % sshanbhag@neomed.edu
 % jpena@einstein.edu
 %--------------------------------------------------------------------------
-% Created:	31 March, 2017 (SJS) from noise_opto
+% Created:	28 October, 2020 (SJS) from MTwav.m
 %
 % Revision History:
-%	12 Jun 2017 (SJS): pulled off common elements into separate subscripts
-%	13 Jun 2017 (SJS): working on separate psths for each stimulus 
-%	28 Mar, 2019 (SJS): created for use with M. Tehrani's vocal stimuli
-%	24 Apr, 2019 (SJS): reworking and testing.
-%	29 Apr 2019 (SJS): adding informative things to output testdata struct
-%  29 May 2019 (SJS): updating with new wav files
-%  13 Sep 2019 (SJS): modifying for neuronexus/multielectrode probe
-%  19 Oct 2020 (SJS): trying to track down persisten problem with error:
-% 		Undefined function or variable 'noise'.
-% 
-% 		Error in MTwav (line 143) [stimList, counts] =
-% 		opto_build_stimList(test, audio, opto, noise, nullstim); %#ok<NODEF>
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
@@ -72,8 +58,8 @@ outdata = {};
 % # of plots for PSTH and rasters - the product of PLOT_ROWs and PLOT_COLS
 % must be greater than or equal to the number of wav files + 2 (need to
 % account for "null" stimulus and noise stimulus)
-PLOT_ROWS = 5; %#ok<NASGU>
-PLOT_COLS = 3; %#ok<NASGU>
+PLOT_ROWS = 1; %#ok<NASGU>
+PLOT_COLS = 2; %#ok<NASGU>
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -103,7 +89,7 @@ caldata = handles.H.caldata;
 %------------------------------------
 % original type is 'STANDALONE' but analysis scripts and programs will want
 % something specific
-test.Type = 'WAVFILE';
+test.Type = 'LEVEL';
 test.Name = handles.H.test.Name;
 % store original type as script type
 test.ScriptType = handles.H.test.Type;
@@ -116,38 +102,37 @@ test.ScriptType = handles.H.test.Type;
 % PARAMETERS (reps, ISI, etc.) %%%%
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 %-------------------------------------------------------------------------
-run('Scripts\MTwav_settings')
+run('Scripts\click_settings')
 
 if opto.Enable
-	disp 'running wav_optoON!'
-	curvetype = 'Wav+OptoON';	
+	disp 'running click level, optogenetic stimulus ON!'
+	curvetype = 'LEVEL+OptoON';	
 else
-	disp 'running wav_optoOFF!'
-	curvetype = 'Wav+OptoOFF';
+	disp 'running click level, no optogenetic stimulus'
+	curvetype = 'LEVEL+OptoOFF';
 end
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% construct wavInfo struct "database" for desired wav stimuli
+% construct stimuli - can do this ahead of time, since all of these stimuli
+% are "frozen" (unlike BBN)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% opto_create_wav_stimulus_info builds the information stored in wavInfo 
-% audio.signal.WavPath, WavesToPlay, WavScaleFactors, WavLevelAtScale are 
-% all defined in MTwav_settings!
-[wavInfo, audio.signal.WavFile] = opto_create_wav_stimulus_info( ...
-														audio.signal.WavPath, ...
-														WavesToPlay, ...
-														WavScaleFactors, ...
-														WavLevelAtScale); %#ok<NODEF>
+audio.signal.S = synmonoclick(audio.Duration, outdev.Fs, ...
+								audio.signal.ClickDelay, ...
+								audio.signal.ClickDuration, ...
+								caldata.DAscale); %#ok<NODEF>
+
+% null audio stimulus
+audio.signal.Snull = syn_null(audio.Duration, outdev.Fs, 0);
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % build list of unique stimuli
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% exist('noise', 'var')
 [stimList, counts] = opto_build_stimList(test, audio, opto, ...
-	                                      noise, nullstim); %#ok<NODEF>
+	                                             noise, nullstim); 
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -192,34 +177,6 @@ end	% END if test.Randomize
 % some stimulus things
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% check durations of wav stimuli
-% first, create a vector stimulus durations
-[tmp{1:numel(audio.signal.WavFile)}] = deal(wavInfo.Duration);
-durations = cell2mat(tmp);
-clear tmp;
-maxDur = max(1000*durations);
-if maxDur > test.AcqDuration
-	error('%s: max wav duration (%d) is > AcqDuration (%d)', mfilename, ...
-							maxDur, test.AcqDuration);
-end
-
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-% If noise is frozen, save noise spectrum for future synthesis
-% need to do this AFTER stimList has been built to avoid using up
-% extra memory
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-if noise.Frozen
-	[noise.signal.S0, noise.signal.Smag0, noise.signal.Sphase0] = ...
-								synmononoise_fft(noise.Duration, outdev.Fs, ...
-															noise.signal.Fmin, ...
-															noise.signal.Fmax, ...
-															caldata.DAscale, caldata);
-	% ramp the sound on and off (important!) and compute RMS
-	noise.signal.S0 = sin2array(noise.signal.S0, noise.Ramp, outdev.Fs);
-	noise.signal.rms = rms(noise.signal.S0);
-end
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -259,13 +216,6 @@ standalone_setuphardware
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% Load and condition wav stimuli
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-standalone_condition_wavs
-
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
 % Write data file header - this will create the binary data file
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -274,7 +224,7 @@ test.stimIndices = stimIndices;
 test.nCombinations = counts.nCombinations;
 test.optovar_name = 'Amp';
 test.optovar = opto.Amp;
-test.audiovar_name = 'WavFile';
+test.audiovar_name = 'ClickLevel';
 test.audiovar = audio.signal.WavFile;
 test.curvetype = curvetype;
 animal = handles.H.animal;
@@ -282,19 +232,13 @@ animal = handles.H.animal;
 writeOptoDataFileHeader(datafile, test, animal, ...
 									audio, opto, channels, ...
 									caldata, indev, outdev);
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-% Write wav information to mat file
-%-------------------------------------------------------------------------
-%-------------------------------------------------------------------------
-standalone_write_wavinfomatfile;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Set up figure for plotting incoming data
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-standalone_wav_setupplots;
+standalone_click_setupplots;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -419,7 +363,7 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 			% in the main audio struct, audio.signal.WavFile{}
 			wavindex = find(strcmpi(Stim.audio.signal.WavFile, ...
 												audio.signal.WavFile));
-			Sn = wavS0{wavindex} * wavInfo(wavindex).ScaleFactor; %#ok<IDISVAR,USENS>
+			Sn = wavS0{wavindex} * wavInfo(wavindex).ScaleFactor; %#ok<USENS>
 
 			% determine attenuation value by subtracting desired level from
 			% WavLevelAtScale
