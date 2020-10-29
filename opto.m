@@ -76,7 +76,7 @@ function opto_OpeningFcn(hObject, eventdata, handles, varargin)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % --- Outputs from this function are returned to the command line.
-function varargout = opto_OutputFcn(hObject, eventdata, handles) 
+function varargout = opto_OutputFcn(hObject, eventdata, handles)  %#ok<*INUSL>
 	% varargout  cell array for returning output args (see VARARGOUT);
 	% hObject    handle to figure
 	% eventdata  reserved - to be defined in a future version of MATLAB
@@ -96,7 +96,7 @@ function varargout = opto_OutputFcn(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % --- Executes on selection change in popupAudioSignal.
-function popupAudioSignal_Callback(hObject, eventdata, handles)
+function popupAudioSignal_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
 	% get the Audio Signal String (cell array)
 	stimTypes = read_ui_str(hObject);
 	% retrieve the search stim  type string that is selected
@@ -856,8 +856,8 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	if strcmpi(test.Type, 'STANDALONE')
 		% run test.Function (function handle in test struct)
 		testout = test.Function(handles, datafile);
-		testdata = testout{1}; %#ok<NASGU>
-		respdata = testout{2}; %#ok<NASGU>
+		testdata = testout{1}; 
+		respdata = testout{2}; 
 		handles = testout{3};
 		save(fullfile(pname, [basename '_testdata.mat']), ...
 									'testdata', 'respdata', '-MAT');
@@ -875,7 +875,7 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	
 		% Play stimuli in cache, record neural data
 		testdata = opto_playCache(handles, datafile, ...
-												stimcache, test); %#ok<NASGU>
+												stimcache, test); 
 		save(fullfile(pname, [basename '_testdata.mat']), ...
 									'testdata', '-MAT');
 	end
@@ -1062,7 +1062,7 @@ function buttonLoadCal_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 % --- Executes on button press in buttonDebug.
 %-------------------------------------------------------------------------
-function buttonDebug_Callback(hObject, eventdata, handles)
+function buttonDebug_Callback(hObject, eventdata, handles) %#ok<*INUSD>
 	keyboard
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
