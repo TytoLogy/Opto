@@ -26,7 +26,6 @@ function [stimList, varargout] = opto_build_clickstimList(test, audio, ...
 %
 % for ease, nAudioStim = nAudioLevels + nNullStim
 %---------------------------------------------------------------------
-%--------------------------------------------------------------------------
 % Input Arguments:
 %  test
 %  audio

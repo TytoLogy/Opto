@@ -118,20 +118,20 @@ end
 % are "frozen" (unlike BBN)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-audio.signal.S = synmonoclick(audio.Duration, outdev.Fs, ...
+Sclick = synmonoclick(audio.Duration, outdev.Fs, ...
 								audio.signal.ClickDelay, ...
 								audio.signal.ClickDuration, ...
-								caldata.DAscale); %#ok<NODEF>
+								caldata.DAscale);
 
 % null audio stimulus
-audio.signal.Snull = syn_null(audio.Duration, outdev.Fs, 0);
+Snull = syn_null(audio.Duration, outdev.Fs, 0);
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % build list of unique stimuli
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-[stimList, counts] = opto_build_stimList(test, audio, opto, ...
+[stimList, counts] = opto_build_clickstimList(test, audio, opto, ...
 	                                             noise, nullstim); 
 
 %-------------------------------------------------------------------------
@@ -225,7 +225,7 @@ test.nCombinations = counts.nCombinations;
 test.optovar_name = 'Amp';
 test.optovar = opto.Amp;
 test.audiovar_name = 'ClickLevel';
-test.audiovar = audio.signal.WavFile;
+test.audiovar = 'Level';
 test.curvetype = curvetype;
 animal = handles.H.animal;
 % and write header to data file
@@ -306,11 +306,7 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 	fprintf('stimIndices(%d): %d\n', sindex, cIndx);
 	fprintf('\taudio:\tDelay:%d\tLevel:%d', ...
 			Stim.audio.Delay, Stim.audio.Level)
-	if strcmpi(stimtype, 'wav')
-		fprintf('\t%s\n', Stim.audio.signal.WavFile);
-	else
-		fprintf('\t%s\n', Stim.audio.signal.Type);
-	end
+	fprintf('\t%s\n', Stim.audio.signal.Type);
 	fprintf('\topto:\tEnable:%d\tDelay:%d\tDur:%d\tAmp:%d\n', ...
 			Stim.opto.Enable, Stim.opto.Delay, Stim.opto.Dur, Stim.opto.Amp)
 
@@ -322,59 +318,34 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 		
 		case 'NULL'
 			% no audio stimulus
-			Sn = syn_null(Stim.audio.Duration, outdev.Fs, 0);
+			Sn = Snull;
 			% dummy rms val
 			rmsval = 0; %#ok<NASGU>
 			% max atten for null stim
 			atten = 120;
 			% null stimuli will be in psth after the wav psths
-			% see standalone_wav_settupplots.m script
-			pIndx = counts.nWavStim + 1;
+			% see standalone_click_settupplots.m script and
+			% opto_build_clickstimList function
+			pIndx = counts.nAudioLevels + 1;
 			
-		case 'NOISE'
-			% noise, bandwidth determined by signal.Fmin,Fmax
-			if ~Stim.audio.Frozen
-				% synthesize stimulus de novo
-				Sn = synmononoise_fft(Stim.audio.Duration, outdev.Fs, ...
-												Stim.audio.signal.Fmin, ...
-												Stim.audio.signal.Fmax, ...
-												caldata.DAscale, caldata);
-				% ramp the sound on and off (important!)
-				Sn = sin2array(Sn, Stim.audio.Ramp, outdev.Fs);
-				% compute rms value for use in setting SPL value
-				rmsval = rms(Sn);
-			else
-				% use previously generated, "Frozen" noise
-				Sn = noise.signal.S0;
-				rmsval = noise.signal.rms;
-			end
+		case 'CLICK'
+			% Click
+			Sn = Sclick;
+% 			rmsval = rms(Sn);
+
 			% get the attenuator settings for the desired SPL
-% 			atten = figure_mono_atten(Stim.audio.Level, rmsval, caldata);
-			atten = figure_mono_atten_noise(Stim.audio.Level, rmsval, caldata);
+ 			atten = audio.signal.ClickLevelAtScale - Stim.audio.Level;
+			if atten < 0
+				warning('Desired level %.1f > max possible level (%.1f)', ...
+					       Stim.audio.Level, audio.signal.ClickLevelAtScale);
+				atten = 0;
+			end
+			
 			% noise stimuli will be 2 psth after the wav psths
 			% see standalone_wav_settupplots.m script
-			pIndx = counts.nWavStim + 2;
+			pIndx = find(Stim.audio.Level == test.Level);
 			% update the Stimulus Delay
  			RPsettag(outdev, 'StimDelay', ms2bin(Stim.audio.Delay, outFs));
-
-		case 'WAV'
-			% wav file.  locate waveform in wavS0{} cell array by
-			% finding corresponding location of Stim.audio.signal.WavFile 
-			% in the main audio struct, audio.signal.WavFile{}
-			wavindex = find(strcmpi(Stim.audio.signal.WavFile, ...
-												audio.signal.WavFile));
-			Sn = wavS0{wavindex} * wavInfo(wavindex).ScaleFactor; %#ok<USENS>
-
-			% determine attenuation value by subtracting desired level from
-			% WavLevelAtScale
-			atten = wavInfo(wavindex).WavLevelAtScale - Stim.audio.Level;
-
-			% use wavindex for psth id
-			% see standalone_wav_settupplots.m script
-			pIndx = wavindex;
-
-			% update the Stimulus Delay
-			RPsettag(outdev, 'StimDelay', ms2bin(Stim.audio.Delay, outFs));
 			
 		otherwise
 			fprintf('unknown type %s\n', stimtype);
@@ -448,10 +419,7 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 
 	% This is code for letting the user know what in
 	% tarnation is going on in text at bottom of window
-	wtype = '';
-	if strcmpi(stimtype, 'wav')
-		wtype = sprintf('%s', Stim.audio.signal.WavFile);
-	end
+	wtype = sprintf('%s', Stim.audio.signal.Type);
 	if Stim.opto.Enable
 		wtype = [wtype sprintf('+ Opto %d mV', Stim.opto.Amp)]; %#ok<AGROW>
 	end
@@ -486,11 +454,6 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 	% assign spiketimes to currentRep within storage cell array
 	SpikeTimes{pIndx}{currentRep(pIndx)} = (1000/indev.Fs) * ...
 																	spikebins; %#ok<AGROW>
-%----
-% what is this for????
-% 	SpikeTimes{cIndx}{currentRep(cIndx)} = ...
-% 				[SpikeTimes{cIndx}{currentRep(cIndx)} 100*cIndx]; %#ok<AGROW>
-%-----
 	% draw new hash marks on sweep plot
 	set(tH,	'XData', ...
 					SpikeTimes{pIndx}{currentRep(pIndx)}, ...
@@ -512,7 +475,6 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 % 						12, ...
 % 						'k', ...
 % 						rstAxes(cIndx)	);
-	% check state of cancel button
 
 	% increment current index
 	currentRep(pIndx) = currentRep(pIndx) + 1; %#ok<AGROW>

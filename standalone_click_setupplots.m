@@ -145,15 +145,11 @@ PSTH.hvals = cell(nPSTH, 1);
 for p = 1:nPSTH
 	if p == 1
 		% create null psthdata and store bins
-% 		[PSTH.hvals{p}, PSTH.bins] = ...
-% 									psth(	{}, binSize, ...
-% 											[0 handles.H.TDT.AcqDuration]);
 		[PSTH.hvals{p}, PSTH.bins] = ...
 									psth(	{}, binSize, ...
 											[0 test.AcqDuration]);
 	else
 		% just store hvals
-% 		PSTH.hvals{p} = psth({}, binSize, [0 handles.H.TDT.AcqDuration]);
 		PSTH.hvals{p} = psth({}, binSize, [0 test.AcqDuration]);
 	end
 end
@@ -168,12 +164,9 @@ pstBar = zeros(nPSTH, 1);
 for p = 1:nPSTH
 	pstBar(p) = bar(pstAxes(p), PSTH.bins, PSTH.hvals{p}, 1);
 	% set xlimits
-% 	xlim(pstAxes(p), [-0.5*binSize ...
-% 										(handles.H.TDT.AcqDuration+0.5*binSize)]);
 	xlim(pstAxes(p), [-0.5*binSize ...
 										(test.AcqDuration+0.5*binSize)]);
 	% set xtick properties
-% 	set(pstAxes(p), 'XTick', 0:200:handles.H.TDT.AcqDuration);
 	set(pstAxes(p), 'XTick', test.AcqDuration);
 	set(pstAxes(p), 'TickDir', 'out');
 	set(pstAxes(p), 'XMinorTick', 'on');
@@ -192,13 +185,12 @@ axis(pstAxes, 'auto y');
 %--------------------------------
 pstAudLine = zeros(nPSTH, 2);
 % stimulus lines depend on stimulus type
-for p = 1:length(wavInfo)
+for p = 1:nLevels
 	axes(pstAxes(p)); %#ok<LAXES>
 	% adjust the onset "tick" to account for the delayed
 	% onset within the wav file (calculated in buildWavInfo() function)
-	onset = audio.Delay + bin2ms(wavInfo(p).OnsetBin, ...
-															wavInfo(p).SampleRate);
-	offset = onset + 1000*wavInfo(p).Duration;
+	onset = audio.Delay + audio.signal.ClickDelay;
+	offset = onset + audio.signal.ClickDuration;
 	if ~isempty(onset)
 		pstAudLine(p, 1) = text(onset, 0, ':', ...
 											'Color', 'b', ...
@@ -212,18 +204,7 @@ if test.NullStim
 	p = p+1;
 	axes(pstAxes(p)); 
 end
-if test.NoiseStim
-	p = p+1;
-	axes(pstAxes(p)); 
-	onset = noise.Delay;
-	offset = onset + noise.Duration;
-	pstAudLine(p, 1) = text(onset, 0, ':', ...
-										'Color', 'b', ...
-										'FontSize', 11);
-	pstAudLine(p, 2) = text(offset, 0, '|', ...
-										'Color', 'b', ...
-										'FontSize', 11);
-end
+
 %--------------------------------
 % draw line for opto stim
 %--------------------------------
