@@ -78,7 +78,7 @@ opto.Amp = 0;
 %------------------------------------
 % Delay - this will set the delay in TDT hardware (don't need to add
 % delay in the click stimulus itself
-audio.Delay = 10;
+audio.Delay = 20;
 % Duration is total signal duration - not click duration
 % click duration will be set in the audio.signal.ClickDuration field
 audio.Duration = 100;
@@ -99,6 +99,7 @@ audio.signal.ClickDuration = 0.050;
 audio.signal.ClickDelay = 0;
 % amplitude of click - set to DAscale from caldata for now
 audio.signal.ClickScale = caldata.DAscale;
+audio.signal.ClickScale = 0.25;
 % output level at scale, with zero attenuation. need to 
 % get this using calibration rig to measure output
 audio.signal.ClickLevelAtScale = 70;
