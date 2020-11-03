@@ -29,6 +29,8 @@ test.saveStim = 0;
 test.Level = [50 70];
 % use null stim?
 test.NullStim = 1;
+% use Noise stim?
+test.NoiseStim = 0;
 
 %------------------------------------
 % acquisition/sweep settings
@@ -108,6 +110,18 @@ nullstim.signal.Type = 'null';
 nullstim.Delay = audio.Delay;
 nullstim.Duration = audio.Duration;
 nullstim.Level = 0;
+%------------------------------------
+% noise signal
+%------------------------------------
+noise.signal.Type = 'noise';
+noise.signal.Fmin = 4000;
+noise.signal.Fmax = 80000;
+% set this to 100 ms
+noise.Delay = 100;
+noise.Duration = 100;
+noise.Level = 60;
+noise.Ramp = 5;
+noise.Frozen = 0;
 
 %%%%%%%%%%%%%
 %{

@@ -57,6 +57,7 @@ optovar = opto.Amp;
 % different elements -> get counts
 nOptoStim = numel(optovar);
 nAudioLevels = numel(test.Level);
+nNoiseStim = test.NoiseStim;
 nNullStim = test.NullStim;
 
 % # of audio stimuli

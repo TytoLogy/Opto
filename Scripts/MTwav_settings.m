@@ -30,7 +30,7 @@ test.saveStim = 0;
 test.Level = [20 40 60 70];
 % use null stim?
 test.NullStim = 1;
-% use Noist stim?
+% use Noise stim?
 test.NoiseStim = 1;
 %------------------------------------
 % acquisition/sweep settings

@@ -86,13 +86,13 @@ set(pstHandle, 'Filename', [fname '_PSTH.fig']);
 nLevels = length(test.Level);
 nPSTH = test.NullStim + nLevels;
 
-PLOT_ROWS = 1;
-PLOT_COLS = nPSTH;
+PLOT_ROWS = nPSTH;
+PLOT_COLS = 1;
 
 % allocate axes
 pstAxes = zeros(nPSTH, 1);
 % subplots for levels first
-for p = 1:length(nLevels)
+for p = 1:nLevels
 	pstAxes(p) = subplot(PLOT_ROWS, PLOT_COLS, p);
 	% write titles for plots
 	tstr = sprintf('Click %d dB', test.Level(p));
@@ -167,10 +167,10 @@ for p = 1:nPSTH
 	xlim(pstAxes(p), [-0.5*binSize ...
 										(test.AcqDuration+0.5*binSize)]);
 	% set xtick properties
-	set(pstAxes(p), 'XTick', test.AcqDuration);
+	set(pstAxes(p), 'XTick', [0 audio.Delay test.AcqDuration]);
 	set(pstAxes(p), 'TickDir', 'out');
 	set(pstAxes(p), 'XMinorTick', 'on');
-	set(pstAxes(p), 'TickLen', 3*get(pstAxes(p), 'TickLen'));
+% 	set(pstAxes(p), 'TickLen', 3*get(pstAxes(p), 'TickLen'));
 	% turn off outer box
 	set(pstAxes(p), 'Box', 'off');
 end
@@ -193,10 +193,10 @@ for p = 1:nLevels
 	offset = onset + audio.signal.ClickDuration;
 	if ~isempty(onset)
 		pstAudLine(p, 1) = text(onset, 0, ':', ...
-											'Color', 'b', ...
+											'Color', 'g', ...
 											'FontSize', 11);
 		pstAudLine(p, 2) = text(offset, 0, '|', ...
-											'Color', 'b', ...
+											'Color', 'r', ...
 											'FontSize', 11);
 	end
 end
