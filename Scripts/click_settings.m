@@ -101,6 +101,14 @@ audio.signal.ClickScale = caldata.DAscale;
 % get this using calibration rig to measure output
 audio.signal.ClickLevelAtScale = 70;
 
+%------------------------------------
+% null signal
+%------------------------------------
+nullstim.signal.Type = 'null';
+nullstim.Delay = audio.Delay;
+nullstim.Duration = audio.Duration;
+nullstim.Level = 0;
+
 %%%%%%%%%%%%%
 %{
 note: not sure yet how to deal with levels. specify max click amplitude

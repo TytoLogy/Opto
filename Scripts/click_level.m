@@ -131,8 +131,7 @@ Snull = syn_null(audio.Duration, outdev.Fs, 0);
 % build list of unique stimuli
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-[stimList, counts] = opto_build_clickstimList(test, audio, opto, ...
-	                                             noise, nullstim); 
+[stimList, counts] = opto_build_clickstimList(test, audio, opto, nullstim); 
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
