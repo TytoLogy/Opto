@@ -26,9 +26,9 @@ test.saveStim = 0;
 % stimulus levels to test
 % !!! note that levels for individual stimulus types set below are
 % overridden by these values
-test.Level = [50 70];
+test.Level = [ 70];
 % use null stim?
-test.NullStim = 1;
+test.NullStim = 0;
 % use Noise stim?
 test.NoiseStim = 0;
 
@@ -78,7 +78,7 @@ opto.Amp = 0;
 %------------------------------------
 % Delay - this will set the delay in TDT hardware (don't need to add
 % delay in the click stimulus itself
-audio.Delay = 100;
+audio.Delay = 10;
 % Duration is total signal duration - not click duration
 % click duration will be set in the audio.signal.ClickDuration field
 audio.Duration = 100;

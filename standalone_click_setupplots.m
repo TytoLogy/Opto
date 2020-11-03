@@ -169,7 +169,7 @@ for p = 1:nPSTH
 	% set xtick properties
 	set(pstAxes(p), 'XTick', [0 audio.Delay test.AcqDuration]);
 	set(pstAxes(p), 'TickDir', 'out');
-	set(pstAxes(p), 'XMinorTick', 'on');
+	set(pstAxes(p), 'XMinorTick', 'off');
 % 	set(pstAxes(p), 'TickLen', 3*get(pstAxes(p), 'TickLen'));
 	% turn off outer box
 	set(pstAxes(p), 'Box', 'off');
