@@ -66,6 +66,10 @@ function opto_OpeningFcn(hObject, eventdata, handles, varargin)
 	%----------------------------------------------------------------
 	handles = opto_InitializeGUI(hObject, eventdata, handles);
 	%----------------------------------------------------------------
+	% add path to scripts
+	%----------------------------------------------------------------
+	addpath('Scripts');
+	%----------------------------------------------------------------
 	% Update handles structure
 	%----------------------------------------------------------------
 	guidata(hObject, handles);
