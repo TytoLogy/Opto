@@ -13,7 +13,13 @@
 %	blocked randomization, e.g., random sequence of each stimulus
 %	without repeats for 1 rep, then another, then .... etc.
 %----------------------------------------------------------
-test.Reps = 20;
+% test.Reps			# of reps per stimulus and level combination
+% test.Randomize	randomize stimulus presentation order? 0=no, 1=yes
+% test.Block		randomize in blocks? 0 = no, 1 = yes 
+% audio.ISI       inter-stimulus interval in ms. due to windows and 
+%						TDT communication, this is approximate
+%----------------------------------------------------------
+test.Reps = 10;
 test.Randomize = 1;
 test.Block = 0;
 audio.ISI = 100;
@@ -26,9 +32,9 @@ test.saveStim = 0;
 % stimulus levels to test
 % !!! note that levels for individual stimulus types set below are
 % overridden by these values
-test.Level = [ 70];
+test.Level = 70;
 % use null stim?
-test.NullStim = 0;
+test.NullStim = 1;
 % use Noise stim?
 test.NoiseStim = 0;
 
@@ -94,15 +100,16 @@ audio.Frozen = 0;
 %----------------------------------------------
 audio.signal.Type = 'click';
 % duration of the click (in milliseconds)
-audio.signal.ClickDuration = 0.050;
+audio.signal.ClickDuration = 0.025;
 % delay of click in signal (usually set to 0)
 audio.signal.ClickDelay = 0;
-% amplitude of click - set to DAscale from caldata for now
-audio.signal.ClickScale = caldata.DAscale;
+% amplitude of click - this needs to set experimentally using calibration
+% mic to measure output. 
+% value set on 6 Nov 2020, SJS
 audio.signal.ClickScale = 0.25;
 % output level at scale, with zero attenuation. need to 
 % get this using calibration rig to measure output
-audio.signal.ClickLevelAtScale = 70;
+audio.signal.ClickLevelAtScale = 83;
 
 %------------------------------------
 % null signal
