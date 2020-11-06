@@ -19,7 +19,7 @@
 % audio.ISI       inter-stimulus interval in ms. due to windows and 
 %						TDT communication, this is approximate
 %----------------------------------------------------------
-test.Reps = 10;
+test.Reps = 20;
 test.Randomize = 1;
 test.Block = 0;
 audio.ISI = 100;

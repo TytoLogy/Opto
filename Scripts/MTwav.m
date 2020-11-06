@@ -116,7 +116,8 @@ test.ScriptType = handles.H.test.Type;
 % PARAMETERS (reps, ISI, etc.) %%%%
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 %-------------------------------------------------------------------------
-run('Scripts\MTwav_settings')
+% run('Scripts\MTwav_settings')
+MTwav_settings
 
 if opto.Enable
 	disp 'running wav_optoON!'
@@ -146,8 +147,7 @@ end
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % exist('noise', 'var')
-[stimList, counts] = opto_build_stimList(test, audio, opto, ...
-	                                      noise, nullstim); %#ok<NODEF>
+[stimList, counts] = opto_build_stimList(test, audio, opto, noise, nullstim); %#ok<NODEF>
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -419,7 +419,7 @@ while ~cancelFlag && (sindex < counts.nTotalTrials)
 			% in the main audio struct, audio.signal.WavFile{}
 			wavindex = find(strcmpi(Stim.audio.signal.WavFile, ...
 												audio.signal.WavFile));
-			Sn = wavS0{wavindex} * wavInfo(wavindex).ScaleFactor; %#ok<IDISVAR,USENS>
+			Sn = wavS0{wavindex} * wavInfo(wavindex).ScaleFactor; %#ok<USENS>
 
 			% determine attenuation value by subtracting desired level from
 			% WavLevelAtScale
