@@ -95,8 +95,23 @@ catch errMsg
 end
 
 % convert test.Name into characters
-datainfo.test.Name = char(datainfo.test.Name);
-
+% need to see if Name is field in test structure - due to inconsistencies
+% in the different tests, some (e.g., opto-amp) do not have Name and only
+% have Type
+datainfo.test
+if isfield(datainfo.test, 'Name')
+   datainfo.test.Name = char(datainfo.test.Name);
+else
+   fprintf('file %s: \n\tNo ''Name'' field in datainfo.test\n', datafile);
+   fprintf('Checking for ''Type''\n');
+   if isfield(datainfo.test, 'Type')
+      datainfo.test.Type = char(datainfo.test.Type);
+      datainfo.test.Name = datainfo.test.Type;
+   else
+      error('Cannot determine test type');
+   end
+end
+   
 % check if stimcache exists
 if isfield(datainfo.test, 'stimcache')
 	% if so, get # of reps and trials from size of trialRandomSequence
