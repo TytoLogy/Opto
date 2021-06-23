@@ -37,6 +37,7 @@ function outdata = click_level(handles, datafile)
 % Created:	28 October, 2020 (SJS) from MTwav.m
 %
 % Revision History:
+% 23 Jun 21 (SJS): adding code to insert stimlist info into test struct
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
@@ -230,6 +231,8 @@ test.optovar = opto.Amp;
 test.audiovar_name = 'ClickLevel';
 test.audiovar = 'Level';
 test.curvetype = curvetype;
+% add stimList to test
+test.stimList = stimList;
 animal = handles.H.animal;
 % and write header to data file
 writeOptoDataFileHeader(datafile, test, animal, ...
