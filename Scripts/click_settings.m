@@ -42,7 +42,7 @@ test.NoiseStim = 0;
 % acquisition/sweep settings
 % will have to be adjusted to deal with wav file durations
 %------------------------------------
-test.AcqDuration = 400;
+test.AcqDuration = 250;
 test.SweepPeriod = test.AcqDuration + 5;
 
 %-------------------------------------------------------------------------
@@ -84,7 +84,7 @@ opto.Amp = 0;
 %------------------------------------
 % Delay - this will set the delay in TDT hardware (don't need to add
 % delay in the click stimulus itself
-audio.Delay = 20;
+audio.Delay = 100;
 % Duration is total signal duration - not click duration
 % click duration will be set in the audio.signal.ClickDuration field
 audio.Duration = 100;
