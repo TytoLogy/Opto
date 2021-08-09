@@ -255,6 +255,12 @@ else
 	nchan = Dinf.channels.nInputChannels; %#ok<NASGU>
 	channelList = Dinf.channels.InputChannels;
 end
+
+fprintf('Channels in Data:\n\t')
+for c = 1:length(channelList)
+   fprintf('%d ', channelList(c));
+end
+fprintf('\n');
 % make sure specified channel is in the list
 channelIndex = find(channelList == channelNumber);
 if isempty(channelIndex)
