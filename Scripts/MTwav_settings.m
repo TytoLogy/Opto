@@ -14,11 +14,19 @@
 %	Note that Randomize in this context will mean a 
 %	blocked randomization, e.g., random sequence of each stimulus
 %	without repeats for 1 rep, then another, then .... etc.
+%  MT comments 2/8/23: IC stimulus presentation settings
 %----------------------------------------------------------
+% test.Reps = 20;
+% test.Randomize = 1;
+% test.Block = 0;
+% audio.ISI = 100;
+
+%  MT comments 2/8/23: BLA stimulus presentation settings (need ~1/sec)
 test.Reps = 20;
 test.Randomize = 1;
 test.Block = 0;
-audio.ISI = 100;
+audio.ISI = 700;
+%----------------------------------------------------------
 %------------------------------------
 % Experiment settings
 %------------------------------------
@@ -27,7 +35,10 @@ test.saveStim = 0;
 % stimulus levels to test
 % !!! note that levels for individual stimulus types set below are
 % overridden by these values
-test.Level = [20 40 60 70];
+% MT comments 2/8/23/23: IC stimulus levels
+%test.Level = [20 40 60 70];
+% MT comments 2/8/23/23: BLA stimulus levels
+test.Level = [60 70];
 % use null stim?
 test.NullStim = 1;
 % use Noise stim?
