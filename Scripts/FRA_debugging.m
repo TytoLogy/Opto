@@ -3,7 +3,7 @@
 %-------------------------------------------------------------------------
 % 	'LEVEL'			firing rate vs. stimulus level (dB)
 %	`FREQ'			frequency-tuning curve (tones)
-%	'FRA'				frequency-response area (tones)
+%	'FREQ+LEVEL'	frequency-response area (tones)
 % 	'OPTO'			simple optical stimulation (nothing varies)
 % 	'OPTO-xxx'		optical stim, with 'xxx' as variable, where 'xxx' is
 % 		'DELAY'			opto stim delay 
@@ -11,58 +11,50 @@
 % 		'AMP'				opto stim amplitude
 % 						or some combination of these
 %-------------------------------------------------------------------------
-test.Type = 'LEVEL';
-test.Name = 'BBN';
+test.Type = 'FREQ+LEVEL';
+test.Name = 'FRA';
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % OPTICAL settings
 %-------------------------------------------------------------------------
-test.opto.Enable = 1;
-% test.opto.Delay = 100;
-% test.opto.Dur = 300;
-% test.opto.Delay = 200;
-% test.opto.Dur = 100;
-test.opto.Delay = 50;
-test.opto.Dur = 50;
-test.opto.Amp = 1000;
+test.opto.Enable = 0;
+test.opto.Delay = 150;
+test.opto.Dur = 200;
+test.opto.Amp = 2000; % mV
+
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % Auditory stimulus settings
 %-------------------------------------------------------------------------
 % signal
-test.audio.signal.Type = 'noise';
-test.audio.signal.Fmin = 4000;
-% test.audio.signal.Fmin = 40000;
-test.audio.signal.Fmax = 80000;
+test.audio.signal.Type = 'tone';
+test.audio.signal.Frequency = [4000 4500 5000];
+% test.audio.signal.Frequency = 7500:2500:40000;
+test.audio.signal.RadVary = 1;
 test.audio.Delay = 100;
 test.audio.Duration = 100;
-% test.audio.Level = [0 40 60 80];
-test.audio.Level = 0:10:70;
+test.audio.Level = [40 45 50];
 test.audio.Ramp = 5;
 test.audio.Frozen = 0;
 test.audio.ISI = 100;
 
-test.Reps = 20;
-% test.Reps = 5;
+test.Reps = 10;
 test.Randomize = 1;
 test.Block = 0;
 test.saveStim = 0;
-
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % TDT
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-test.AcqDuration = 250;
-test.SweepPeriod = test.AcqDuration + 5;
+test.AcqDuration = 300;
+test.SweepPeriod = test.AcqDuration + 1;
 
-if test.opto.Enable
-	test.Name = [test.Name '_optoON'];
+ if test.opto.Enable
+	test.Name = [test.Name 'optoON'];
 end
-	
 
- 
 
 

@@ -21,7 +21,7 @@ function varargout = opto(varargin)
 % See also: GUIDE, GUIDATA, GUIHANDLES
 %-------------------------------------------------------------------------
 
-% Last Modified by GUIDE v2.5 12-Jun-2017 19:36:24
+% Last Modified by GUIDE v2.5 27-Feb-2019 17:52:21
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -66,6 +66,10 @@ function opto_OpeningFcn(hObject, eventdata, handles, varargin)
 	%----------------------------------------------------------------
 	handles = opto_InitializeGUI(hObject, eventdata, handles);
 	%----------------------------------------------------------------
+	% add path to scripts
+	%----------------------------------------------------------------
+	addpath('Scripts');
+	%----------------------------------------------------------------
 	% Update handles structure
 	%----------------------------------------------------------------
 	guidata(hObject, handles);
@@ -76,7 +80,7 @@ function opto_OpeningFcn(hObject, eventdata, handles, varargin)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % --- Outputs from this function are returned to the command line.
-function varargout = opto_OutputFcn(hObject, eventdata, handles) 
+function varargout = opto_OutputFcn(hObject, eventdata, handles)  %#ok<*INUSL>
 	% varargout  cell array for returning output args (see VARARGOUT);
 	% hObject    handle to figure
 	% eventdata  reserved - to be defined in a future version of MATLAB
@@ -96,7 +100,7 @@ function varargout = opto_OutputFcn(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % --- Executes on selection change in popupAudioSignal.
-function popupAudioSignal_Callback(hObject, eventdata, handles)
+function popupAudioSignal_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
 	% get the Audio Signal String (cell array)
 	stimTypes = read_ui_str(hObject);
 	% retrieve the search stim  type string that is selected
@@ -184,17 +188,6 @@ function editAudioDur_Callback(hObject, eventdata, handles)
 		RPsettag(handles.H.TDT.outdev, 'StimDur', handles.H.audio.Duration);
 	end	
 %-------------------------------------------------------------------------
-function editAudioLevel_Callback(hObject, eventdata, handles)
-	val = read_ui_str(hObject, 'n');
-	if between(val, 0, 100)
-		handles.H.audio.Level = val;
-		guidata(hObject, handles);
-	else
-		optomsg(handles, 'invalid audio Level');
-		update_ui_str(hObject, handles.H.audio.Level);
-	end
-	guidata(hObject, handles);
-%-------------------------------------------------------------------------
 function editAudioRamp_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	if between(val, 0, handles.H.audio.Duration)
@@ -206,12 +199,39 @@ function editAudioRamp_Callback(hObject, eventdata, handles)
 	end
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
+function editAudioLevel_Callback(hObject, eventdata, handles)
+	val = read_ui_str(hObject, 'n');
+	if between(val, 0, 100)
+		handles.H.audio.Level = val;
+		guidata(hObject, handles);
+	else
+		optomsg(handles, 'invalid audio Level');
+		update_ui_str(hObject, handles.H.audio.Level);
+	end
+	guidata(hObject, handles);
+%-------------------------------------------------------------------------
+function sliderAudioLevel_Callback(hObject, eventdata, handles)
+
+	val = round(read_ui_val(hObject));
+	if between(val, 0, 100)
+		handles.H.audio.Level = val;
+		update_ui_str(handles.editAudioLevel, handles.H.audio.Level);
+		guidata(hObject, handles);
+	else
+		optomsg(handles, 'invalid audio Level');
+		update_ui_val(hObject, handles.H.audio.Level);
+	end
+	guidata(hObject, handles);
+%-------------------------------------------------------------------------
 function editAudioFmin_Callback(hObject, eventdata, handles)
 	val = read_ui_str(hObject, 'n');
 	switch upper(handles.H.audio.Signal)
 		case 'NOISE'
-			if between(val, 3500, handles.H.noise.Fmax)
+			if between(val, handles.H.Lim.F(1), handles.H.noise.Fmax)
 				handles.H.noise.Fmin = val;
+				update_ui_val(handles.sliderAudioFmin, val);
+				% set sliderAudioFmax ctrl min val
+				set(handles.sliderAudioFmax, 'Min', val);
 				guidata(hObject, handles);
 				optomsg(handles, sprintf('Noise Fmin: %.0f', ...
 													handles.H.noise.Fmin), ...
@@ -221,8 +241,51 @@ function editAudioFmin_Callback(hObject, eventdata, handles)
 				update_ui_str(hObject, handles.H.noise.Fmin);
 			end
 		case 'TONE'
-			if between(val, 3500, handles.H.TDT.outdev.Fs / 2)
+			if between(val, handles.H.Lim.F(1), ...
+										floor(handles.H.TDT.outdev.Fs / 2))
 				handles.H.tone.Frequency = val;
+				update_ui_val(handles.sliderAudioFmin, val);
+				guidata(hObject, handles);
+				optomsg(handles, sprintf('Tone Freq: %.0f', ...
+													handles.H.tone.Frequency), ...
+													'echo', 'off');
+			else
+				optomsg(handles, 'invalid audio tone Frequency');
+				update_ui_str(hObject, handles.H.tone.Frequency);
+			end
+	end
+	guidata(hObject, handles);
+%-------------------------------------------------------------------------
+% --- Executes on slider movement.
+function sliderAudioFmin_Callback(hObject, eventdata, handles)
+% need to
+% (1) get value
+% (2) update noise or tone freq
+% (3) adjust min value limit of sliderAudioFmax ctrl (for noise only)
+	val = round(read_ui_val(hObject));
+	switch upper(handles.H.audio.Signal)
+		case 'NOISE'
+			% check if value is in range
+			if between(val, handles.H.Lim.F(1), handles.H.noise.Fmax)
+				% update value in H.noise
+				handles.H.noise.Fmin = val;
+				% set sliderAudioFmax ctrl min val
+				set(handles.sliderAudioFmax, 'Min', handles.H.noise.Fmin);
+				% update audioFmin box
+				update_ui_str(handles.editAudioFmin, handles.H.noise.Fmin);
+				guidata(hObject, handles);
+				optomsg(handles, sprintf('Noise Fmin: %.0f', ...
+													handles.H.noise.Fmin), ...
+													'echo', 'off');
+			else
+				optomsg(handles, 'invalid audio noise Fmin');
+				update_ui_val(hObject, handles.H.noise.Fmin);
+			end
+		case 'TONE'
+			if between(val, handles.H.Lim.F(1), handles.H.TDT.outdev.Fs / 2)
+				handles.H.tone.Frequency = val;
+				% update audioFmin box
+				update_ui_str(handles.editAudioFmin, handles.H.tone.Frequency);
 				guidata(hObject, handles);
 				optomsg(handles, sprintf('Tone Freq: %.0f', ...
 													handles.H.tone.Frequency), ...
@@ -239,6 +302,8 @@ function editAudioFmax_Callback(hObject, eventdata, handles)
 	if between(val, handles.H.noise.Fmin, ...
 							handles.H.TDT.outdev.Fs / 2)
 		handles.H.noise.Fmax = val;
+		% set sliderAudioFmax ctrl min val
+		set(handles.sliderAudioFmin, 'Max', handles.H.noise.Fmax);
 		guidata(hObject, handles);
 		optomsg(handles, sprintf('Noise Fmax: %.0f', ...
 													handles.H.noise.Fmax), ...
@@ -246,6 +311,37 @@ function editAudioFmax_Callback(hObject, eventdata, handles)
 	else
 		optomsg(handles, 'invalid audio noise Fmax');
 		update_ui_str(hObject, handles.H.noise.Fmax);
+	end
+	guidata(hObject, handles);
+%-------------------------------------------------------------------------
+function sliderAudioFmax_Callback(hObject, eventdata, handles)
+% --- Executes on slider movement.
+% need to
+% (1) get value
+% (2) update noise or tone freq
+% (3) adjust max value limit of sliderAudioFmin ctrl (for noise only)
+	val = round(read_ui_val(hObject));
+	switch upper(handles.H.audio.Signal)
+		case 'NOISE'
+			% check if value is in range [noiseFmin, Lim.F(2)]
+			if between(val, handles.H.noise.Fmin, handles.H.Lim.F(2))
+				% update value in H.noise
+				handles.H.noise.Fmax = val;
+				% set sliderAudioFmin ctrl max val
+				set(handles.sliderAudioFmin, 'Max', handles.H.noise.Fmax);
+				% update audioFmax box
+				update_ui_str(handles.editAudioFmax, handles.H.noise.Fmax);
+				guidata(hObject, handles);
+				optomsg(handles, sprintf('Noise Fmin: %.0f', ...
+													handles.H.noise.Fmax), ...
+													'echo', 'off');
+			else
+				optomsg(handles, 'invalid audio noise Fmax');
+				update_ui_val(hObject, handles.H.noise.Fmax);
+			end
+		case 'TONE'
+			optomsg(handles, '???????');
+			update_ui_val(hObject, handles.H.noise.Fmax);
 	end
 	guidata(hObject, handles);
 %-------------------------------------------------------------------------
@@ -764,13 +860,12 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	if strcmpi(test.Type, 'STANDALONE')
 		% run test.Function (function handle in test struct)
 		testout = test.Function(handles, datafile);
-		testdata = testout{1}; %#ok<NASGU>
-		respdata = testout{2}; %#ok<NASGU>
+		testdata = testout{1}; 
+		respdata = testout{2}; 
 		handles = testout{3};
 		save(fullfile(pname, [basename '_testdata.mat']), ...
 									'testdata', 'respdata', '-MAT');
 		guidata(hObject, handles);
-		
 	else
 		% not standalone, so build cache
 		[stimcache, stimseq] = opto_buildStimCache(test, handles.H.TDT, ...
@@ -784,10 +879,18 @@ function buttonRunTestScript_Callback(hObject, eventdata, handles)
 	
 		% Play stimuli in cache, record neural data
 		testdata = opto_playCache(handles, datafile, ...
-												stimcache, test); %#ok<NASGU>
+												stimcache, test); 
 		save(fullfile(pname, [basename '_testdata.mat']), ...
 									'testdata', '-MAT');
 	end
+	
+%------------------------------------------------
+% plot data using optoproc
+%------------------------------------------------
+
+
+
+
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 function buttonEditTestScript_Callback(hObject, eventdata, handles)
@@ -914,14 +1017,16 @@ function editComments_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 function buttonLoadCal_Callback(hObject, eventdata, handles)
 	% open a dialog box to get calibration data file name and path
-	[filenm, pathnm] = uigetfile({'*.mat'; '*.*'}, ...
+	[filenm, pathnm] = uigetfile({'*.cal'; '*.mat'; '*.*'}, ...
 											'Load cal data...', ...
 											[pwd filesep]);
 	% load the speaker calibration data if user doesn't hit cancel
 	if filenm
 		% try to load the calibration data
 		try
-			tmpcal = load_cal(fullfile(pathnm, filenm));
+			% %%%%% KLUDGE %%%%%%%%%%%%%%%%%
+
+			tmpcal = load_cal_and_smooth(fullfile(pathnm, filenm), 10);
 			optomsg(handles, ['Loaded cal from ' ...
 											fullfile(pathnm, filenm)], ...
 											'echo', 'off');
@@ -933,7 +1038,7 @@ function buttonLoadCal_Callback(hObject, eventdata, handles)
 		% if tmpcal is a structure, load of calibration file was
 		% hopefully successful, so save it in the handles info
 		if isstruct(tmpcal)
-			handles.H.caldata = tmpcal;
+			handles.H.caldata = tmpcal;			
 			% update UI control limits based on calibration data
 			handles.H.Lim.F = [handles.H.caldata.Freqs(1) ...
 											handles.H.caldata.Freqs(end)];
@@ -961,7 +1066,7 @@ function buttonLoadCal_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------------------
 % --- Executes on button press in buttonDebug.
 %-------------------------------------------------------------------------
-function buttonDebug_Callback(hObject, eventdata, handles)
+function buttonDebug_Callback(hObject, eventdata, handles) %#ok<*INUSD>
 	keyboard
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
@@ -1031,10 +1136,25 @@ function editComments_CreateFcn(hObject, eventdata, handles)
 	create_function(hObject);
 function editTLo_CreateFcn(hObject, eventdata, handles)
 	create_function(hObject);
+function sliderAudioFmin_CreateFcn(hObject, eventdata, handles)
+	if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+		 set(hObject,'BackgroundColor',[.9 .9 .9]);
+	end
+function sliderAudioFmax_CreateFcn(hObject, eventdata, handles)
+	if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+		 set(hObject,'BackgroundColor',[.9 .9 .9]);
+	end
+function sliderAudioLevel_CreateFcn(hObject, eventdata, handles)
+	if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+		 set(hObject,'BackgroundColor',[.9 .9 .9]);
+	end	
 % function editRMSTau_CreateFcn(hObject, eventdata, handles)
 % 	create_function(hObject);
 % function editSnipLen_CreateFcn(hObject, eventdata, handles)
 % 	create_function(hObject);
+%-------------------------------------------------------------------------
+%-------------------------------------------------------------------------
+
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 function create_function(hObject)
@@ -1054,7 +1174,6 @@ function figure1_DeleteFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-
 
 
 

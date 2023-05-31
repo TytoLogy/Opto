@@ -46,9 +46,9 @@ if ispc
 %   datafile = '1058_20160623_0_02_1500_FREQ.dat';
 %   datapath = 'E:\Data\SJS\1012\20160727';
 %   datafile = '1012_20160727_5_3_1_OPTO.dat';
-  datapath = 'E:\Data\SJS';
+	datapath = 'E:\Data\EphysData';
 %     datapath = 'C:\Users\cgrimsley\Desktop\1116\20170618';
-    datafile = '';
+	datafile = '';
 else
 %   datapath = '/Users/sshanbhag/Work/Data/Mouse/Opto/1012/20160727';
 %   datafile = '1012_20160727_5_3_1_OPTO.dat';
@@ -240,6 +240,7 @@ if strcmpi(Dinf.test.Type, 'WavFile')
         ylabel('Trial')
     end
 end
+drawnow
 
 %% assign outputs
 varargout{1} = D;
@@ -249,14 +250,26 @@ varargout{3} = tracesByStim;
 %% work from testdata
 % if no testdata, get outta here
 if isempty(testdata)
+	fprintf('%s: testdata empty (no spiketimes or PSTH to plot)\n', ...
+						mfilename);
     return
 elseif ~isfield(testdata, 'SpikeTimes')
+	fprintf('%s: field SpikeTimes not present in testdata \n', ...
+						mfilename);
 	return
 else
     spikesByStim = testdata.SpikeTimes;
     PSTHByStim = testdata.PSTH;
     if length(spikesByStim) ~= nwavs
-        error('%s: mismatch in # of stimuli in testdata and # of wavs', mfilename)
+		fprintf('Detected mismatch:\n');
+		fprintf('length(spikesByStim) = %d\n', length(spikesByStim));
+		fprintf('nwavs = %d\n', length(nwavs));
+		if length(Dinf.test.Level) > 1
+			fprintf(['%d audio levels tested - ' ...
+						'this might be cause of mismatch\n'], ...
+						length(Dinf.test.Level));
+		end
+		error('%s: mismatch in # of stimuli in testdata and # of wavs', mfilename)
     end
 end
 % Plot data

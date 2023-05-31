@@ -98,6 +98,9 @@ RPsettag(indev, 'MonOutChan', channels.MonitorOutputChannel);
 if tdt.MonEnable
 	% turn on audio monitor for spikes using software trigger 1
 	RPtrig(indev, 1);
+else
+	% turn off audio monitor using software trigger 2
+	RPtrig(indev, 2);
 end
 
 %------------------------------------------------------------------------

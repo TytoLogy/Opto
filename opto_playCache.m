@@ -87,6 +87,8 @@ curvetype = upper(stimcache.curvetype);
 stimtype = lower(stimcache.stimtype);
 % init the curvedata as empty matrix
 curvedata = [];
+% Storage for detected spikes
+spiketimes = cell(stimcache.nstims, 1);
 	
 %--------------------------------------------------------
 %--------------------------------------------------------
@@ -367,8 +369,22 @@ while ~cancelFlag && (sindex <= stimcache.nstims)
 		set(pH(c), 'YData', tmpY + c*yabsmax);
 	end
  	title(ax, tstr);
+	% get the spike response
+	[spikes, ~, spikerms] = opto_getspikes(indev);
+	% get the spike times
+	spiketimes{sindex} = (1000/indev.Fs) * ...
+									getSpikebinsFromSpikes(spikes, ...
+														handles.H.TDT.SnipLen);
+	update_ui_str(handles.textRMS, sprintf('%.4f', spikerms));
+	% show detected spikes !!! not working bad handle to plot
+% 	% draw new ones
+% 	set(tH,	'XData', spiketimes{sindex}, ...
+% 				'YData', zeros(size(spiketimes{sindex})) + ...
+% 										TDT.channels.MonitorChannel*yabsmax);
+	% force drawing
 	drawnow
-
+	refreshdata
+	
 	% check state of cancel button
 	cancelFlag = read_ui_val(cancelButton);
 
@@ -463,7 +479,7 @@ if ~cancelFlag
 	end
 	curvedata.depvars = depvars;
 	curvedata.depvars_sort = depvars_sort;
-
+	curvedata.spikes = spiketimes;
 	if stimcache.saveStim
 		[pathstr, fbase] = fileparts(datafile);
 		curvedata.stimfile = fullfile(pathstr, [fbase '_stim.mat']);

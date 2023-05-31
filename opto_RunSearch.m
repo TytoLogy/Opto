@@ -183,6 +183,7 @@ else
 					AttenL = figure_mono_atten_noise(H.audio.Level, ...
 												rms(stim), H.caldata);
 				end
+% -------debugging
 % 				fprintf('level: %.2f rms: %.4f rmsdb: %.4f Atten: %.2f\n', ...
 % 								H.audio.Level, rms(stim), ...
 % 								db(H.caldata.cal.VtoPa(1).*rms(stim)), AttenL);
@@ -210,12 +211,12 @@ else
 		% Set the spike threshold
 		RPsettag(indev, 'TLo', H.TDT.TLo);
 		% play stim, record data
-		[mcresp, ~] = opto_io(S, inpts, indev, outdev, zBUS);
+		[mcresp, ~] = opto_io(S, inpts, indev, outdev, zBUS);      
 		% get the monitor response
 		[monresp, ~] = opto_readbuf(indev, 'monIndex', 'monData');
 		% get the spike response
 		[spikes, nspikes, spikerms] = opto_getspikes(indev);
-		% get the spike times
+        % get the spike times
 		spiketimes = (1000/indev.Fs) * ...
 							getSpikebinsFromSpikes(spikes, ...
 															handles.H.TDT.SnipLen);
@@ -224,6 +225,7 @@ else
 		% first, demux input data matrices
 		[resp, ~] = mcFastDeMux(mcresp, TDT.channels.nInputChannels);
 		[pdata, ~] = mcFastDeMux(monresp, TDT.channels.nInputChannels);
+        
 		% then assign values to plot
 		for c = 1:TDT.channels.nInputChannels
 			if TDT.channels.RecordChannels{c}
@@ -259,7 +261,7 @@ else
 % 		end
 % 		subplot(212)
 % 		plot(spikes);
-	
+
 		% wait for ISI
 		pause(0.001*H.audio.ISI)
 	end	% END while get(hObject, 'Value')

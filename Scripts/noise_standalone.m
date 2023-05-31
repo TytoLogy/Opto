@@ -1,6 +1,6 @@
-function [curvedata, varargout] = noise(handles, datafile)
+function [curvedata, varargout] = noise_standalone(handles, datafile)
 %--------------------------------------------------------------------------
-% [curvedata, rawdata] = noise(handles, datafile)
+% [curvedata, rawdata] = noise_standalone(handles, datafile)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -35,6 +35,9 @@ function [curvedata, varargout] = noise(handles, datafile)
 %
 % Revision History:
 %	31 March, 2017 (SJS): minor fixes, added comments
+%	6 Nov, 2020 (SJS): renamed to avoid conflict in scripts, programs that
+%	use variable name noise (might be source of persistent problem in
+%	MTwav....
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 

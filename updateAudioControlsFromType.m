@@ -71,9 +71,14 @@ switch stimString
 		enable_ui(handles.textAudioRamp);
 		enable_ui(handles.editAudioRamp);
 		update_ui_str(handles.textAudioFmin, 'Freq. (Hz)');
+% 		% set sliderAudioFmin ctrl min, max val
+% 		set(handles.sliderAudioFmin, 'Min', handles.H.Lim.F(1));
+% 		set(handles.sliderAudioFmin, 'Max', ...
+% 								floor(handles.H.TDT.outdev.Fs / 2));
 		enable_ui(handles.textAudioFmin);
 		enable_ui(handles.editAudioFmin);
-		update_ui_str(handles.editAudioFmin, handles.H.tone.Frequency);		
+		update_ui_str(handles.editAudioFmin, handles.H.tone.Frequency);
+		update_ui_val(handles.sliderAudioFmin, handles.H.tone.Frequency);
 		disable_ui(handles.textAudioFmax);
 		disable_ui(handles.editAudioFmax);
 		disable_ui(handles.buttonAudioWavFile);

@@ -1,8 +1,8 @@
 % standalone_setupplots
 %
-% Initializes plots for sweep display, PSTHs, Raster plots
+% Initializes plots for sweep display, PSTHs, Raster plots for clickdata
 %
-% 28 Mar 2019 (SJS): Updated for MTwav()
+% 28 October 2020 (SJS): Updated for click_level()
 
 disp 'setting up plots'
 
@@ -16,7 +16,8 @@ binSize = 10;
 
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
-% Set up figure for plotting incoming data
+% Set up figure for plotting incoming data (raw sweep data for recorded
+% channels)
 %-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 % generate figure, axes
@@ -79,30 +80,49 @@ set(pstHandle, 'Name', [fname ' PSTH']);
 set(pstHandle, 'Filename', [fname '_PSTH.fig']);
 %--------------------------------
 % set up plots
+%	revising 24 Apr 2019 to account for multiple stim levels per stimulus
+%	type in stimList!!!
 %--------------------------------
-nPSTH = length(stimList);
+nLevels = length(test.Level);
+nPSTH = test.NullStim + nLevels;
+
+PLOT_ROWS = nPSTH;
+PLOT_COLS = 1;
+
 % allocate axes
 pstAxes = zeros(nPSTH, 1);
-% subplots
-for p = 1:nPSTH
+% subplots for levels first
+for p = 1:nLevels
 	pstAxes(p) = subplot(PLOT_ROWS, PLOT_COLS, p);
 	% write titles for plots
-	if any(strcmpi(stimList(p).audio.signal.Type, {'null', 'noise'}))
-		title(	pstAxes(p), ...
-					stimList(p).audio.signal.Type, ...
-					'FontSize', 10);
-	elseif strcmpi(stimList(p).audio.signal.Type, 'wav')
-		[~, wname] = fileparts(stimList(p).audio.signal.WavFile);
-		title(	pstAxes(p), ...
-					wname, ...
-					'Interpreter', 'none', ...
+	tstr = sprintf('Click %d dB', test.Level(p));
+	title(	pstAxes(p), ...
+				tstr, ...
+				'Interpreter', 'none', ...
+				'FontSize', 8, ...
+				'FontWeight', 'normal');
+end
+% then for null stim
+if test.NullStim
+	p = p + 1;
+	pstAxes(p) = subplot(PLOT_ROWS, PLOT_COLS, p);
+	% write titles for plots
+	title(	pstAxes(p), ...
+					nullstim.signal.Type, ...
 					'FontSize', 9, ...
 					'FontWeight', 'normal');
-	else
-		% WTF!!!???
-		error('WTF?')
-	end
 end
+% and then for noise stim
+if test.NoiseStim
+	p = p + 1;
+	pstAxes(p) = subplot(PLOT_ROWS, PLOT_COLS, p);
+	% write titles for plots
+	title(	pstAxes(p), ...
+					noise.signal.Type, ...
+					'FontSize', 9, ...
+					'FontWeight', 'normal');
+end
+
 %--------------------------------
 % set up psth data storage
 %--------------------------------
@@ -125,15 +145,11 @@ PSTH.hvals = cell(nPSTH, 1);
 for p = 1:nPSTH
 	if p == 1
 		% create null psthdata and store bins
-% 		[PSTH.hvals{p}, PSTH.bins] = ...
-% 									psth(	{}, binSize, ...
-% 											[0 handles.H.TDT.AcqDuration]);
 		[PSTH.hvals{p}, PSTH.bins] = ...
 									psth(	{}, binSize, ...
 											[0 test.AcqDuration]);
 	else
 		% just store hvals
-% 		PSTH.hvals{p} = psth({}, binSize, [0 handles.H.TDT.AcqDuration]);
 		PSTH.hvals{p} = psth({}, binSize, [0 test.AcqDuration]);
 	end
 end
@@ -148,16 +164,13 @@ pstBar = zeros(nPSTH, 1);
 for p = 1:nPSTH
 	pstBar(p) = bar(pstAxes(p), PSTH.bins, PSTH.hvals{p}, 1);
 	% set xlimits
-% 	xlim(pstAxes(p), [-0.5*binSize ...
-% 										(handles.H.TDT.AcqDuration+0.5*binSize)]);
 	xlim(pstAxes(p), [-0.5*binSize ...
 										(test.AcqDuration+0.5*binSize)]);
 	% set xtick properties
-% 	set(pstAxes(p), 'XTick', 0:200:handles.H.TDT.AcqDuration);
-	set(pstAxes(p), 'XTick', test.AcqDuration);
+	set(pstAxes(p), 'XTick', [0 audio.Delay test.AcqDuration]);
 	set(pstAxes(p), 'TickDir', 'out');
-	set(pstAxes(p), 'XMinorTick', 'on');
-	set(pstAxes(p), 'TickLen', 3*get(pstAxes(p), 'TickLen'));
+	set(pstAxes(p), 'XMinorTick', 'off');
+% 	set(pstAxes(p), 'TickLen', 3*get(pstAxes(p), 'TickLen'));
 	% turn off outer box
 	set(pstAxes(p), 'Box', 'off');
 end
@@ -167,35 +180,31 @@ end
 axis(pstAxes, 'auto y');
 %--------------------------------
 % draw line for stimulus onset
+%	revising 24 Apr 2019 to account for multiple stim levels per stimulus
+%	type in stimList!!!
 %--------------------------------
 pstAudLine = zeros(nPSTH, 2);
-winfoIndx = 0;
-for p = 1:nPSTH
+% stimulus lines depend on stimulus type
+for p = 1:nLevels
 	axes(pstAxes(p)); %#ok<LAXES>
-	onset = [];
-	offset = [];
-	% stimulus lines depend on stimulus type
-	if strcmpi(stimList(p).audio.signal.Type, 'noise')
-		onset = stimList(p).audio.Delay;
-		offset = onset + stimList(p).audio.Duration;
-	elseif strcmpi(stimList(p).audio.signal.Type, 'wav')
-		winfoIndx = winfoIndx + 1;
-		onset = stimList(p).audio.Delay;
-		offset = onset + 1000*wavInfo(winfoIndx).Duration;
-	elseif strcmpi(stimList(p).audio.signal.Type, 'null')
-	else
-		% WTF!!!???
-		error('WTF?')
-	end
+	% adjust the onset "tick" to account for the delayed
+	% onset within the wav file (calculated in buildWavInfo() function)
+	onset = audio.Delay + audio.signal.ClickDelay;
+	offset = onset + audio.signal.ClickDuration;
 	if ~isempty(onset)
 		pstAudLine(p, 1) = text(onset, 0, ':', ...
-											'Color', 'b', ...
+											'Color', 'g', ...
 											'FontSize', 11);
 		pstAudLine(p, 2) = text(offset, 0, '|', ...
-											'Color', 'b', ...
+											'Color', 'r', ...
 											'FontSize', 11);
 	end
 end
+if test.NullStim
+	p = p+1;
+	axes(pstAxes(p)); 
+end
+
 %--------------------------------
 % draw line for opto stim
 %--------------------------------

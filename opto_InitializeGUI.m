@@ -29,6 +29,8 @@ function handles = opto_InitializeGUI(hObject, eventdata, ...
 %------------------------------------------------------------------------
 % Revisions
 %	22 Oct 2017 (SJS): new cal file
+%	24 Apr 2019 (SJS): new cal file for wav stimuli in opto rig
+%	1 Oct 2019 (SJS): new cal file for wav stimuli in opto rig
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
@@ -41,15 +43,20 @@ guidata(hObject, handles);
 %----------------------------------------------------------------
 % Calibration data
 %----------------------------------------------------------------
-calpath = 'C:\TytoLogy\Experiments\CalData';
+% calpath = 'C:\TytoLogy\Experiments\CalData';
 % calfile = 'Optorig_20170601_TDT3981_4k90k_5V_cal.mat';
-calfile = 'Optorig_20171022_TDT3981_4k-91k_5V_cal.mat';
+% calfile = 'Optorig_20171022_TDT3981_4k-91k_5V_cal.mat';
+% calfile = 'LCY-C-4K-100K-1V-20dBatten_29May19.cal';
+% calfile = 'LCY-C-4K-100K-1V-20dBatten_11Jul19.cal';
+calpath = 'C:\TytoLogy\Experiments\WAVs';
+calfile = 'LCY-C-3000-103K-1V-20dBatten_30Sep19.cal';
 if ~exist(fullfile(calpath, calfile), 'file')
-	warning('Calibration file %s not found!', fullfile(calpath, calfile));
-	tmpcal = [];
+	error('%s: Calibration file %s not found!', mfilename, ...
+						fullfile(calpath, calfile));
+	tmpcal = []; %#ok<UNRCH>
 else
 	% load the calibration data
-	tmpcal = load_cal(fullfile(calpath, calfile));
+	tmpcal = load_cal_and_smooth(fullfile(calpath, calfile), 10);
 end
 % if tmpcal is a structure, load of calibration file was
 % hopefully successful, so save it in the handles info
@@ -76,7 +83,7 @@ end
 %----------------------------------------------------------------
 % window position and size
 set(handles.figure1, 'Units', 'characters');
-set(handles.figure1, 'Position', [8.2000 46.3077 148.4000 34.5385]);
+set(handles.figure1, 'Position', [8.2000 46.3077 120 54]);
 % audio stimulus selector (!!!ADD SEARCH!!!)
 set(handles.popupAudioSignal, 'String', ...
 				{'Noise'; 'Tone'; '.wav'; 'Search'; 'BlockSearch'; 'OFF'});
@@ -85,7 +92,20 @@ update_ui_val(handles.popupAudioSignal, 1);
 set(handles.tableChannelSelect, 'Data', ...
 										handles.H.TDT.channels.RecordChannels);
 set(handles.tableChannelSelect, 'ColumnName', 'Record');
-guidata(hObject, handles)
+guidata(hObject, handles);
+
+% update Level slider limits and values
+update_ui_val(handles.sliderAudioLevel, 50);
+% update Fmin slider limits and values
+set(handles.sliderAudioFmin, 'Min', handles.H.Lim.F(1));
+set(handles.sliderAudioFmin, 'Max', handles.H.Lim.F(2));
+update_ui_val(handles.sliderAudioFmin, handles.H.Lim.F(1));
+% update Fmax slider limits and values
+set(handles.sliderAudioFmax, 'Min', handles.H.Lim.F(1));
+set(handles.sliderAudioFmax, 'Max', handles.H.Lim.F(2));
+update_ui_val(handles.sliderAudioFmax, handles.H.Lim.F(2));
+guidata(hObject, handles);
+
 
 %----------------------------------------------------------------
 % list of channels for monitor popup
@@ -95,6 +115,8 @@ for c = 1:16
 	clist{c} = num2str(c);
 end
 set(handles.popupMonitorChannel, 'String', clist);
+update_ui_val(handles.popupMonitorChannel, ...
+										handles.H.TDT.channels.MonitorChannel);
 
 %----------------------------------------------------------------
 % TDT things

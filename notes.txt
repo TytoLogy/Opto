@@ -1,0 +1,40 @@
+---------------------------
+2 May 2019 (SJS):
+---------------------------
+fixed:
+	attenuation
+	wav onset fixed in files to 50ms from beginning of file
+	randomization fixed
+Work to do:
+	- need to add gain/filtering information to Dinf (written to header of datafile)?
+   - noise stim needs 50 ms additional delay in order to match onset of wav file?
+   - derandomize still needs attention
+	- currently working on analysis of MTwav data script
+
+---------------------------
+22Apr2019 (SJS):
+---------------------------
+working on wav stimulation. 
+still need to do:
+work out attenuation
+figure out wav files - onset/offset
+	set to 50 ms uniformly?
+randomization,
+	how to handle multiple levels?
+	derandomize for analysis
+test!
+
+---------------------------
+19 Oct 2020 (SJS):
+---------------------------
+Been lax on notes...
+There remains an odd, intermittent, inexplicable issue when pulling changes/syncing with github. Often, MTwav.m crashes with unknown variable error re: noise stimulus. This is resolved occasionally by pasting an identical copy of MTwav from an older branch/commit.. WTF?????!!!!???
+
+This happened again as I start work on click stimulus. To be continued...
+For now, will work on click stimuli/syn_click function in audio toolbox.
+
+for MGB, Anderson and Linden (2011): "Once an auditory response had been established, the neuron’s response to 100 repetitions of a 50 ms click presented at w 60 dB SPL with an inter- stimulus interval of 500 ms was recorded."
+ 
+Anderson and Linden (2016) "Two Mechanisms of Auditory Temporal Processing"
+J. Neurosci. 36(6):1977–1995"
+ Once auditory responses were established, recordings were collected during 100 repetitions of a 50 􏰇s click presented with at least an 800 ms interstimulus interval. Further recordings were collected during presentations of click trains; tones varying in frequency and intensity; gap-in-noise stimuli; and noise maskers followed by click probes. Click trains were 200 ms in duration and composed of 60 dB SPL clicks with interclick intervals (ICIs) of 3.125, 6.25, 12.5, 25, 50, and 100 ms; responses to 20 repetitions of each train were recorded.

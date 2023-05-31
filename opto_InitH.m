@@ -48,6 +48,10 @@ function H = opto_InitH
 %	17 May 2017 (SJS): added block to hold data for blocked search stimuli
 %	12 Jun 2017 (SJS): adding stuff for spike detection, psth plots
 %	13 Jun 2017 (SJS): more psth, raster things
+%	18 Apr 2019 (SJS): changed wav file dir, default wav to LFH_adj, default
+%							output directory to E:\Data\EphysData
+%	1 Jul 2020 (SJS): changed default output to F:\Data2\EphysData (new hard
+%	drive)
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -92,8 +96,8 @@ tone = struct(	'Type', 'tone', ...
 					'PeakAmplitude', 1);
 % wav -> pre-recorded wav file stimulus (e.g., vocalization)
 wav = struct(	'Type', 'wav', ...
-					'filenm', 'P100_11.wav', ...
-					'pathnm', 'C:\TytoLogy\Experiments\Opto', ...
+					'filenm', 'LFH_adj.wav', ...
+					'pathnm', 'C:\TytoLogy\Experiments\WAVs', ...
 					'isloaded', 0, ...
 					'data', [], ...
 					'info', [], ...
@@ -172,14 +176,28 @@ PA5R = [];
 % Hardware settings
 %------------------------------------------------------------------------
 % -- TDT I/O channels ---- default TDT hardware = 'NO_TDT'
+% channels struct
+% 
+% OutputChannelL				audio output channel on RZ6
+% OutputChannelR				audio output channel on RZ6
+% nInputChannels				total number of neural recording channels on RZ5D
+% InputChannels				list of input neural channels on RZ5D
+% OpticalChannel				D/A output channel on RZ5d for opto trigger
+% MonitorChannel				neural channel to monitor from RZ5D
+% MonitorOutputChannel		D/A output channel on RZ5D for monitored neural data
 channels.OutputChannelL = 1;
 channels.OutputChannelR = 2;
 channels.nInputChannels = 16;
 channels.InputChannels = 1:channels.nInputChannels;
 channels.OpticalChannel = 10;
-channels.MonitorChannel = 1;
+channels.MonitorChannel = 8;
 channels.MonitorOutputChannel = 9; 
-channels.RecordChannels = num2cell(true(channels.nInputChannels, 1));
+% This is for all channels are "on"
+% channels.RecordChannels = num2cell(true(channels.nInputChannels, 1));
+% This is for all channels "off"
+channels.RecordChannels = num2cell(false(channels.nInputChannels, 1));
+% This sets monitored channel to be recorded to "on"
+channels.RecordChannels{channels.MonitorChannel} = true;
 channels.nRecordChannels = sum(cell2mat(channels.RecordChannels));
 channels.RecordChannelList = find(cell2mat(channels.RecordChannels));
 
@@ -211,9 +229,9 @@ TDT = struct(	'Enable', 0, ...
 					'CircuitGain', 1000, ...		% gain for TDT circuit
 					'MonitorGain', 1000, ...
 					'HPEnable', 1, ...				% enable high pass filter
-					'HPFreq', 100, ...				% high pass frequency
+					'HPFreq', 300, ...				% high pass frequency
 					'LPEnable', 1, ...				% enable low pass filter
-					'LPFreq', 10000, ...				% low pass frequency
+					'LPFreq', 5000, ...				% low pass frequency
 					'MonEnable', 0, ...
 					'SnipLen', 60, ...				% length of spike snippet samples
 					'RMSTau', 1000, ...				% ms for computation of bg RMS
@@ -238,7 +256,8 @@ animal.comments = '';
 % test script and data destination
 %------------------------------------------------------------------------
 TestScript = fullfile(pwd, 'defaultscript.m');
-DefaultOutputDir = 'E:\Data\SJS';
+% DefaultOutputDir = 'E:\Data\EphysData';
+DefaultOutputDir = 'F:\Data2\EphysData';
 
 %------------------------------------------------------------------------
 % build overall H struct

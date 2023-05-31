@@ -1,4 +1,4 @@
-function [c, stimseq] = opto_buildStimCache(test, tdt, caldata)
+function [c, stimseq] = opto_buildStimCache_orig(test, tdt, caldata)
 %--------------------------------------------------------------------------
 % [c, stimseq] = opto_buildStimCache(test, stim, tdt, caldata)
 %--------------------------------------------------------------------------
@@ -34,7 +34,7 @@ function [c, stimseq] = opto_buildStimCache(test, tdt, caldata)
 %	8 Jan 2017 (SJS): working on FRA
 %	25 Feb 2020 (SJS): FRA cache not working properly! only using lowest
 %	frequency!!!
-%   19 Aug 2020 (SJS): dealing with opto-amp test
+%
 %--------------------------------------------------------------------------
 
 %{
@@ -48,7 +48,6 @@ test.Type values:
 	'LEVEL'
 	'FREQ+LEVEL'
 	'WAVFILE'
-    'OPTO-AMP'
 
 test.Name values:
 	'FREQ_TUNING'
@@ -118,84 +117,24 @@ end
 % compute total number of trials = total number of different
 % stimuli/stimulus combinations to play
 % # of trials == total # of stim values (ITDs, ILDs, # freqs, etc.)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-%if ~isempty(strfind(test.Type, 'LEVEL')) && strcmpi(signal.Type, 'tone')
-
-% Level curve (either BBN or FREQ)?
-if strcmpi(test.Type, 'LEVEL')
-	% alter behaviour depending on signal type (tone, noise, wav)
-	if strcmpi(signal.Type, 'tone')
-		% test is tone + level, so ntrials will be 
-		% # of levels plus # opto amps
-		c.ntrials = nLevels + nOptoAmp;
-		fprintf('tone + level curve\n');
-	elseif strcmpi(signal.Type, 'noise')
-		% test is noise + level, so ntrials will be 
-		% # of levels plus # opto amps
-		c.ntrials = nLevels + nOptoAmp;
-		fprintf('noise + level curve\n');
-	elseif strcmpi(signal.Type, 'wav')
-		% test is wav (single) + level, so ntrials will be 
-		% # of levels plus # opto amps
-		c.ntrials = nLevels + nOptoAmp;
-		fprintf('wav + level curve\n');
-	else
-		error('%s: Unsupported signal type %s', mfilename, signal.Type);
-	end
-	fprintf('\t %d levels\n', nLevels); 
-	fprintf('\t %d OptoAmp values\n', nOptoAmp);
-
-% FREQ (freq tuning) curve
-elseif strcmpi(test.Type, 'FREQ')
-	if strcmpi(signal.Type, 'tone')
-		% test is frequency tuning curve
-		% for simple (non-FRA, freq level) tests, ntrials will be 
-		% sum of different levels
-		c.ntrials = nLevels + nOptoAmp + nFreqs;
-		fprintf('frequency tuning curve\n');
-	else
-		error('%s: Unsupported signal %s for test.TYPE = FREQ', ...
-											mfilename, signal.Type)
-	end
-	fprintf('\t %d levels\n', nLevels); 
-	fprintf('\t %d OptoAmp values\n', nOptoAmp);
-	fprintf('\t %d Freqs values\n', nFreqs);
-
-% FREQ+LEVEL = FRA test
-elseif strcmpi(test.Type, 'FREQ+LEVEL')
-	if strcmpi(signal.Type, 'tone')
-		% test is FRA (vary both frequency and level)
-		c.ntrials = nLevels * nFreqs;
-		fprintf('FRA (FREQ+LEVEL) test\n');
-	else
-		error('%s: unsupported signal %s for FRA', mfilename. signal.Type);
-	end
-	fprintf('\t %d levels\n', nLevels); 
-	fprintf('\t %d OptoAmp values\n', nOptoAmp);
-	fprintf('\t %d Freqs values\n', nFreqs);
-
-% wavfile unsupported
-elseif strcmpi(test.Type, 'WAVFILE')
-	error('%s: unsupported test type %s', mfilename, test.Type);
-
-% OPTO-AMP: vary optogenetic output level (for use with ThorLabs LED
-% controller)
-elseif strcmpi(test.Type, 'OPTO-AMP')
-    c.ntrials = nOptoAmp;
-    fprintf('OPTO-AMP test\n');
-
-% Unknown test type
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%PRE 25Feb2020
+if ~isempty(strfind(test.Type, 'LEVEL')) && strcmpi(signal.Type, 'tone')
+	% test is frequency level, so ntrials will be # of levels plus # opto
+	% amps
+	c.ntrials = nLevels + nOptoAmp;
+elseif ~isempty(strfind(test.Type, 'FREQ+LEVEL'))
+	% test is FRA (vary both frequency and level)
+	c.ntrials = nLevels * nFreqs;
+elseif isempty(strfind(test.Type, 'FREQ+LEVEL'))
+	% for simple (non-FRA, freq level) tests, ntrials will be sum of different levels
+	c.ntrials = nLevels + nOptoAmp + nFreqs;
 else
 	error('%s: setting ntrials, unknown test Type %s', ...
 													mfilename, test.Type);
 end
-fprintf('\t %d trials\n', c.ntrials);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % # total stimuli will be # of reps (per stimulus) * total # of trials
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c.nstims = c.nreps * c.ntrials;
 % assign rep and trial numbers (trial corresponds to 
 % stimulus type or parameter)
@@ -273,7 +212,6 @@ switch c.curvetype
 				
 			case 'wav'
 				% NOT YET IMPLEMENTED
-				error('%s: unsupported stimulus %s', mfilename, c.stimtype);
 				
 			otherwise
 				warning([mfilename ': unsupported stimtype ' c.stimtype ...
@@ -284,7 +222,7 @@ switch c.curvetype
 		
 	% freq tuning is tones-only
 	case {'FREQ'}
-        switch c.stimtype
+		switch c.stimtype
 			case 'tone'
 				% freq. for tone (Hz) (will be a vector)
 				FREQ = signal.Frequency;
@@ -296,13 +234,14 @@ switch c.curvetype
 														' for curvetype ' c.curvetype])
 				c = [];
 				return
-        end
-  		
-	case {'OPTO', 'OPTO-DELAY', 'OPTO-DUR', 'OPTO-AMP'}
-		fprintf('%s: curvetype is %s\n', mfilename, c.curvetype);
+		end
+	
+	case 'OPTO-DUR'
 		
+	case {'OPTO', 'OPTO-DELAY', 'OPTO-AMP'}
+	
 	otherwise
-		error([mfilename ': unkown curvetype ' c.curvetype])
+		error([mfilename ': unsupported curvetype ' c.curvetype])
 end		
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

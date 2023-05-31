@@ -34,13 +34,15 @@ function [c, stimseq] = opto_buildStimCache(test, tdt, caldata)
 %	8 Jan 2017 (SJS): working on FRA
 %	25 Feb 2020 (SJS): FRA cache not working properly! only using lowest
 %	frequency!!!
-%   19 Aug 2020 (SJS): dealing with opto-amp test
+%  19 Aug 2020 (SJS): dealing with opto-amp test
+%  26 Oct 2020 (SJS): adding click stimuli
 %--------------------------------------------------------------------------
 
 %{
 test.audio.signal.Type values:
 	'tone'
 	'noise'
+   'click'
 	'wav'
 
 test.Type values:
@@ -48,11 +50,12 @@ test.Type values:
 	'LEVEL'
 	'FREQ+LEVEL'
 	'WAVFILE'
-    'OPTO-AMP'
+   'OPTO-AMP'
 
 test.Name values:
 	'FREQ_TUNING'
 	'BBN'
+   'CLICK'
 	'FRA'
 	'WAV'
 %}
@@ -123,26 +126,37 @@ end
 
 %if ~isempty(strfind(test.Type, 'LEVEL')) && strcmpi(signal.Type, 'tone')
 
-% Level curve (either BBN or FREQ)?
+% Level curve (either BBN or FREQ or CLICK)?
 if strcmpi(test.Type, 'LEVEL')
+	
 	% alter behaviour depending on signal type (tone, noise, wav)
 	if strcmpi(signal.Type, 'tone')
 		% test is tone + level, so ntrials will be 
 		% # of levels plus # opto amps
 		c.ntrials = nLevels + nOptoAmp;
 		fprintf('tone + level curve\n');
+
 	elseif strcmpi(signal.Type, 'noise')
 		% test is noise + level, so ntrials will be 
 		% # of levels plus # opto amps
 		c.ntrials = nLevels + nOptoAmp;
 		fprintf('noise + level curve\n');
+
+	elseif strcmpi(signal.Type, 'click')
+		% test is click + level, so ntrials will be 
+		% # of levels plus # opto amps
+		c.ntrials = nLevels + nOptoAmp;
+		fprintf('noise + level curve\n');
+		
 	elseif strcmpi(signal.Type, 'wav')
 		% test is wav (single) + level, so ntrials will be 
 		% # of levels plus # opto amps
 		c.ntrials = nLevels + nOptoAmp;
 		fprintf('wav + level curve\n');
+
 	else
 		error('%s: Unsupported signal type %s', mfilename, signal.Type);
+
 	end
 	fprintf('\t %d levels\n', nLevels); 
 	fprintf('\t %d OptoAmp values\n', nOptoAmp);
@@ -257,19 +271,24 @@ end
 % *** seeems like this section is superfluous....
 switch c.curvetype		
 	
-	% LEVEL curves can use either noise or tones or opto
+	% LEVEL curves can use either noise or tones or click or opto
 	case {'LEVEL', 'LEVEL_OPTO', 'FREQ+LEVEL'}
 		switch c.stimtype
+			
 			case 'noise'
 				% low freq for bandwidth of noise (Hz)
 				FREQ(1) = signal.Fmin;
 				% high freq. for BB noise (Hz)
 				FREQ(2) = signal.Fmax;
+				
 			case 'tone'
 				FREQ = signal.Frequency;	% freq. for tone (Hz)'
 				% vary phase randomly from stim to stim 1 = yes, 0 = no
 				% (consistent phase each time)
 				c.radvary = signal.RadVary;
+			
+			case 'click'
+				% do things for click
 				
 			case 'wav'
 				% NOT YET IMPLEMENTED
@@ -544,6 +563,17 @@ switch c.curvetype
 																caldata.DAscale, ...
 																caldata, ...
 																0);
+				case 'click'
+					% get click
+					% use audio.Duration for overall length of stimulus, 
+					% signal.Delay and signal.ClickDur for click delay and
+					% duration. use calibration data scaling for click amplitude
+					c.S0 = synmonoclick(audio.Duration, outdev.Fs, ...
+						                   signal.Delay, signal.ClickDur, ...
+												 calData.DAscale);
+					% next issue is how to set levels. for now, use 1
+					c.Scale0 = 1;
+					
 			end
 		end
 		
@@ -574,6 +604,11 @@ switch c.curvetype
 															caldata.DAscale, ...
 															caldata, ...
 															signal.RadVary);
+
+						case 'click'
+							% get click
+							Sn = c.S0;
+
 					end
 				else	% stimulus is frozen
 					switch c.stimtype
@@ -590,11 +625,18 @@ switch c.curvetype
 															signal.Frequency, ...
 															caldata.DAscale, ...
 															caldata, 0);
+
+						case 'click'
+							% get click
+							Sn = c.S0;
+					
 					end
 				end
 				
-				% ramp the sound on and off (important!)
-				Sn = sin2array(Sn, audio.Ramp, outdev.Fs);
+				% ramp the sound on and off if not a click (important!)
+				if ~strcmpi(c.stimtype, 'click')
+					Sn = sin2array(Sn, audio.Ramp, outdev.Fs);
+				end
 				% compute RMS value
 				rmsval = rms(Sn);
 				% get the attenuator settings for the desired SPL
@@ -603,6 +645,10 @@ switch c.curvetype
 						atten = figure_mono_atten_noise(LEVEL, rmsval, caldata);
 					case 'tone'
 						atten = figure_mono_atten_tone(LEVEL, rmsval, caldata);
+					case 'click'
+						% signal needs to have information about level and 
+						% corresponding SPL level
+						atten = figure_mono_atten_click(LEVEL, signal);
 				end
 				% Store the parameters in the stimulus cache struct
 				c.stimvar{sindex} = LEVEL;

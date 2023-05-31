@@ -2,7 +2,7 @@ function [data, varargout] = readOptoData(varargin)
 %------------------------------------------------------------------------
 % [data, datainfo] = readOptoData(varargin)
 %------------------------------------------------------------------------
-% % TytoLogy:Experiments:opto Application
+% TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
 % Reads binary data file created by the opto program
 %
@@ -20,7 +20,7 @@ function [data, varargout] = readOptoData(varargin)
 % datainfo		has the file header information.
 % 
 %------------------------------------------------------------------------
-% See Also:
+% See Also: optoproc, getFilteredOptoData
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -31,7 +31,10 @@ function [data, varargout] = readOptoData(varargin)
 %			- adapted from readHPData.m
 % 
 % Revisions:
-%	24 June 2016 (SJS): added data position, status and # read
+% 24 June 2016 (SJS): added data position, status and # read
+% 12 Jun 2020 (SJS): updated comments, docs
+% 24 Jun 2021 (SJS): changed behavior for non-Wav data in which stimList
+% was replaced by []
 %------------------------------------------------------------------------
 % TO DO:
 %	*Documentation!
@@ -93,6 +96,24 @@ catch errMsg
 	return;
 end
 
+% convert test.Name into characters
+% need to see if Name is field in test structure - due to inconsistencies
+% in the different tests, some (e.g., opto-amp) do not have Name and only
+% have Type
+datainfo.test
+if isfield(datainfo.test, 'Name')
+   datainfo.test.Name = char(datainfo.test.Name);
+else
+   fprintf('file %s: \n\tNo ''Name'' field in datainfo.test\n', datafile);
+   fprintf('Checking for ''Type''\n');
+   if isfield(datainfo.test, 'Type')
+      datainfo.test.Type = char(datainfo.test.Type);
+      datainfo.test.Name = datainfo.test.Type;
+   else
+      error('Cannot determine test type');
+   end
+end
+   
 % check if stimcache exists
 if isfield(datainfo.test, 'stimcache')
 	% if so, get # of reps and trials from size of trialRandomSequence
@@ -175,10 +196,18 @@ if exist(wavinfo_matfile, 'file')
 	fprintf('Loading stimList from %s\n', wavinfo_matfile);
 	load(wavinfo_matfile, 'stimList');
 	datainfo.stimList = stimList;
-else
+elseif isfield(datainfo.test, 'stimList')
+   % move datainto.test.stimList to datainfo (click stimulus standalone
+   % script puts stimList in the test struct)
+   datainfo.stimList = datainfo.test.stimList;
+   datainfo.test = rmfield(datainfo.test, 'stimList');
+elseif ~isfield(datainfo, 'stimList')
+   % maybe not a good idea to clear out stimList if it exists... only add
+   % empty value if it is not present in datainfo
 	datainfo.stimList = [];
 end
 
+% assign to output
 if nargout == 2
 	varargout{1} = datainfo;
 end

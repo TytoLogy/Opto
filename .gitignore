@@ -56,4 +56,5 @@ tdtlockfile.mat
 tdtlockfile.mat
 testdata.mat
 stims.mat
+*.mat
 

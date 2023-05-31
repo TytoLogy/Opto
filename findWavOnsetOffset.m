@@ -1,7 +1,10 @@
-function out = findWavOnsetOffset(wav, Fs, varargin)
+function varargout = findWavOnsetOffset(wav, Fs, varargin)
 %--------------------------------------------------------------------------
-% out = findWavOnsetOffset(wav, Fs, 'UserConfirm', 'Threshold', threshold, 
-% 												 'RMSWin', rmswin_ms, 'MeanWin', meanwin)
+% [out_bins, out_ms] = findWavOnsetOffset(wav, Fs, 
+%														'UserConfirm', 
+% 														'Threshold', threshold, 
+% 														'RMSWin', rmswin_ms, 
+% 														'MeanWin', meanwin)
 %--------------------------------------------------------------------------
 % TytoLogy:Experiments:opto Application
 %--------------------------------------------------------------------------
@@ -25,7 +28,8 @@ function out = findWavOnsetOffset(wav, Fs, varargin)
 %	'Axis'				use defined axis handle for plot
 %
 % Output Arguments:
-%	 [onset offset] bins in 1X2 vector
+%	 out_bins			[onset offset] bins in 1X2 vector
+%	 out_ms				[onset offset] milliseconds in 1X2 vector
 %--------------------------------------------------------------------------
 % See Also: getWavInfo, opto
 %--------------------------------------------------------------------------
@@ -39,6 +43,10 @@ function out = findWavOnsetOffset(wav, Fs, varargin)
 %
 % Revision History:
 %	18 Apr 2019 (SJS): added Axis input
+%	22 Apr 2019 (SJS): revisions
+%		- fixed offset issue when using default methods
+%		- pulled out nested functions
+%		- hopefully improved plotting in formerly nested functions
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
@@ -116,21 +124,25 @@ function out = findWavOnsetOffset(wav, Fs, varargin)
 	%------------------------------------------------------------------------
 	% find onset
 	%------------------------------------------------------------------------
+	figure(1);
+	axOn = gca;
 	if strcmpi(method, 'rms')
 		onset = rms_onset(wav, Fs, userconfirm, rmswin_ms, meanwin, ...
 																		threshold, ...
 																		['ONSET:' wavname], ...
-																		axH);
+																		axOn);
 	else
 		onset = drmsdt_onset(wav, Fs, userconfirm, rmswin_ms, meanwin, ...
 																		threshold, ...
 																		['ONSET:' wavname], ...
-																		axH);		
+																		axOn);
 	end
 	
 	%------------------------------------------------------------------------
 	% find offset
 	%------------------------------------------------------------------------
+	figure(2);
+	axOff = gca;
 	% flip wav around
 	if isrow(wav)
 		wav = fliplr(wav);
@@ -141,228 +153,20 @@ function out = findWavOnsetOffset(wav, Fs, varargin)
 		% then use "onset" to find offset
 		tmp = rms_onset(wav, Fs, userconfirm, rmswin_ms, meanwin, ...
 																		threshold, ...
-																		['OFFSET:' wavname]);
+																		['OFFSET:' wavname], ...
+																		axOff);
 	else
-		onset = drmsdt_onset(wav, Fs, userconfirm, rmswin_ms, meanwin, ...
+		tmp = drmsdt_onset(wav, Fs, userconfirm, rmswin_ms, meanwin, ...
 																		threshold, ...
-																		['OFFSET:' wavname]);	
+																		['OFFSET:' wavname], ...
+																		axOff);
 	end
-	% subtract from total length to give offset
+	% need to subtract from total length to give offset
 	offset = length(wav) - tmp;
 	% build output
-	out = [onset offset];
+	varargout{1} = [onset offset];
+	if nargout > 1
+		varargout{2} = bin2ms([onset offset], Fs);
+	end
 	
 end	% END of findWavOnset
-
-%--------------------------------------------------------------------------
-%--------------------------------------------------------------------------
-function out = rms_onset(wav, Fs, userconfirm, rmswin_ms, ...
-														meanwin, threshold, ptitle, varargin)
-%--------------------------------------------------------------------------
-	% select axes or figure in which to draw
-	if ~isempty(varargin)
-		axes(varargin{1});
-	else
-		figure(314);
-	end
-	
-	% plot signal in blue
-	dt = (1/Fs);
-	t_wav = 1000 * dt * ( 0:(length(wav) - 1) );
-	plot(t_wav, wav, 'b.');
-	title(ptitle, 'Interpreter', 'none')
-	grid on
-
-	% compute rms of signal in blocks, then plot it in green
-	wavrms = block_rms(wav, ms2bin(rmswin_ms, Fs));
-	t_rms = rmswin_ms * (0:(length(wavrms) - 1));
-	hold on
-		plot(t_rms, wavrms, 'g');
-	hold off
-
-	% find first value above threshold
-	rmsonsetbin = 0;
-	rmsonsetval = [];
-	av = moving_average(wavrms, meanwin);
-	hold on
-		plot(t_rms, av, 'r')
-	hold off
-	for n = 1:length(av)
-		if (rmsonsetbin == 0) && (av(n) > threshold)
-			rmsonsetbin = n;
-			rmsonsetval = av(n);
-		end
-	end
-	if rmsonsetbin == 0
-		rmsonsetbin = 1;
-		onsettime = t_rms(rmsonsetbin);
-		rmsonsetval = av(rmsonsetbin);
-	else
-		% check onset
-		onsettime = t_rms(rmsonsetbin)-(meanwin*rmswin_ms);
-	end
-	if onsettime < 0
-		onsettime = t_rms(rmsonsetbin);
-	elseif rmsonsetbin == 0
-		rmsonsetbin = 1;
-		onsettime = t_rms(1);
-		rmsonsetval = av(rmsonsetbin);
-	end
-	% plot onset
-	hold on
-		plot(t_rms(rmsonsetbin), rmsonsetval, 'm*', 'MarkerSize', 9)
-		onPlot = plot(onsettime, rmsonsetval, 'k*', 'MarkerSize', 9);
-	hold off
-	legend('wav', 'rms', 'rmsavg', 'rmson', 'onset')
-	drawnow
-	
-	if userconfirm
-		% check with user
-		qopts = struct('Default', 'No', 'Interpreter', 'none');
-% 		ptopts = struct('Resize', 'on', 'WindowStyle', 'normal', 'Interpreter', 'none');
-		butt = 'No';
-		while strcmpi(butt, 'No')
-
-			butt = questdlg(	'Accept Onset?', ...
-									'Find onset', ...
-									'Yes', 'No', ...
-									qopts);
-			if strcmpi(butt, 'No')
-				tmpcell = inputdlg('onset (ms)', 'New Onset', 1, {num2str(onsettime)});
-				if isempty(tmpcell)
-					newval = onsettime;
-				else
-					newval = str2num(tmpcell{1}); %#ok<ST2NM>
-				end
-				if between(newval, 0, max(t_wav))
-					delete(onPlot);
-					onsettime = newval;
-					rmsonsetval = av(t_rms==onsettime);
-					try
-						hold on
-						onPlot = plot(onsettime, rmsonsetval, 'k*', 'MarkerSize', 9);
-						hold off
-					catch
-						debug
-						
-					end
-				else
-					errdlg('Invalid onset', 'find onset')
-					butt = 'No';
-				end
-			end
-		end
-	end
-	
-	% return onset bin
-	out =  ms2bin(onsettime, Fs);
-end
-
-
-%--------------------------------------------------------------------------
-%--------------------------------------------------------------------------
-function out = drmsdt_onset(wav, Fs, userconfirm, rmswin_ms, ...
-														meanwin, threshold, ptitle, varargin)
-%--------------------------------------------------------------------------
-	% select axes or figure in which to draw
-	if ~isempty(varargin)
-		axes(varargin{1});
-	else
-		figure(314);
-	end
-
-	% plot signal in blue
-	dt = (1/Fs);
-	t_wav = 1000 * dt * ( 0:(length(wav) - 1) );
-	plot(t_wav, wav, 'b.');
-	title(ptitle, 'Interpreter', 'none')
-	grid on
-
-	% compute rms of signal in blocks, then plot it in green
-	wavrms = block_rms(wav, ms2bin(rmswin_ms, Fs));
-	t_rms = rmswin_ms * (0:(length(wavrms) - 1));
-	hold on
-		plot(t_rms, wavrms, 'g');
-	hold off
-
-	% compute 1st derivative of rms
-	dwavrmsdt = diff(wavrms) ./ rmswin_ms;
-	dwavrmsdt = [dwavrmsdt(1); dwavrmsdt];
-
-	% find first avg derivative value above threshold
-	rmsonsetbin = 0;
-	rmsonsetval = [];
-	av = zeros(length(t_rms), 1);
-	for n = 1:(length(t_rms) - meanwin)
-		av(n) = mean(dwavrmsdt(n:(n+meanwin)));
-		hold on
-			plot(t_rms(n), av(n), 'r+')
-		hold off
-		if (rmsonsetbin == 0) && (av(n) > threshold)
-			rmsonsetbin = n;
-			rmsonsetval = av(n);
-		end
-	end
-	if rmsonsetbin == 0
-		rmsonsetbin = 1;
-		onsettime = t_rms(rmsonsetbin);
-		rmsonsetval = av(rmsonsetbin);
-	else
-		% check onset
-		onsettime = t_rms(rmsonsetbin)-(meanwin*rmswin_ms);
-	end
-	if onsettime < 0
-		onsettime = t_rms(rmsonsetbin);
-	elseif rmsonsetbin == 0
-		rmsonsetbin = 1;
-		onsettime = t_rms(1);
-		rmsonsetval = av(rmsonsetbin);
-	end
-	% plot onset
-	hold on
-		plot(t_rms(rmsonsetbin), rmsonsetval, 'm*', 'MarkerSize', 9)
-		onPlot = plot(onsettime, rmsonsetval, 'k*', 'MarkerSize', 9);
-	hold off
-	drawnow
-	
-	if userconfirm
-		% check with user
-		qopts = struct('Default', 'No', 'Interpreter', 'none');
-% 		ptopts = struct('Resize', 'on', 'WindowStyle', 'normal', 'Interpreter', 'none');
-		butt = 'No';
-		while strcmpi(butt, 'No')
-
-			butt = questdlg(	'Accept Onset?', ...
-									'Find onset', ...
-									'Yes', 'No', ...
-									qopts);
-			if strcmpi(butt, 'No')
-				tmpcell = inputdlg('onset (ms)', 'New Onset', 1, {num2str(onsettime)});
-				if isempty(tmpcell)
-					newval = onsettime;
-				else
-					newval = str2num(tmpcell{1}); %#ok<ST2NM>
-				end
-				if between(newval, 0, max(t_wav))
-					delete(onPlot);
-					onsettime = newval;
-					rmsonsetval = av(t_rms==onsettime);
-					try
-						hold on
-						onPlot = plot(onsettime, rmsonsetval, 'k*', 'MarkerSize', 9);
-						hold off
-					catch
-						debug
-						
-					end
-				else
-					errdlg('Invalid onset', 'find onset')
-					butt = 'No';
-				end
-			end
-		end
-	end
-	
-	% return onset bin
-	out =  ms2bin(onsettime, Fs);
-end
